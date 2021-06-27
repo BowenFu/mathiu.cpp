@@ -15,6 +15,14 @@ TEST(Expr, constant2)
     EXPECT_NEAR(eval(sin(pi / constant(2))), 1, 1e-5);
 }
 
+TEST(Expr, constant3)
+{
+    auto x = constant(std::complex<double>(0, 1));
+    auto result = ceval(x * x);
+    EXPECT_NEAR(result.real(), -1, 1e-5);
+    EXPECT_NEAR(result.imag(), 0, 1e-5);
+}
+
 TEST(Expr, product)
 {
     auto x = constant(5);

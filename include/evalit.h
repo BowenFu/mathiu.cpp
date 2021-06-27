@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <cmath>
+#include <complex>
 
 namespace evalit
 {
@@ -21,13 +22,15 @@ namespace evalit
             std::shared_ptr<Expr> value;
         };
 
-        struct Constant : std::array<double, 1>
+        struct Constant : std::variant<double, std::complex<double>>
         {
         };
 
         constexpr double pi_ = 3.1415926;
-
         inline const auto pi = std::make_shared<Expr>(Constant{{pi_}});
+
+        constexpr std::complex<double> i_ = std::complex<double>(0, 1);
+        inline const auto i = std::make_shared<Expr>(Constant{{i_}});
 
         struct Sum : std::array<std::shared_ptr<Expr>, 2>
         {
@@ -66,6 +69,11 @@ namespace evalit
         }
 
         inline std::shared_ptr<Expr> constant(double v)
+        {
+            return std::make_shared<Expr>(Constant{{v}});
+        }
+
+        inline std::shared_ptr<Expr> constant(std::complex<double> v)
         {
             return std::make_shared<Expr>(Constant{{v}});
         }
@@ -118,19 +126,45 @@ namespace evalit
             assert(ex);
             Id<int> i;
             Id<double> d;
+            Id<std::complex<double>> c;
             Id<std::shared_ptr<Expr> > e, l, r;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int>(i)                           = expr(i),
-                pattern | asSymbolDs(e)                        = [&]{ return eval(*e); },
-                pattern | as<Constant>(ds(d))                  = expr(d),
-                pattern | as<Sum>(ds(l, r))                    = [&]{ return eval(*l) + eval(*r); },
+                pattern | as<int>(i)                                = expr(i),
+                pattern | asSymbolDs(e)                             = [&]{ return eval(*e); },
+                pattern | as<Constant>(as<double>(d))               = expr(d),
+                pattern | as<Constant>(as<std::complex<double>>(c)) = [&]{ assert((*c).imag() == 0); return (*c).real(); },
+                pattern | as<Sum>(ds(l, r))                         = [&]{ return eval(*l) + eval(*r); },
                 // Optimize multiplication by 0.
-                pattern | as<Product>(ds(some(as<int>(0)), _)) = expr(0),
-                pattern | as<Product>(ds(_, some(as<int>(0)))) = expr(0),
-                pattern | as<Product>(ds(l, r))                = [&]{ return eval(*l) * eval(*r); },
-                pattern | as<Power>(ds(l, r))                  = [&]{ return std::pow(eval(*l), eval(*r)); },
-                pattern | as<Sin>(ds(e))                       = [&]{ return std::sin(eval(*e)); }
+                pattern | as<Product>(ds(some(as<int>(0)), _))      = expr(0),
+                pattern | as<Product>(ds(_, some(as<int>(0))))      = expr(0),
+                pattern | as<Product>(ds(l, r))                     = [&]{ return eval(*l) * eval(*r); },
+                pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(eval(*l), eval(*r)); },
+                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(eval(*e)); }
+                // clang-format on
+            );
+        }
+
+        inline std::complex<double> ceval(const std::shared_ptr<Expr> &ex)
+        {
+            assert(ex);
+            Id<int> i;
+            Id<double> d;
+            Id<std::complex<double>> c;
+            Id<std::shared_ptr<Expr> > e, l, r;
+            return match(*ex)(
+                // clang-format off
+                pattern | as<int>(i)                                = expr(i),
+                pattern | asSymbolDs(e)                             = [&]{ return ceval(*e); },
+                pattern | as<Constant>(as<double>(d))               = expr(d),
+                pattern | as<Constant>(as<std::complex<double>>(c)) = expr(c),
+                pattern | as<Sum>(ds(l, r))                         = [&]{ return ceval(*l) + ceval(*r); },
+                // Optimize multiplication by 0.
+                pattern | as<Product>(ds(some(as<int>(0)), _))      = expr(0),
+                pattern | as<Product>(ds(_, some(as<int>(0))))      = expr(0),
+                pattern | as<Product>(ds(l, r))                     = [&]{ return ceval(*l) * ceval(*r); },
+                pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(ceval(*l), ceval(*r)); },
+                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(ceval(*e)); }
                 // clang-format on
             );
         }
