@@ -59,11 +59,11 @@ namespace evalit
         {
         };
 
-        struct Rational : std::array<int32_t, 2>
+        struct Fraction : std::array<int32_t, 2>
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Rational, Symbol, Constant, Sum, Product, Power, Log, Sin, Arctan>;
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Constant, Sum, Product, Power, Log, Sin, Arctan>;
 
         struct Expr : ExprVariant
         {
@@ -75,9 +75,9 @@ namespace evalit
             return std::make_shared<Expr>(v);
         }
 
-        inline std::shared_ptr<Expr> rational(int32_t l, int32_t r)
+        inline std::shared_ptr<Expr> fraction(int32_t l, int32_t r)
         {
-            return std::make_shared<Expr>(Rational{{l, r}});
+            return std::make_shared<Expr>(Fraction{{l, r}});
         }
 
         inline std::shared_ptr<Expr> constant(double v)
@@ -131,7 +131,7 @@ namespace evalit
             Id<int32_t> il, ir;
             return match(*lhs, *rhs)(
                 // clang-format off
-                pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return rational(*il, *ir); },
+                pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return fraction(*il, *ir); },
                 pattern | _                                    = expr(lhs * (rhs ^ constant(-1)))
                 // clang-format on
             );
@@ -161,7 +161,7 @@ namespace evalit
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = [&]{ assert((*c).imag() == 0); return (*c).real(); },
-                pattern | as<Rational>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
+                pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Sum>(ds(l, r))                         = [&]{ return eval(*l) + eval(*r); },
                 // Optimize multiplication by 0.
                 pattern | as<Product>(ds(some(as<int32_t>(0)), _))      = expr(0),
@@ -187,7 +187,7 @@ namespace evalit
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = expr(c),
-                pattern | as<Rational>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
+                pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Sum>(ds(l, r))                         = [&]{ return ceval(*l) + ceval(*r); },
                 // Optimize multiplication by 0.
                 pattern | as<Product>(ds(some(as<int32_t>(0)), _))      = expr(0),
@@ -216,7 +216,7 @@ namespace evalit
                 pattern | as<Constant>(*i)                           = expr("i"),
                 pattern | as<Constant>(as<double>(id))               = [&]{ return std::to_string(*id); },
                 pattern | as<Constant>(as<std::complex<double>>(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
-                pattern | as<Rational>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
+                pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
                 pattern | as<Sum>(ds(il, ir))                        = [&]{ return "(+ " + toString(*il) + " " + toString(*ir) + ")"; },
                 pattern | as<Product>(ds(il, ir))                    = [&]{ return "(* " + toString(*il) + " " + toString(*ir) + ")"; },
