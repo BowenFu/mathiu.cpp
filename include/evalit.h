@@ -36,7 +36,7 @@ namespace evalit
             std::shared_ptr<Expr> lhs, rhs;
         };
 
-        using ExprVariant = std::variant<int32_t, Symbol, Sum, Product, Power>;
+        using ExprVariant = std::variant<int32_t, double, Symbol, Sum, Product, Power>;
 
         struct Expr : ExprVariant
         {
@@ -44,6 +44,11 @@ namespace evalit
         };
 
         inline std::shared_ptr<Expr> value(int32_t v)
+        {
+            return std::make_shared<Expr>(v);
+        }
+
+        inline std::shared_ptr<Expr> value(double v)
         {
             return std::make_shared<Expr>(v);
         }
@@ -93,10 +98,12 @@ namespace evalit
         {
             assert(ex);
             Id<int> i;
+            Id<double> d;
             Id<std::shared_ptr<Expr> > e, l, r;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int>(i)                       = expr(i),
+                pattern | as<double>(d)                    = expr(d),
                 pattern | asSymbolDs(e)                    = [&]{ return eval(*e); },
                 pattern | asSumDs(l, r)                    = [&]{ return eval(*l) + eval(*r); },
                 // Optimize multiplication by 0.
