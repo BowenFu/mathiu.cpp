@@ -239,12 +239,15 @@ namespace evalit
             );
         }
 
+        inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+        
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             Id<Product> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2;
             Id<double> id1, id2;
+            Id<std::shared_ptr<Expr>> iu, iv, iw;
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
@@ -263,6 +266,8 @@ namespace evalit
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
                 pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 * *id2);; },
                 pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) * ceval(rhs)); },
+                // basic power transformation 1
+                pattern | ds(as<Power>(ds(iu, iv)), as<Power>(ds(iu, iw))) = iu^(iv+iw),
                 pattern | _                            = [&] { return std::make_shared<Expr>(Product{{lhs, rhs}}); }
                 // clang-format on
             );
@@ -270,7 +275,22 @@ namespace evalit
 
         inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            return std::make_shared<Expr>(Power{{lhs, rhs}});
+            Id<std::shared_ptr<Expr>> iu, iv;
+            Id<Product> ip;
+            return match(*lhs, *rhs)(
+                // clang-format off
+                // basic power transformation 2,3
+                pattern | ds(as<Power>(ds(iu, iv)), as<int>(_)) = (iu^rhs) * (iv^rhs),
+                pattern | ds(as<Product>(ip), as<int>(_)) = [&] {
+                    return std::accumulate((*ip).begin(), (*ip).end(), constant(1), [&](auto&& p, auto&& e)
+                    {
+                        return p * e^rhs;
+                    });
+                },
+                pattern | _ = [&] {
+                    return std::make_shared<Expr>(Power{{lhs, rhs}});
+                }
+            );
         }
 
         inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
