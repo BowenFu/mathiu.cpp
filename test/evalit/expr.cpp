@@ -27,7 +27,7 @@ TEST(Expr, e)
 TEST(Expr, i)
 {
     auto expr = i * i;
-    EXPECT_EQ(toString(expr), "(* i i)");
+    EXPECT_EQ(toString(expr), "-1.000000 + 0.000000i");
     auto result = ceval(expr);
     EXPECT_NEAR(result.real(), -1, 1e-5);
     EXPECT_NEAR(result.imag(), 0, 1e-5);
@@ -39,48 +39,94 @@ TEST(Expr, fraction)
     EXPECT_EQ(toString(expr), "5/8");
 }
 
-TEST(Expr, ceval)
+// TEST(Expr, ceval)
+// {
+//     auto expr = e ^ (-i * pi);
+//     auto exprStr = toString(expr);
+//     EXPECT_EQ(exprStr, "(^ e (* (* -1 i) pi))");
+//     auto result = ceval(expr);
+//     EXPECT_NEAR(result.real(), -1, 1e-5);
+//     EXPECT_NEAR(result.imag(), 0, 1e-5);
+// }
+
+TEST(Expr, ceval1)
 {
-    auto expr = e ^ (-i * pi);
-    EXPECT_EQ(toString(expr), "(^ e (* (* -1 i) pi))");
+    auto expr = (-i * pi);
+    auto exprStr = toString(expr);
+    EXPECT_EQ(exprStr, "(* -1 pi i)");
     auto result = ceval(expr);
-    EXPECT_NEAR(result.real(), -1, 1e-5);
-    EXPECT_NEAR(result.imag(), 0, 1e-5);
+    EXPECT_NEAR(result.real(), 0, 1e-5);
+    EXPECT_NEAR(result.imag(), -3.1415926, 1e-5);
+}
+
+TEST(Expr, order)
+{
+    EXPECT_TRUE(pi < i);
+}
+
+TEST(Expr, order2)
+{
+    EXPECT_TRUE(pi < -i);
+}
+
+TEST(Expr, order3)
+{
+    // -i * pi;
+    pi *(-i);
 }
 
 TEST(Expr, product)
 {
     auto x = constant(5);
     auto y = constant(5);
-    EXPECT_EQ(eval(x * y), 25);
+    auto expr = x * y;
+    EXPECT_EQ(toString(expr), "25");
+    EXPECT_EQ(eval(expr), 25);
 }
 
 TEST(Expr, quotient)
 {
     auto x = constant(5);
     auto y = constant(5);
-    EXPECT_EQ(eval(x / y), 1);
+    auto expr = x / y;
+    EXPECT_EQ(toString(expr), "1");
+    EXPECT_EQ(eval(expr), 1);
 }
 
 TEST(Expr, sum)
 {
     auto x = constant(5);
     auto y = constant(5);
-    EXPECT_EQ(eval(x + y), 10);
+    auto expr = x + y;
+    EXPECT_EQ(toString(expr), "10");
+    EXPECT_EQ(eval(expr), 10);
+}
+
+TEST(Expr, sum2)
+{
+    auto x = constant(5);
+    auto y = constant(5);
+    auto expr = x + y / x;
+    EXPECT_EQ(toString(expr), "6");
+    EXPECT_EQ(eval(expr), 6);
 }
 
 TEST(Expr, difference)
 {
     auto x = constant(5);
     auto y = constant(5);
-    EXPECT_EQ(eval(x - y), 0);
+    auto expr = x - y;
+    EXPECT_EQ(toString(expr), "0");
+    EXPECT_EQ(eval(expr), 0);
 }
 
 TEST(Expr, compound)
 {
     auto x = constant(5);
     auto y = constant(2);
-    EXPECT_EQ(eval(x / y - y * y), -1.5);
+    auto expr = x / y - y * y;
+    EXPECT_EQ(toString(expr), "-3/2");
+    EXPECT_EQ(eval(expr), -1.5);
 }
 
 TEST(Expr, symbol)
@@ -89,7 +135,7 @@ TEST(Expr, symbol)
     auto y = symbol("y");
     auto expr = x / y - y * y;
     auto result = toString(expr);
-    EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 (* y y)))"));
+    EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 y y))"));
 }
 
 TEST(Expr, sumMultiple)
