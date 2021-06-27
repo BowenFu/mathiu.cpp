@@ -12,6 +12,7 @@ TEST(Expr, constant1)
 TEST(Expr, constant2)
 {
     auto expr = sin(pi);
+    EXPECT_EQ(toString(expr), "(Sin pi)");
     EXPECT_NEAR(eval(expr), 0, 1e-5);
     EXPECT_NEAR(eval(sin(pi / constant(2))), 1, 1e-5);
 }
