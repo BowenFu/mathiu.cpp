@@ -100,9 +100,55 @@ namespace evalit
             return std::make_shared<Expr>(Symbol{{name}});
         }
 
+        bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            Id<std::string> isl, isr;
+            Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
+            return match(*lhs, *rhs)
+            ( 
+                pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
+                pattern | ds(as<Constant>(_), not_(as<Constant>(_)))   = [&] { return true; },
+                pattern | ds(not_(as<Constant>(_)), as<Constant>(_))   = [&] { return false; },
+                pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
+                    if (*iEl1 == *iEr1)
+                    {
+                        return *iEl2 < *iEr2;
+                    }
+                    return *iEl1 < *iEl1;
+                }
+            );
+        }
+
+        template <typename C, typename T>
+        auto insertSorted(C& c, T const& t)
+        {
+            return c.insert
+            (
+                std::upper_bound(c.begin(), c.end(), t),
+                t
+            );
+        }
+
         inline std::shared_ptr<Expr> operator+(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            return std::make_shared<Expr>(Sum{{lhs, rhs}});
+            Id<Sum> il, ir;
+            return match(*lhs, *rhs)(
+                // clang-format off
+                pattern | ds(as<Sum>(il), as<Sum>(ir)) = [&] {
+                    std::vector<std::shared_ptr<Expr>> newOperands;
+                    newOperands.reserve((*il).size() + (*ir).size());
+                    std::merge((*il).begin(), (*il).end(), (*ir).begin(), (*ir).end(), std::back_inserter(newOperands));
+                    return std::make_shared<Expr>(Sum{{ newOperands }});
+                },
+                pattern | ds(as<Sum>(il), _) = [&] {
+                    std::vector<std::shared_ptr<Expr>> newOperands = *il;
+                    insertSorted(newOperands, rhs);
+                    return std::make_shared<Expr>(Sum{{ newOperands }});
+                },
+                pattern | ds(_, as<Sum>(_)) = [&] { return rhs + lhs; },
+                pattern | _                            = [&] { return std::make_shared<Expr>(Sum{{lhs, rhs}}); }
+                // clang-format on
+            );
         }
 
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
@@ -208,6 +254,7 @@ namespace evalit
             Id<std::string> is;
             Id<std::complex<double>> ic;
             Id<std::shared_ptr<Expr> > ie, il, ir;
+            Id<Sum> iS;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
@@ -215,10 +262,17 @@ namespace evalit
                 pattern | as<Constant>(*e)                           = expr("e"),
                 pattern | as<Constant>(*i)                           = expr("i"),
                 pattern | as<Constant>(as<double>(id))               = [&]{ return std::to_string(*id); },
-                pattern | as<Constant>(as<std::complex<double>>(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
+                pattern | as<Constant>(as<std::complex<double> >(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
                 pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
-                pattern | as<Sum>(ds(il, ir))                        = [&]{ return "(+ " + toString(*il) + " " + toString(*ir) + ")"; },
+                pattern | as<Sum>(iS)                                = [&]{
+                    std::string result = "(+ ";
+                    for (auto e : *iS)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
+                },
                 pattern | as<Product>(ds(il, ir))                    = [&]{ return "(* " + toString(*il) + " " + toString(*ir) + ")"; },
                 pattern | as<Power>(ds(il, ir))                      = [&]{ return "(^ " + toString(*il) + " " + toString(*ir) + ")"; },
                 pattern | as<Log>(ds(il, ir))                        = [&]{ return "(Log " + toString(*il) + " " + toString(*ir) + ")"; },

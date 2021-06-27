@@ -91,3 +91,15 @@ TEST(Expr, symbol)
     auto result = toString(expr);
     EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 (* y y)))"));
 }
+
+TEST(Expr, sumMultiple)
+{
+    auto x = symbol("x");
+    auto y = symbol("y");
+    auto z = symbol("z");
+    auto expr = x + y + z;
+    // auto expr = x + z + y;
+    auto result = toString(expr);
+    EXPECT_EQ(result, std::string("(+ x y z)"));
+}
+
