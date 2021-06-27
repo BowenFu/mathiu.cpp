@@ -33,6 +33,12 @@ TEST(Expr, i)
     EXPECT_NEAR(result.imag(), 0, 1e-5);
 }
 
+TEST(Expr, rational)
+{
+    auto expr = constant(5) / constant(8);
+    EXPECT_EQ(toString(expr), "5/8");
+}
+
 TEST(Expr, ceval)
 {
     auto expr = e ^ (-i * pi);

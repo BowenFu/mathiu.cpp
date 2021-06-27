@@ -59,7 +59,11 @@ namespace evalit
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Symbol, Constant, Sum, Product, Power, Log, Sin, Arctan>;
+        struct Rational : std::array<int32_t, 2>
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Rational, Symbol, Constant, Sum, Product, Power, Log, Sin, Arctan>;
 
         struct Expr : ExprVariant
         {
@@ -69,6 +73,11 @@ namespace evalit
         inline std::shared_ptr<Expr> constant(int32_t v)
         {
             return std::make_shared<Expr>(v);
+        }
+
+        inline std::shared_ptr<Expr> rational(int32_t l, int32_t r)
+        {
+            return std::make_shared<Expr>(Rational{{l, r}});
         }
 
         inline std::shared_ptr<Expr> constant(double v)
@@ -118,7 +127,14 @@ namespace evalit
 
         inline std::shared_ptr<Expr> operator/(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            return lhs * (rhs ^ constant(-1));
+            using namespace matchit;
+            Id<int32_t> il, ir;
+            return match(*lhs, *rhs)(
+                // clang-format off
+                pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return rational(*il, *ir); },
+                pattern | _                                    = expr(lhs * (rhs ^ constant(-1)))
+                // clang-format on
+            );
         }
 
         inline std::shared_ptr<Expr> log(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
@@ -135,20 +151,21 @@ namespace evalit
         inline double eval(const std::shared_ptr<Expr> &ex)
         {
             assert(ex);
-            Id<int> i;
+            Id<int32_t> i, il, ir;
             Id<double> d;
             Id<std::complex<double>> c;
             Id<std::shared_ptr<Expr> > e, l, r;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int>(i)                                = expr(i),
+                pattern | as<int32_t>(i)                                = expr(i),
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = [&]{ assert((*c).imag() == 0); return (*c).real(); },
+                pattern | as<Rational>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Sum>(ds(l, r))                         = [&]{ return eval(*l) + eval(*r); },
                 // Optimize multiplication by 0.
-                pattern | as<Product>(ds(some(as<int>(0)), _))      = expr(0),
-                pattern | as<Product>(ds(_, some(as<int>(0))))      = expr(0),
+                pattern | as<Product>(ds(some(as<int32_t>(0)), _))      = expr(0),
+                pattern | as<Product>(ds(_, some(as<int32_t>(0))))      = expr(0),
                 pattern | as<Product>(ds(l, r))                     = [&]{ return eval(*l) * eval(*r); },
                 pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(eval(*l), eval(*r)); },
                 pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(eval(*e)); },
@@ -160,20 +177,21 @@ namespace evalit
         inline std::complex<double> ceval(const std::shared_ptr<Expr> &ex)
         {
             assert(ex);
-            Id<int> i;
+            Id<int32_t> i, il, ir;
             Id<double> d;
             Id<std::complex<double>> c;
             Id<std::shared_ptr<Expr> > e, l, r;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int>(i)                                = expr(i),
+                pattern | as<int32_t>(i)                                = expr(i),
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = expr(c),
+                pattern | as<Rational>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Sum>(ds(l, r))                         = [&]{ return ceval(*l) + ceval(*r); },
                 // Optimize multiplication by 0.
-                pattern | as<Product>(ds(some(as<int>(0)), _))      = expr(0),
-                pattern | as<Product>(ds(_, some(as<int>(0))))      = expr(0),
+                pattern | as<Product>(ds(some(as<int32_t>(0)), _))      = expr(0),
+                pattern | as<Product>(ds(_, some(as<int32_t>(0))))      = expr(0),
                 pattern | as<Product>(ds(l, r))                     = [&]{ return ceval(*l) * ceval(*r); },
                 pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(ceval(*l), ceval(*r)); },
                 pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(ceval(*e)); },
@@ -185,19 +203,20 @@ namespace evalit
         inline std::string toString(const std::shared_ptr<Expr> &ex)
         {
             assert(ex);
-            Id<int> ii;
+            Id<int32_t> ii, iil, iir;
             Id<double> id;
             Id<std::string> is;
             Id<std::complex<double>> ic;
             Id<std::shared_ptr<Expr> > ie, il, ir;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int>(ii)                                = [&]{ return std::to_string(*ii); },
+                pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
                 pattern | as<Constant>(*pi)                          = expr("pi"),
                 pattern | as<Constant>(*e)                           = expr("e"),
                 pattern | as<Constant>(*i)                           = expr("i"),
                 pattern | as<Constant>(as<double>(id))               = [&]{ return std::to_string(*id); },
                 pattern | as<Constant>(as<std::complex<double>>(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
+                pattern | as<Rational>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
                 pattern | as<Sum>(ds(il, ir))                        = [&]{ return "(+ " + toString(*il) + " " + toString(*ir) + ")"; },
                 pattern | as<Product>(ds(il, ir))                    = [&]{ return "(* " + toString(*il) + " " + toString(*ir) + ")"; },
