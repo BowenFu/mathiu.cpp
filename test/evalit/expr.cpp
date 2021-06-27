@@ -27,6 +27,13 @@ TEST(Expr, constant4)
     EXPECT_NEAR(result.imag(), 0, 1e-5);
 }
 
+TEST(Expr, constant5)
+{
+    auto result = ceval(e ^ (-i * pi));
+    EXPECT_NEAR(result.real(), -1, 1e-5);
+    EXPECT_NEAR(result.imag(), 0, 1e-5);
+}
+
 TEST(Expr, product)
 {
     auto x = constant(5);

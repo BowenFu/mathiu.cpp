@@ -112,6 +112,11 @@ namespace evalit
             return lhs + constant(-1) * rhs;
         }
 
+        inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &rhs)
+        {
+            return constant(-1) * rhs;
+        }
+
         inline std::shared_ptr<Expr> operator/(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             return lhs * (rhs ^ constant(-1));
