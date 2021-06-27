@@ -7,6 +7,7 @@
 #include <string>
 #include <cmath>
 #include <complex>
+#include <iostream>
 
 namespace evalit
 {
@@ -28,6 +29,9 @@ namespace evalit
 
         constexpr double pi_ = 3.1415926;
         inline const auto pi = std::make_shared<Expr>(Constant{{pi_}});
+
+        inline const double e_ = std::exp(1);
+        inline const auto e = std::make_shared<Expr>(Constant{{e_}});
 
         constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         inline const auto i = std::make_shared<Expr>(Constant{{i_}});
@@ -113,6 +117,11 @@ namespace evalit
             return lhs * (rhs ^ constant(-1));
         }
 
+        inline std::shared_ptr<Expr> log(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            return std::make_shared<Expr>(Log{{lhs, rhs}});
+        }
+
         inline bool operator==(Expr const &l, Expr const &r)
         {
             return static_cast<ExprVariant const &>(l) ==
@@ -140,7 +149,8 @@ namespace evalit
                 pattern | as<Product>(ds(_, some(as<int>(0))))      = expr(0),
                 pattern | as<Product>(ds(l, r))                     = [&]{ return eval(*l) * eval(*r); },
                 pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(eval(*l), eval(*r)); },
-                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(eval(*e)); }
+                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(eval(*e)); },
+                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log2(eval(*r)) / std::log2(eval(*l)); }
                 // clang-format on
             );
         }
@@ -164,7 +174,8 @@ namespace evalit
                 pattern | as<Product>(ds(_, some(as<int>(0))))      = expr(0),
                 pattern | as<Product>(ds(l, r))                     = [&]{ return ceval(*l) * ceval(*r); },
                 pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(ceval(*l), ceval(*r)); },
-                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(ceval(*e)); }
+                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(ceval(*e)); },
+                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log(ceval(*r)) / std::log(ceval(*l)); }
                 // clang-format on
             );
         }
@@ -179,6 +190,8 @@ namespace evalit
     using impl::operator^;
     using impl::eval;
     using impl::pi;
+    using impl::i;
+    using impl::e;
     using impl::sin;
 } // namespace evalit
 
