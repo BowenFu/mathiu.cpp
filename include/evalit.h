@@ -157,14 +157,11 @@ namespace evalit
                 pattern | ds(as<Constant>(as<std::complex<double>>(_)), _)   = [&] { return true; },
                 pattern | ds(_, as<Constant>(as<std::complex<double>>(_)))   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
-                pattern | ds(as<Symbol>(ds(isl)), _) = [&] { return true; },
-                pattern | ds(_, as<Symbol>(ds(isl))) = [&] { return false; },
+                pattern | ds(as<Symbol>(_), _) = [&] { return true; },
+                pattern | ds(_, as<Symbol>(_)) = [&] { return false; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&] { return less(*iP1, *iP2); },
-                pattern | ds(as<Product>(iP1), _) = [&] { return true; },
-                pattern | ds(_, as<Product>(iP1)) = [&] { return false; },
-                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return less(*iS1, *iS2); },
-                pattern | ds(as<Sum>(iS1), _) = [&] { return true; },
-                pattern | ds(_, as<Sum>(iS1)) = [&] { return false; },
+                pattern | ds(as<Product>(_), _) = [&] { return true; },
+                pattern | ds(_, as<Product>(_)) = [&] { return false; },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
                     if (*iEl1 == *iEr1)
                     {
@@ -172,6 +169,11 @@ namespace evalit
                     }
                     return *iEl1 < *iEl1;
                 },
+                pattern | ds(as<Power>(_), _) = [&] { return true; },
+                pattern | ds(_, as<Power>(_)) = [&] { return false; },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return less(*iS1, *iS2); },
+                pattern | ds(as<Sum>(_), _) = [&] { return true; },
+                pattern | ds(_, as<Sum>(_)) = [&] { return false; },
                 pattern | _ = [&] { return false; }
             );
         }
