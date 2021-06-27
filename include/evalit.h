@@ -107,7 +107,7 @@ namespace evalit
             return std::make_shared<Expr>(Symbol{{name}});
         }
 
-        template <typename C>
+        template <typename T, typename C = std::vector<T>>
         inline bool less(C const& v1, C const& v2)
         {
             auto const size = std::min(v1.size(), v2.size());
@@ -148,30 +148,22 @@ namespace evalit
                 pattern | ds(_, as<Constant>(as<double>(_)))   = [&] { return false; },
                 pattern | ds(as<Constant>(as<std::complex<double>>(ic1)), as<Constant>(as<std::complex<double>>(ic2)))   = [&]
                 {
-                    if ((*ic1).real() == (*ic2).real())
-                    {
-                        return (*ic1).imag() < (*ic2).imag();
-                    }
-                    return (*ic1).real() < (*ic2).real();
+                    return less<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
                 },
                 pattern | ds(as<Constant>(as<std::complex<double>>(_)), _)   = [&] { return true; },
                 pattern | ds(_, as<Constant>(as<std::complex<double>>(_)))   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
                 pattern | ds(as<Symbol>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Symbol>(_)) = [&] { return false; },
-                pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&] { return less(*iP1, *iP2); },
+                pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&] { return less<std::shared_ptr<Expr>>(*iP1, *iP2); },
                 pattern | ds(as<Product>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Product>(_)) = [&] { return false; },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    if (*iEl1 == *iEr1)
-                    {
-                        return *iEl2 < *iEr2;
-                    }
-                    return *iEl1 < *iEl1;
+                    return less<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Power>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Power>(_)) = [&] { return false; },
-                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return less(*iS1, *iS2); },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return less<std::shared_ptr<Expr>>(*iS1, *iS2); },
                 pattern | ds(as<Sum>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Sum>(_)) = [&] { return false; },
                 pattern | _ = [&] { return false; }
