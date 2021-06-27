@@ -42,3 +42,12 @@ TEST(Expr, compound)
     auto y = value(2);
     EXPECT_EQ(eval(x / y - y * y), -1.5);
 }
+
+TEST(Expr, symbol)
+{
+    auto x = value(5);
+    auto y = symbol("y");
+    auto expr = x / y - y * y;
+    std::get<impl::Symbol>(*y).value = 2;
+    EXPECT_EQ(eval(expr), -1.5);
+}
