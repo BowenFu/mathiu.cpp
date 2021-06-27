@@ -107,6 +107,24 @@ namespace evalit
             return std::make_shared<Expr>(Symbol{{name}});
         }
 
+        template <typename C>
+        inline bool less(C const& v1, C const& v2)
+        {
+            auto const size = std::min(v1.size(), v2.size());
+            for (auto i = size ; i > 0; --i)
+            {
+                if (v1[i - 1] == v2[i - 1])
+                {
+                    continue;
+                }
+                else
+                {
+                    return v1[i - 1] < v2[i - 1];
+                }
+            }
+            return v1.size() < v2.size();
+        }
+
         // for basic commutative transformation
         inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
@@ -115,6 +133,8 @@ namespace evalit
             Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
             Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
+            Id<Product> iP1, iP2;
+            Id<Sum> iS1, iS2;
             return match(*lhs, *rhs)
             ( 
                 pattern | ds(as<int>(ii1), as<int>(ii2))   = [&] { return *ii1 < *ii2; },
@@ -139,6 +159,12 @@ namespace evalit
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
                 pattern | ds(as<Symbol>(ds(isl)), _) = [&] { return true; },
                 pattern | ds(_, as<Symbol>(ds(isl))) = [&] { return false; },
+                pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&] { return less(*iP1, *iP2); },
+                pattern | ds(as<Product>(iP1), _) = [&] { return true; },
+                pattern | ds(_, as<Product>(iP1)) = [&] { return false; },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return less(*iS1, *iS2); },
+                pattern | ds(as<Sum>(iS1), _) = [&] { return true; },
+                pattern | ds(_, as<Sum>(iS1)) = [&] { return false; },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
                     if (*iEl1 == *iEr1)
                     {

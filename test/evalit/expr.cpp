@@ -135,7 +135,7 @@ TEST(Expr, symbol)
     auto y = symbol("y");
     auto expr = x / y - y * y;
     auto result = toString(expr);
-    EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 y y))"));
+    EXPECT_EQ(result, std::string("(+ (* -1 y y) (* 5 (^ y -1)))"));
 }
 
 TEST(Expr, sumMultiple)
