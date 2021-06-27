@@ -3,13 +3,13 @@
 #include <string>
 using namespace evalit;
 
-TEST(Expr, constant1)
+TEST(Expr, constant)
 {
     auto x = constant(5);
     EXPECT_EQ(eval(x), 5);
 }
 
-TEST(Expr, constant2)
+TEST(Expr, pi)
 {
     auto expr = sin(pi);
     EXPECT_EQ(toString(expr), "(Sin pi)");
@@ -17,21 +17,27 @@ TEST(Expr, constant2)
     EXPECT_NEAR(eval(sin(pi / constant(2))), 1, 1e-5);
 }
 
-TEST(Expr, constant3)
+TEST(Expr, e)
 {
-    EXPECT_NEAR(eval(log(e, e)), 1, 1e-5);
+    auto expr = log(e, e);
+    EXPECT_EQ(toString(expr), "(Log e e)");
+    EXPECT_NEAR(eval(expr), 1, 1e-5);
 }
 
-TEST(Expr, constant4)
+TEST(Expr, i)
 {
-    auto result = ceval(i * i);
+    auto expr = i * i;
+    EXPECT_EQ(toString(expr), "(* i i)");
+    auto result = ceval(expr);
     EXPECT_NEAR(result.real(), -1, 1e-5);
     EXPECT_NEAR(result.imag(), 0, 1e-5);
 }
 
-TEST(Expr, constant5)
+TEST(Expr, ceval)
 {
-    auto result = ceval(e ^ (-i * pi));
+    auto expr = e ^ (-i * pi);
+    EXPECT_EQ(toString(expr), "(^ e (* (* -1 i) pi))");
+    auto result = ceval(expr);
     EXPECT_NEAR(result.real(), -1, 1e-5);
     EXPECT_NEAR(result.imag(), 0, 1e-5);
 }
