@@ -8,6 +8,7 @@
 #include <cmath>
 #include <complex>
 #include <iostream>
+#include <vector>
 
 namespace evalit
 {
@@ -17,10 +18,8 @@ namespace evalit
 
         struct Expr;
 
-        struct Symbol
+        struct Symbol : std::array<std::string, 1>
         {
-            std::string name;
-            std::shared_ptr<Expr> value;
         };
 
         struct Constant : std::variant<double, std::complex<double>>
@@ -36,11 +35,11 @@ namespace evalit
         constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         inline const auto i = std::make_shared<Expr>(Constant{{i_}});
 
-        struct Sum : std::array<std::shared_ptr<Expr>, 2>
+        struct Sum : std::vector<std::shared_ptr<Expr>>
         {
         };
 
-        struct Product : std::array<std::shared_ptr<Expr>, 2>
+        struct Product : std::vector<std::shared_ptr<Expr>>
         {
         };
 
@@ -89,7 +88,7 @@ namespace evalit
 
         inline std::shared_ptr<Expr> symbol(std::string const &name)
         {
-            return std::make_shared<Expr>(Symbol{name, {}});
+            return std::make_shared<Expr>(Symbol{{name}});
         }
 
         inline std::shared_ptr<Expr> operator+(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
@@ -133,8 +132,6 @@ namespace evalit
                    static_cast<ExprVariant const &>(r);
         }
 
-        const auto asSymbolDs = asDsVia<Symbol>(&Symbol::value);
-
         inline double eval(const std::shared_ptr<Expr> &ex)
         {
             assert(ex);
@@ -145,7 +142,7 @@ namespace evalit
             return match(*ex)(
                 // clang-format off
                 pattern | as<int>(i)                                = expr(i),
-                pattern | asSymbolDs(e)                             = [&]{ return eval(*e); },
+                pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = [&]{ assert((*c).imag() == 0); return (*c).real(); },
                 pattern | as<Sum>(ds(l, r))                         = [&]{ return eval(*l) + eval(*r); },
@@ -170,7 +167,7 @@ namespace evalit
             return match(*ex)(
                 // clang-format off
                 pattern | as<int>(i)                                = expr(i),
-                pattern | asSymbolDs(e)                             = [&]{ return ceval(*e); },
+                pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = expr(c),
                 pattern | as<Sum>(ds(l, r))                         = [&]{ return ceval(*l) + ceval(*r); },
@@ -185,6 +182,33 @@ namespace evalit
             );
         }
 
+        inline std::string toString(const std::shared_ptr<Expr> &ex)
+        {
+            assert(ex);
+            Id<int> ii;
+            Id<double> id;
+            Id<std::string> is;
+            Id<std::complex<double>> ic;
+            Id<std::shared_ptr<Expr> > ie, il, ir;
+            return match(*ex)(
+                // clang-format off
+                pattern | as<int>(ii)                                = [&]{ return std::to_string(*ii); },
+                pattern | as<Constant>(*pi)                          = expr("pi"),
+                pattern | as<Constant>(*e)                           = expr("e"),
+                pattern | as<Constant>(*i)                           = expr("i"),
+                pattern | as<Constant>(as<double>(id))               = [&]{ return std::to_string(*id); },
+                pattern | as<Constant>(as<std::complex<double>>(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
+                pattern | as<Symbol>(ds(is))                         = expr(is),
+                pattern | as<Sum>(ds(il, ir))                        = [&]{ return "(+ " + toString(*il) + " " + toString(*ir) + ")"; },
+                pattern | as<Product>(ds(il, ir))                    = [&]{ return "(* " + toString(*il) + " " + toString(*ir) + ")"; },
+                pattern | as<Power>(ds(il, ir))                      = [&]{ return "(^ " + toString(*il) + " " + toString(*ir) + ")"; },
+                pattern | as<Log>(ds(il, ir))                        = [&]{ return "(Log " + toString(*il) + " " + toString(*ir) + ")"; },
+                pattern | as<Sin>(ds(ie))                            = [&]{ return "(Sin " + toString(*ie) + ")"; }
+                // clang-format on
+            );
+        }
+
+
     } // namespace impl
     using impl::constant;
     using impl::symbol;
@@ -198,6 +222,7 @@ namespace evalit
     using impl::i;
     using impl::e;
     using impl::sin;
+    using impl::toString;
 } // namespace evalit
 
 #endif // EVALIT_H

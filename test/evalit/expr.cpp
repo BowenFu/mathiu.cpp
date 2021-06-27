@@ -1,5 +1,6 @@
 #include "evalit.h"
 #include "gtest/gtest.h"
+#include <string>
 using namespace evalit;
 
 TEST(Expr, constant1)
@@ -74,10 +75,6 @@ TEST(Expr, symbol)
     auto x = constant(5);
     auto y = symbol("y");
     auto expr = x / y - y * y;
-    std::get<impl::Symbol>(*y).value = constant(2);
-    EXPECT_EQ(eval(expr), -1.5);
-    std::get<impl::Symbol>(*y).value = constant(2.5);
-    EXPECT_EQ(eval(expr), -4.25);
-    std::get<impl::Symbol>(*y).value = x;
-    EXPECT_EQ(eval(expr), -24);
+    auto result = toString(expr);
+    EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 (* y y)))"));
 }
