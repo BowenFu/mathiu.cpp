@@ -48,6 +48,8 @@ TEST(Expr, symbol)
     auto x = value(5);
     auto y = symbol("y");
     auto expr = x / y - y * y;
-    std::get<impl::Symbol>(*y).value = 2;
+    std::get<impl::Symbol>(*y).value = value(2);
     EXPECT_EQ(eval(expr), -1.5);
+    std::get<impl::Symbol>(*y).value = x;
+    EXPECT_EQ(eval(expr), -24);
 }

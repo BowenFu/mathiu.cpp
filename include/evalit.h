@@ -14,13 +14,13 @@ namespace evalit
     {
         using namespace matchit;
 
+        struct Expr;
+
         struct Symbol
         {
             std::string name;
-            std::optional<int32_t> value;
+            std::shared_ptr<Expr> value;
         };
-
-        struct Expr;
 
         struct Sum
         {
@@ -92,19 +92,19 @@ namespace evalit
 
         inline double eval(const std::shared_ptr<Expr> &ex)
         {
+            assert(ex);
             Id<int> i;
-            Id<std::optional<int> > v;
             Id<std::shared_ptr<Expr> > e, l, r;
             return match(*ex)(
                 // clang-format off
-        pattern | as<int>(i)                       = expr(i),
-        pattern | asSymbolDs(v)                    = [&]{ assert(*v); return **v; },
-        pattern | asSumDs(l, r)                    = [&]{ return eval(*l) + eval(*r); },
-        // Optimize multiplication by 0.
-        pattern | asProductDs(some(as<int>(0)), _) = expr(0),
-        pattern | asProductDs(_, some(as<int>(0))) = expr(0),
-        pattern | asProductDs(l, r)                = [&]{ return eval(*l) * eval(*r); },
-        pattern | asPowerDs(l, r)                  = [&]{ return std::pow(eval(*l), eval(*r)); }
+                pattern | as<int>(i)                       = expr(i),
+                pattern | asSymbolDs(e)                    = [&]{ return eval(*e); },
+                pattern | asSumDs(l, r)                    = [&]{ return eval(*l) + eval(*r); },
+                // Optimize multiplication by 0.
+                pattern | asProductDs(some(as<int>(0)), _) = expr(0),
+                pattern | asProductDs(_, some(as<int>(0))) = expr(0),
+                pattern | asProductDs(l, r)                = [&]{ return eval(*l) * eval(*r); },
+                pattern | asPowerDs(l, r)                  = [&]{ return std::pow(eval(*l), eval(*r)); }
                 // clang-format on
             );
         }
