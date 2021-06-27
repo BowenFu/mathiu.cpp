@@ -2,7 +2,6 @@
 #define EVALIT_H
 
 #include "matchit.h"
-#include <optional>
 #include <variant>
 #include <memory>
 #include <string>
