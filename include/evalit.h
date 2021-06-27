@@ -21,19 +21,16 @@ namespace evalit
             std::shared_ptr<Expr> value;
         };
 
-        struct Sum
+        struct Sum : std::array<std::shared_ptr<Expr>, 2>
         {
-            std::shared_ptr<Expr> lhs, rhs;
         };
 
-        struct Product
+        struct Product : std::array<std::shared_ptr<Expr>, 2>
         {
-            std::shared_ptr<Expr> lhs, rhs;
         };
 
-        struct Power
+        struct Power : std::array<std::shared_ptr<Expr>, 2>
         {
-            std::shared_ptr<Expr> lhs, rhs;
         };
 
         using ExprVariant = std::variant<int32_t, double, Symbol, Sum, Product, Power>;
@@ -60,17 +57,17 @@ namespace evalit
 
         inline std::shared_ptr<Expr> operator+(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            return std::make_shared<Expr>(Sum{lhs, rhs});
+            return std::make_shared<Expr>(Sum{{lhs, rhs}});
         }
 
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            return std::make_shared<Expr>(Product{lhs, rhs});
+            return std::make_shared<Expr>(Product{{lhs, rhs}});
         }
 
         inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            return std::make_shared<Expr>(Power{lhs, rhs});
+            return std::make_shared<Expr>(Power{{lhs, rhs}});
         }
 
         inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
@@ -90,9 +87,6 @@ namespace evalit
         }
 
         const auto asSymbolDs = asDsVia<Symbol>(&Symbol::value);
-        const auto asSumDs = asDsVia<Sum>(&Sum::lhs, &Sum::rhs);
-        const auto asProductDs = asDsVia<Product>(&Product::lhs, &Product::rhs);
-        const auto asPowerDs = asDsVia<Power>(&Power::lhs, &Power::rhs);
 
         inline double eval(const std::shared_ptr<Expr> &ex)
         {
@@ -102,15 +96,15 @@ namespace evalit
             Id<std::shared_ptr<Expr> > e, l, r;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int>(i)                       = expr(i),
-                pattern | as<double>(d)                    = expr(d),
-                pattern | asSymbolDs(e)                    = [&]{ return eval(*e); },
-                pattern | asSumDs(l, r)                    = [&]{ return eval(*l) + eval(*r); },
+                pattern | as<int>(i)                           = expr(i),
+                pattern | as<double>(d)                        = expr(d),
+                pattern | asSymbolDs(e)                        = [&]{ return eval(*e); },
+                pattern | as<Sum>(ds(l, r))                    = [&]{ return eval(*l) + eval(*r); },
                 // Optimize multiplication by 0.
-                pattern | asProductDs(some(as<int>(0)), _) = expr(0),
-                pattern | asProductDs(_, some(as<int>(0))) = expr(0),
-                pattern | asProductDs(l, r)                = [&]{ return eval(*l) * eval(*r); },
-                pattern | asPowerDs(l, r)                  = [&]{ return std::pow(eval(*l), eval(*r)); }
+                pattern | as<Product>(ds(some(as<int>(0)), _)) = expr(0),
+                pattern | as<Product>(ds(_, some(as<int>(0)))) = expr(0),
+                pattern | as<Product>(ds(l, r))                = [&]{ return eval(*l) * eval(*r); },
+                pattern | as<Power>(ds(l, r))                  = [&]{ return std::pow(eval(*l), eval(*r)); }
                 // clang-format on
             );
         }
