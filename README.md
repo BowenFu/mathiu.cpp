@@ -14,4 +14,4 @@ mathia : a lightweight computer algebra system in C++
 [![CMake](https://github.com/BowenFu/mathia.cpp/actions/workflows/cmake.yml/badge.svg)](https://github.com/BowenFu/mathia.cpp/actions/workflows/cmake.yml)
 [![CMake](https://github.com/BowenFu/mathia.cpp/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/BowenFu/mathia.cpp/actions/workflows/sanitizers.yml)
 ![GitHub license](https://img.shields.io/github/license/BowenFu/mathia.cpp.svg)
-[![codecov](https://codecov.io/gh/BowenFu/matchit.cpp/branch/main/graph/badge.svg?token=G5B0RE6THD)](https://codecov.io/gh/BowenFu/mathia.cpp)
+[![codecov](https://codecov.io/gh/BowenFu/mathia.cpp/branch/main/graph/badge.svg?token=BNWHFLNNSD)](https://codecov.io/gh/BowenFu/mathia.cpp)
