@@ -107,21 +107,47 @@ namespace mathia
             return std::make_shared<Expr>(Symbol{{name}});
         }
 
-        template <typename T, typename C = std::vector<T>>
-        inline bool less(C const& v1, C const& v2)
+        inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+
+        template <typename T>
+        inline bool less(T const t1, T const t2)
         {
-            auto const size = std::min(v1.size(), v2.size());
-            for (auto i = size ; i > 0; --i)
+            return t1 < t2;
+        }
+
+        auto lessLambda = [](auto&& x, auto&& y) { return less(x, y); };
+
+        inline std::string toString(const std::shared_ptr<Expr> &ex);
+
+        inline std::string toString(std::string const& s)
+        {
+            return s;
+        }
+
+        template <typename T>
+        inline std::string toString(T const& t)
+        {
+            return std::to_string((t));
+        }
+
+        template <typename T, typename C = std::initializer_list<T>>
+        bool lessC(C const& v1, C const& v2)
+        {
+            std::cerr << "lessC: v1 size " << v1.size() << ", v2 size" << v2.size() << std::endl;
+            for (auto i = std::rbegin(v1), j = std::rbegin(v2); i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
             {
-                if (v1[i - 1] == v2[i - 1])
+                if (*i == *j)
                 {
+                    std::cerr << "lessC : " << toString(*i) << " == " << toString(*j) << std::endl;
                     continue;
                 }
                 else
                 {
-                    return v1[i - 1] < v2[i - 1];
+                    std::cerr << "lessC : " << toString(*i) << (less(*i, *j) ? " < " : " > ") << toString(*j) << std::endl;
+                    return less(*i, *j);
                 }
             }
+            std::cerr << "lessC : size " << v1.size() << (v1.size() < v2.size() ? " < " : " >= ") << v2.size() << std::endl;
             return v1.size() < v2.size();
         }
 
@@ -129,8 +155,9 @@ namespace mathia
 
         // The <| order relation
         // for basic commutative transformation
-        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
+            std::cerr << "comparing " << toString(lhs) << " " << toString(rhs) << std::endl;
             Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
             Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
@@ -145,22 +172,26 @@ namespace mathia
                 pattern | ds(_, isReal)   = [&] { return false; },
                 pattern | ds(as<Constant>(as<std::complex<double>>(ic1)), as<Constant>(as<std::complex<double>>(ic2)))   = [&]
                 {
-                    return less<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
+                    return lessC<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
                 },
                 pattern | ds(as<Constant>(as<std::complex<double>>(_)), _)   = [&] { return true; },
                 pattern | ds(_, as<Constant>(as<std::complex<double>>(_)))   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
                 pattern | ds(as<Symbol>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Symbol>(_)) = [&] { return false; },
-                pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&] { return less<std::shared_ptr<Expr>>(*iP1, *iP2); },
+                pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
+                {
+                    std::cerr << "in product iP1 size " << (*iP1).size() << " iP2 size " << (*iP2).size() << std::endl;
+                    return lessC<std::shared_ptr<Expr>>(*iP1, *iP2);
+                },
                 pattern | ds(as<Product>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Product>(_)) = [&] { return false; },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    return less<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                    return lessC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Power>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Power>(_)) = [&] { return false; },
-                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return less<std::shared_ptr<Expr>>(*iS1, *iS2); },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return lessC<std::shared_ptr<Expr>>(*iS1, *iS2); },
                 pattern | ds(as<Sum>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Sum>(_)) = [&] { return false; },
                 pattern | _ = [&] { return false; }
@@ -173,7 +204,7 @@ namespace mathia
         {
             C copy = c;
             copy.insert(
-                std::upper_bound(copy.begin(), copy.end(), t),
+                std::upper_bound(copy.begin(), copy.end(), t, lessLambda),
                 t);
             return copy;
         }
@@ -183,7 +214,7 @@ namespace mathia
         {
             C result;
             result.reserve(c1.size() + c2.size());
-            std::merge(c1.begin(), c1.end(), c2.begin(), c2.end(), std::back_inserter(result));
+            std::merge(c1.begin(), c1.end(), c2.begin(), c2.end(), std::back_inserter(result), lessLambda);
             return result;
         }
 
