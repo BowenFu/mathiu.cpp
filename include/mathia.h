@@ -125,27 +125,24 @@ namespace mathia
             return v1.size() < v2.size();
         }
 
+        inline double eval(const std::shared_ptr<Expr> &ex);
+
+        // The <| order relation
         // for basic commutative transformation
         inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            Id<int32_t> ii1, ii2, ii3, ii4;
-            Id<double> id1, id2;
             Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
             Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
+            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
             return match(*lhs, *rhs)
             ( 
-                pattern | ds(as<int>(ii1), as<int>(ii2))   = [&] { return *ii1 < *ii2; },
-                pattern | ds(as<int>(_), _)                = [&] { return true; },
-                pattern | ds(_, as<int>(_))                = [&] { return false; },
-                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return *ii1 * *ii4 < *ii2 * *ii3; },
-                pattern | ds(as<Fraction>(_), _)                = [&] { return true; },
-                pattern | ds(_, as<Fraction>(_))                = [&] { return false; },
-                pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return *id1 < *id2; },
-                pattern | ds(as<Constant>(as<double>(_)), _)   = [&] { return true; },
-                pattern | ds(_, as<Constant>(as<double>(_)))   = [&] { return false; },
+                // clang-format off
+                pattern | ds(isReal, isReal)   = [&] { return eval(lhs) < eval(rhs); },
+                pattern | ds(isReal, _)   = [&] { return true; },
+                pattern | ds(_, isReal)   = [&] { return false; },
                 pattern | ds(as<Constant>(as<std::complex<double>>(ic1)), as<Constant>(as<std::complex<double>>(ic2)))   = [&]
                 {
                     return less<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
@@ -167,6 +164,7 @@ namespace mathia
                 pattern | ds(as<Sum>(_), _) = [&] { return true; },
                 pattern | ds(_, as<Sum>(_)) = [&] { return false; },
                 pattern | _ = [&] { return false; }
+                // clang-format on
             );
         }
 
@@ -436,6 +434,7 @@ namespace mathia
     using impl::e;
     using impl::sin;
     using impl::toString;
+    using impl::fraction;
 } // namespace mathia
 
 #endif // mathia_H
