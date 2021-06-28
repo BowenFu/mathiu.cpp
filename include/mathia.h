@@ -1,5 +1,5 @@
-#ifndef EVALIT_H
-#define EVALIT_H
+#ifndef mathia_H
+#define mathia_H
 
 #include "matchit.h"
 #include <variant>
@@ -11,7 +11,7 @@
 #include <vector>
 #include <numeric>
 
-namespace evalit
+namespace mathia
 {
     namespace impl
     {
@@ -436,6 +436,6 @@ namespace evalit
     using impl::e;
     using impl::sin;
     using impl::toString;
-} // namespace evalit
+} // namespace mathia
 
-#endif // EVALIT_H
+#endif // mathia_H
