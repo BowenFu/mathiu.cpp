@@ -1,3 +1,3 @@
 include(FetchGTest)
 include(GoogleTest)
-add_subdirectory(evalit)
+add_subdirectory(mathia)

@@ -1,7 +1,7 @@
-#include "evalit.h"
+#include "mathia.h"
 #include "gtest/gtest.h"
 #include <string>
-using namespace evalit;
+using namespace mathia;
 
 TEST(Expr, constant)
 {
@@ -57,22 +57,6 @@ TEST(Expr, ceval1)
     auto result = ceval(expr);
     EXPECT_NEAR(result.real(), 0, 1e-5);
     EXPECT_NEAR(result.imag(), -3.1415926, 1e-5);
-}
-
-TEST(Expr, order)
-{
-    EXPECT_TRUE(pi < i);
-}
-
-TEST(Expr, order2)
-{
-    EXPECT_TRUE(pi < -i);
-}
-
-TEST(Expr, order3)
-{
-    // -i * pi;
-    pi *(-i);
 }
 
 TEST(Expr, product)
