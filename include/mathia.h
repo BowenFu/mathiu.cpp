@@ -7,7 +7,6 @@
 #include <string>
 #include <cmath>
 #include <complex>
-#include <iostream>
 #include <vector>
 #include <numeric>
 
@@ -133,21 +132,17 @@ namespace mathia
         template <typename T, typename C = std::initializer_list<T>>
         bool lessC(C const& v1, C const& v2)
         {
-            std::cerr << "lessC: v1 size " << v1.size() << ", v2 size" << v2.size() << std::endl;
             for (auto i = std::rbegin(v1), j = std::rbegin(v2); i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
             {
                 if (*i == *j)
                 {
-                    std::cerr << "lessC : " << toString(*i) << " == " << toString(*j) << std::endl;
                     continue;
                 }
                 else
                 {
-                    std::cerr << "lessC : " << toString(*i) << (less(*i, *j) ? " < " : " > ") << toString(*j) << std::endl;
                     return less(*i, *j);
                 }
             }
-            std::cerr << "lessC : size " << v1.size() << (v1.size() < v2.size() ? " < " : " >= ") << v2.size() << std::endl;
             return v1.size() < v2.size();
         }
 
@@ -157,7 +152,6 @@ namespace mathia
         // for basic commutative transformation
         inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
-            std::cerr << "comparing " << toString(lhs) << " " << toString(rhs) << std::endl;
             Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
             Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
@@ -181,7 +175,6 @@ namespace mathia
                 pattern | ds(_, as<Symbol>(_)) = [&] { return false; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
-                    std::cerr << "in product iP1 size " << (*iP1).size() << " iP2 size " << (*iP2).size() << std::endl;
                     return lessC<std::shared_ptr<Expr>>(*iP1, *iP2);
                 },
                 pattern | ds(as<Product>(_), _) = [&] { return true; },
