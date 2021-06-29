@@ -59,22 +59,6 @@ TEST(Expr, ceval1)
     EXPECT_NEAR(result.imag(), -3.1415926, 1e-5);
 }
 
-TEST(Expr, order)
-{
-    EXPECT_TRUE(pi < i);
-}
-
-TEST(Expr, order2)
-{
-    EXPECT_TRUE(pi < -i);
-}
-
-TEST(Expr, order3)
-{
-    // -i * pi;
-    pi *(-i);
-}
-
 TEST(Expr, product)
 {
     auto x = constant(5);

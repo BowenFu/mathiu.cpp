@@ -8,6 +8,12 @@ TEST(Order, constant)
     EXPECT_TRUE(less(fraction(5, 2), constant(7)));
 }
 
+TEST(Order, constant1)
+{
+    EXPECT_TRUE(less(pi, i));
+    EXPECT_TRUE(less(pi, -i));
+}
+
 TEST(Order, symbol)
 {
     EXPECT_TRUE((symbol("a"), symbol("b")));
