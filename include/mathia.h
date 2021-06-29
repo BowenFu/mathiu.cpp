@@ -129,12 +129,22 @@ namespace mathia
             return std::to_string((t));
         }
 
-        template <typename T, typename C = std::initializer_list<T>>
-        bool lessC(C const& v1, C const& v2)
+        inline bool equal(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+
+        template <typename T>
+        inline bool equal(T const t1, T const t2)
         {
-            for (auto i = std::rbegin(v1), j = std::rbegin(v2); i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
+            return t1 == t2;
+        }
+
+        template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
+        bool lessC(C1 const& v1, C2 const& v2)
+        {
+            auto i = std::rbegin(v1);
+            auto j = std::rbegin(v2);
+            for (; i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
             {
-                if (*i == *j)
+                if (equal(*i, *j))
                 {
                     continue;
                 }
@@ -144,6 +154,12 @@ namespace mathia
                 }
             }
             return v1.size() < v2.size();
+        }
+
+        template <typename T, typename C = std::initializer_list<T>>
+        bool equalC(C const& v1, C const& v2)
+        {
+            return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2));
         }
 
         inline double eval(const std::shared_ptr<Expr> &ex);
@@ -158,6 +174,9 @@ namespace mathia
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
             constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
+            constexpr auto canBeProduct = or_(as<Power>(_), as<Sum>(_), as<Symbol>(_));
+            constexpr auto canBePower = or_(as<Sum>(_), as<Symbol>(_));
+            constexpr auto canBeSum = or_(as<Symbol>(_));
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
@@ -171,22 +190,69 @@ namespace mathia
                 pattern | ds(as<Constant>(as<std::complex<double>>(_)), _)   = [&] { return true; },
                 pattern | ds(_, as<Constant>(as<std::complex<double>>(_)))   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
-                pattern | ds(as<Symbol>(_), _) = [&] { return true; },
-                pattern | ds(_, as<Symbol>(_)) = [&] { return false; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
                     return lessC<std::shared_ptr<Expr>>(*iP1, *iP2);
                 },
-                pattern | ds(as<Product>(_), _) = [&] { return true; },
-                pattern | ds(_, as<Product>(_)) = [&] { return false; },
+                pattern | ds(as<Product>(iP1), canBeProduct) = [&] {
+                    return lessC<std::shared_ptr<Expr>>(*iP1, {rhs});
+                },
+                pattern | ds(canBeProduct, as<Product>(iP2)) = [&] {
+                    return lessC<std::shared_ptr<Expr>>({lhs}, *iP2);
+                },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
                     return lessC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
-                pattern | ds(as<Power>(_), _) = [&] { return true; },
-                pattern | ds(_, as<Power>(_)) = [&] { return false; },
-                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return lessC<std::shared_ptr<Expr>>(*iS1, *iS2); },
-                pattern | ds(as<Sum>(_), _) = [&] { return true; },
-                pattern | ds(_, as<Sum>(_)) = [&] { return false; },
+                pattern | ds(as<Power>(ds(iEl1, iEl2)), canBePower)   = [&] {
+                    return lessC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {constant(1), rhs});
+                },
+                pattern | ds(canBePower, as<Power>(ds(iEr1, iEr2)))   = [&] {
+                    return lessC<std::shared_ptr<Expr>>({constant(1), lhs}, {*iEr2, *iEr1});
+                },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&]
+                {
+                    return lessC<std::shared_ptr<Expr>>(*iS1, *iS2);
+                },
+                pattern | ds(as<Sum>(iS1), canBeSum) = [&]
+                {
+                    return lessC<std::shared_ptr<Expr>>(*iS1, {rhs});
+                },
+                pattern | ds(canBeSum, as<Sum>(iS2)) = [&]
+                {
+                    return lessC<std::shared_ptr<Expr>>({lhs}, *iS2);
+                },
+                pattern | _ = [&] { return false; }
+                // clang-format on
+            );
+        }
+
+        // The equality relation
+        // for basic commutative transformation
+        inline bool equal(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            Id<std::complex<double>> ic1, ic2;
+            Id<std::string> isl, isr;
+            Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
+            Id<Product> iP1, iP2;
+            Id<Sum> iS1, iS2;
+            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
+            return match(*lhs, *rhs)
+            ( 
+                // clang-format off
+                pattern | ds(isReal, isReal)   = [&] { return eval(lhs) == eval(rhs); },
+                pattern | ds(as<Constant>(as<std::complex<double>>(ic1)), as<Constant>(as<std::complex<double>>(ic2)))   = [&]
+                {
+                    return equalC<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
+                },
+                pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl == *isr; },
+                pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
+                {
+                    return equalC<std::shared_ptr<Expr>>(*iP1, *iP2);
+                },
+                pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
+                    return equalC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return equalC<std::shared_ptr<Expr>>(*iS1, *iS2); },
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -247,6 +313,9 @@ namespace mathia
                 pattern | ds(as<Sum>(iSl), as<Sum>(iSr)) = [&] {
                     return std::make_shared<Expr>(Sum{{ merge(*iSl, *iSr) }});
                 },
+                pattern | ds(as<Sum>(iSl), _) = [&] {
+                    return std::make_shared<Expr>(Sum{{ insertSorted(*iSl, rhs) }});
+                },
                 pattern | ds(_, as<Sum>(iSr)) = [&] {
                     return std::make_shared<Expr>(Sum{{ insertSorted(*iSr, lhs) }});
                 },
@@ -280,6 +349,9 @@ namespace mathia
                 pattern | ds(as<Product>(iSl), as<Product>(iSr)) = [&] {
                     return std::make_shared<Expr>(Product{{ merge(*iSl, *iSr) }});
                 },
+                pattern | ds(as<Product>(iSl), _) = [&] {
+                    return std::make_shared<Expr>(Product{{ insertSorted(*iSl, rhs) }});
+                },
                 pattern | ds(_, as<Product>(iSr)) = [&] {
                     return std::make_shared<Expr>(Product{{ insertSorted(*iSr, lhs) }});
                 },
@@ -306,7 +378,7 @@ namespace mathia
                 pattern | ds(as<Product>(ip), as<int>(_)) = [&] {
                     return std::accumulate((*ip).begin(), (*ip).end(), constant(1), [&](auto&& p, auto&& e)
                     {
-                        return p * e^rhs;
+                        return p * (e^rhs);
                     });
                 },
                 pattern | _ = [&] {

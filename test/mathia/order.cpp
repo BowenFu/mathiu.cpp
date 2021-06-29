@@ -56,12 +56,13 @@ TEST(Order, product1)
     EXPECT_EQ(toString(b * d), "(* b d)");
     EXPECT_EQ(toString(b * c * d), "(* b c d)");
     EXPECT_TRUE(impl::lessC<std::shared_ptr<impl::Expr>>({b, d}, {b, c, d}));
+
     auto const e1 = c * d;
     auto const e2 = b * c * d;
     EXPECT_EQ(toString(e1), "(* c d)");
     EXPECT_EQ(toString(e2), "(* b c d)");
     EXPECT_TRUE(impl::lessC<std::shared_ptr<impl::Expr>>({c, d}, {b, c, d}));
-    EXPECT_TRUE(impl::less(e1, e2));
+    EXPECT_TRUE(less(e1, e2));
 }
 
 TEST(Order, sum)
@@ -81,4 +82,50 @@ TEST(Order, sum1)
     auto const d = symbol("d");
     EXPECT_TRUE(less(b + d, b + c + d));
     EXPECT_TRUE(less(c + d, b + c + d));
+}
+
+TEST(Order, power)
+{
+    auto const n1 = constant(1);
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const e1 = (n1 + x) ^ n2;
+    auto const e2 = (n1 + x) ^ n3;
+    EXPECT_TRUE(less(e1, e2));
+    EXPECT_TRUE(less((n1 + x) ^ n3, (n1 + y) ^ n2));
+}
+
+TEST(Order, compond)
+{
+    auto const a = symbol("a");
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    EXPECT_TRUE(less(a*x^n2, x^n3));
+}
+
+TEST(Order, compond2)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const n1 = constant(1);
+    auto const n3 = constant(3);
+    EXPECT_TRUE(less((n1 + x)^n3, n1 + y));
+}
+
+TEST(Order, compond3)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const n1 = constant(1);
+    EXPECT_TRUE(less(n1 + x, y));
+}
+
+TEST(Order, compond4)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    EXPECT_TRUE(less(x, x^n2));
 }
