@@ -247,7 +247,7 @@ namespace mathia
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
-                pattern | _ | when ([&]{ return rhs < lhs; }) = [&] {
+                pattern | _ | when ([&]{ return less(rhs, lhs); }) = [&] {
                     return rhs + lhs;
                 },
                 // basic associative transformation
@@ -280,7 +280,7 @@ namespace mathia
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
-                pattern | _ | when ([&]{ return rhs < lhs; }) = [&] {
+                pattern | _ | when ([&]{ return less(rhs, lhs); }) = [&] {
                     return rhs * lhs;
                 },
                 // basic associative transformation
