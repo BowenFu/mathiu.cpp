@@ -387,16 +387,19 @@ namespace mathia
             );
         }
 
+        // the basic difference transformation
         inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             return lhs + constant(-1) * rhs;
         }
 
+        // the basic difference transformation
         inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &rhs)
         {
             return constant(-1) * rhs;
         }
 
+        // the basic quotient transformation
         inline std::shared_ptr<Expr> operator/(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             using namespace matchit;
