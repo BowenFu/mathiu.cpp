@@ -26,13 +26,13 @@ namespace mathia
         {
         };
 
-        constexpr double pi_ = 3.1415926;
+        inline constexpr double pi_ = 3.1415926;
         inline const auto pi = std::make_shared<Expr>(Constant{{pi_}});
 
         inline const double e_ = std::exp(1);
         inline const auto e = std::make_shared<Expr>(Constant{{e_}});
 
-        constexpr std::complex<double> i_ = std::complex<double>(0, 1);
+        inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         inline const auto i = std::make_shared<Expr>(Constant{{i_}});
 
         struct Sum : std::vector<std::shared_ptr<Expr>>
@@ -114,7 +114,7 @@ namespace mathia
             return t1 < t2;
         }
 
-        auto lessLambda = [](auto&& x, auto&& y) { return less(x, y); };
+        inline constexpr auto lessLambda = [](auto&& x, auto&& y) { return less(x, y); };
 
         inline std::string toString(const std::shared_ptr<Expr> &ex);
 
