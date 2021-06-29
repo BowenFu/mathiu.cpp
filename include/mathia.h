@@ -319,6 +319,9 @@ namespace mathia
                 pattern | ds(_, as<Sum>(iSr)) = [&] {
                     return std::make_shared<Expr>(Sum{{ insertSorted(*iSr, lhs) }});
                 },
+                // basic identity transformation
+                pattern | ds(as<int32_t>(0), _) = expr(rhs),
+                pattern | ds(_, as<int32_t>(0)) = expr(lhs),
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil + *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
@@ -355,6 +358,11 @@ namespace mathia
                 pattern | ds(_, as<Product>(iSr)) = [&] {
                     return std::make_shared<Expr>(Product{{ insertSorted(*iSr, lhs) }});
                 },
+                // basic identity transformation
+                pattern | ds(as<int32_t>(0), _) = expr(constant(0)),
+                pattern | ds(_, as<int32_t>(0)) = expr(constant(0)),
+                pattern | ds(as<int32_t>(1), _) = expr(rhs),
+                pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil * *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
@@ -381,6 +389,12 @@ namespace mathia
                         return p * (e^rhs);
                     });
                 },
+                // basic identity transformation
+                pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return eval(rhs) > 0; }) = expr(constant(0)),
+                pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return constant(0);},
+                pattern | ds(as<int32_t>(1), _)= [&] { return constant(1);},
+                pattern | ds(_, 0)= expr(constant(1)),
+                pattern | ds(_, 1)= expr(rhs),
                 pattern | _ = [&] {
                     return std::make_shared<Expr>(Power{{lhs, rhs}});
                 }
@@ -388,15 +402,21 @@ namespace mathia
         }
 
         // the basic difference transformation
-        inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
-        {
-            return lhs + constant(-1) * rhs;
-        }
-
-        // the basic difference transformation
         inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &rhs)
         {
             return constant(-1) * rhs;
+        }
+
+        // the basic difference transformation
+        inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            return match(*lhs, *rhs)
+            (
+                // basic identity transformation
+                pattern | ds(_, 0) = expr(lhs),
+                pattern | ds(0, _) = [&] { return -rhs; },
+                pattern | _ = [&] { return lhs + constant(-1) * rhs; }
+            );
         }
 
         // the basic quotient transformation
@@ -407,6 +427,10 @@ namespace mathia
             return match(*lhs, *rhs)(
                 // clang-format off
                 pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return simplifyRational(fraction(*il, *ir)); },
+                // basic identity transformation
+                pattern | ds(_, 0) = [&] { throw std::runtime_error{"undefined!"}; return constant(0); },
+                pattern | ds(0, _) = expr(constant(0)),
+                pattern | ds(_, 1) = expr(lhs),
                 pattern | _                                    = expr(lhs * (rhs ^ constant(-1)))
                 // clang-format on
             );

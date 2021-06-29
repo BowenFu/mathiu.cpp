@@ -10,7 +10,7 @@ TEST(Simplification, power)
     auto const n3 = constant(3);
     auto const e1 = (x*y)*((x*y)^n2);
     auto const e2 = (x^n3)*(y^n3);
-    EXPECT_EQ(toString(e1), "(* 1 x (^ x 2) y (^ y 2))"); // need to be simplified with basic distributive transformation
+    EXPECT_EQ(toString(e1), "(* x (^ x 2) y (^ y 2))"); // need to be simplified with basic distributive transformation
     EXPECT_EQ(toString(e2), "(* (^ x 3) (^ y 3))");
 }
 
