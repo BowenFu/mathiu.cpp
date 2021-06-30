@@ -115,11 +115,19 @@ TEST(Expr, compound)
 
 TEST(Expr, symbol)
 {
+    auto y = symbol("y");
+    auto expr = y * y;
+    auto result = toString(expr);
+    EXPECT_EQ(result, std::string("(^ y 2)"));
+}
+
+TEST(Expr, symbol2)
+{
     auto x = constant(5);
     auto y = symbol("y");
     auto expr = x / y - y * y;
     auto result = toString(expr);
-    EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 y y))"));
+    EXPECT_EQ(result, std::string("(+ (* 5 (^ y -1)) (* -1 (^ y 2)))"));
 }
 
 TEST(Expr, sumMultiple)
