@@ -71,6 +71,8 @@ TEST(Order, sum)
     auto const b = symbol("b");
     auto const c = symbol("c");
     auto const d = symbol("d");
+    EXPECT_EQ(toString(a + b), "(+ a b)");
+    EXPECT_EQ(toString(a + c + d), "(+ a c d)");
     EXPECT_TRUE(less(a + b, a + c));
     EXPECT_TRUE(less(a + c + d, b + c + d));
 }
@@ -94,6 +96,8 @@ TEST(Order, power)
     auto const e1 = (n1 + x) ^ n2;
     auto const e2 = (n1 + x) ^ n3;
     EXPECT_TRUE(less(e1, e2));
+    EXPECT_EQ(toString(e1), "(^ (+ 1 x) 2)");
+    EXPECT_EQ(toString(e2), "(^ (+ 1 x) 3)");
     EXPECT_TRUE(less((n1 + x) ^ n3, (n1 + y) ^ n2));
 }
 
@@ -103,7 +107,9 @@ TEST(Order, compond)
     auto const x = symbol("x");
     auto const n2 = constant(2);
     auto const n3 = constant(3);
-    EXPECT_TRUE(less(a*x^n2, x^n3));
+    EXPECT_EQ(toString(a*(x^n2)), "(* a (^ x 2))");
+    EXPECT_EQ(toString(x^n3), "(^ x 3)");
+    EXPECT_TRUE(less(a*(x^n2), x^n3));
 }
 
 TEST(Order, compond2)
