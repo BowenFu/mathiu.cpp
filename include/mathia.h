@@ -36,6 +36,8 @@ namespace mathia
         inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         inline const auto i = std::make_shared<Expr>(Constant{{i_}});
 
+        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+
         struct Sum : std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
         {
         };
@@ -131,6 +133,11 @@ namespace mathia
         }
 
         inline bool equal(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+
+        inline bool operator==(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            return equal(lhs, rhs);
+        }
 
         inline bool equal(std::pair<std::shared_ptr<Expr> const, std::shared_ptr<Expr> > const &lhs, std::pair<std::shared_ptr<Expr> const, std::shared_ptr<Expr> > const &rhs)
         {
@@ -234,6 +241,11 @@ namespace mathia
             );
         }
 
+        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            return less(lhs, rhs);
+        }
+
         // The equality relation
         // for basic commutative transformation
         inline bool equal(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
@@ -319,19 +331,21 @@ namespace mathia
         inline constexpr auto first = [](auto&& p) { return p.first; };
         inline constexpr auto firstIsCoeff = [](auto&& id, auto&& whole) { return as<Product>(whole.at(ds(app(first, id.at(asCoeff)), ooo)));};
 
-        inline std::pair<std::shared_ptr<Expr>, std::shared_ptr<Expr>> coeffAndTerm(std::shared_ptr<Expr> const &e)
+        inline std::pair<std::shared_ptr<Expr>, std::shared_ptr<Expr>> coeffAndTerm(Expr const &e)
         {
             Id<std::shared_ptr<Expr>> icoeff;
             Id<Product> ip;
-            return match(*e)(
+            return match(e)(
                 pattern | firstIsCoeff(icoeff, ip) = [&] {
                     auto pCopy = *ip;
                     pCopy.erase(pCopy.begin());
                     return std::make_pair( *icoeff, std::make_shared<Expr>(Product{pCopy}) );
                 },
-                pattern | _ = [&]{ return std::make_pair(constant(1), e); }
+                pattern | _ = [&]{ return std::make_pair(constant(1), std::make_shared<Expr>(e)); }
             );
         }
+
+        inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
 
         inline std::shared_ptr<Expr> operator+(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
@@ -339,6 +353,8 @@ namespace mathia
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2;
             Id<double> id1, id2;
+            Id<std::shared_ptr<Expr>> coeff1, coeff2, rest;
+            auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
             auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs;} ;
             return match(*lhs, *rhs)(
                 // clang-format off
@@ -365,8 +381,25 @@ namespace mathia
                 pattern | ds(as<Fraction>(_), as<int32_t>(_))   = [&] { return rhs + lhs; },
                 pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 + *id2);; },
                 pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) + ceval(rhs)); },
+                // basic distributive transformation
+                pattern | ds(asCoeffAndRest(coeff1, rest), asCoeffAndRest(coeff2, rest)) = [&]
+                {
+                    return ((*coeff1) + (*coeff2)) * (*rest);
+                },
                 pattern | _                            = [&] { return std::make_shared<Expr>(Sum{{{lhs, lhs}, {rhs, rhs}}}); }
                 // clang-format on
+            );
+        }
+
+        inline std::pair<std::shared_ptr<Expr>, std::shared_ptr<Expr>> baseAndExp(Expr const &e)
+        {
+            Id<std::shared_ptr<Expr>> iBase;
+            Id<std::shared_ptr<Expr>> iExp;
+            return match(e)(
+                pattern | as<Power>(ds(iBase, iExp)) = [&] {
+                    return std::make_pair( *iBase, *iExp);
+                },
+                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr>(e), constant(1)); }
             );
         }
 
@@ -380,6 +413,8 @@ namespace mathia
             Id<int32_t> ii1, ii2;
             Id<double> id1, id2;
             Id<std::shared_ptr<Expr>> iu, iv, iw;
+            Id<std::shared_ptr<Expr>> exp1, exp2, base;
+            auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
@@ -408,6 +443,11 @@ namespace mathia
                 pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) * ceval(rhs)); },
                 // basic power transformation 1
                 pattern | ds(as<Power>(ds(iu, iv)), as<Power>(ds(iu, iw))) = iu^(iv+iw),
+                // basic distributive transformation
+                pattern | ds(asBaseAndExp(base, exp1), asBaseAndExp(base, exp2)) = [&]
+                {
+                    return (*base)^((*exp1) + (*exp2));
+                },
                 pattern | _                            = [&] { return std::make_shared<Expr>(Product{{{lhs, lhs}, {rhs, rhs}}}); }
                 // clang-format on
             );
