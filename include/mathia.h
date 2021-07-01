@@ -391,7 +391,7 @@ namespace mathia
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil + *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
-                pattern | ds(as<Fraction>(_), as<int32_t>(_))   = [&] { return rhs + lhs; },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 + *id2);; },
                 pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) + ceval(rhs)); },
                 // basic distributive transformation
@@ -545,10 +545,10 @@ namespace mathia
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
+                pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double>>(c)) = [&]{ assert((*c).imag() == 0); return (*c).real(); },
-                pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Sum>(iS)                                = [&]{
                     return std::accumulate((*iS).begin(), (*iS).end(), 0., [](auto&& sum, auto&& e){ return sum + eval(e.second); }); 
                 },
@@ -574,10 +574,10 @@ namespace mathia
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
+                pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling ceval."); return 0; },
                 pattern | as<Constant>(as<double>(d))               = expr(d),
                 pattern | as<Constant>(as<std::complex<double> >(c)) = expr(c),
-                pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Sum>(iS)                                = [&]{
                     return std::accumulate((*iS).begin(), (*iS).end(), std::complex<double>(0), [](auto&& sum, auto&& e){ return sum + ceval(e.second); }); 
                 },
