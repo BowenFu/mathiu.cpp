@@ -9,10 +9,8 @@ TEST(Simplification, power)
     auto const y = symbol("y");
     auto const n2 = constant(2);
     auto const n3 = constant(3);
-    auto const e1 = (x*y)*((x*y)^n2);
-    auto const e2 = (x^n3)*(y^n3);
-    EXPECT_EQ(toString(e1), "(* x (^ x 2) y (^ y 2))"); // need to be simplified with basic distributive transformation
-    EXPECT_EQ(toString(e2), "(* (^ x 3) (^ y 3))");
+    auto const e = (x*y)*((x*y)^n2);
+    EXPECT_EQ(toString(e), "(* (^ x 3) (^ y 3))");
 }
 
 TEST(Simplification, quotient)
@@ -21,10 +19,8 @@ TEST(Simplification, quotient)
     auto const x = symbol("x");
     auto const n2 = constant(2);
     auto const n3 = constant(3);
-    auto const e1 = (a * (x ^ n3)) / x;
-    auto const e2 = a * (x^n2);
-    EXPECT_EQ(toString(e1), "(* a (^ x -1) (^ x 3))");
-    EXPECT_EQ(toString(e2), "(* a (^ x 2))");
+    auto const e = (a * (x ^ n3)) / x;
+    EXPECT_EQ(toString(e), "(* a (^ x 2))");
 }
 
 TEST(Simplification, distributive)
@@ -213,7 +209,7 @@ TEST(Simplification, distributive2)
     auto const f3o2 = fraction(3, 2);
     auto const e1 = n2 * x;
     auto const e = n2 * x + y + f3o2 * x;
-    EXPECT_EQ(toString(e), "(+ (* 3/2 x) (* 2 x) y)"); // should be (+ (* 7/2 x) y)
+    EXPECT_EQ(toString(e), "(+ (* 7/2 x) y)");
 }
 
 TEST(asCoeffAndRest, product)
@@ -251,14 +247,87 @@ TEST(asCoeffAndRest, sum)
     auto const f3o2 = fraction(3, 2);
     auto const y = symbol("y");
 
-    // EXPECT_EQ(toString(f3o2 * x + y), "");
-
     using namespace matchit;
     Id<std::shared_ptr<mathia::impl::Expr>> e;
-    auto result = match(*(f3o2 * x + y))
-    (
-        pattern | as<mathia::impl::Sum>(ds(ds(_, some(as<mathia::impl::Product>(ds(ds(f3o2, f3o2), ds(x, x))))), ds(y, y))) = [&] { return true; },
-        pattern | _ = expr(false)
-    );
+    auto result = match(*(y + f3o2 * x))(
+        pattern | as<mathia::impl::Sum>(
+                      ds(
+                          ds(
+                              _,
+                              some(
+                                  as<mathia::impl::Product>(ds(ds(f3o2, f3o2), ds(x, x))))),
+                          ds(y, y))) = [&]
+        { return true; },
+        pattern | _ = expr(false));
+    EXPECT_TRUE(result);
+}
+
+TEST(asCoeffAndRest, sumCompare)
+{
+    auto const n2 = constant(2);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+
+    auto const e = n2 * x + y;
+    auto const sum = std::get<mathia::impl::Sum>(*e);
+
+    EXPECT_NE(sum.find(x), sum.end());
+}
+
+
+TEST(asCoeffAndRest, sum2)
+{
+    auto const n2 = constant(2);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+
+    auto const e = n2 * x + y;
+
+    EXPECT_EQ(toString(e), "(+ (* 2 x) y)");
+
+    using namespace matchit;
+    Id<std::shared_ptr<mathia::impl::Expr>> ie;
+    auto result = match(*(e))(
+        pattern | as<mathia::impl::Sum>(
+                      ds(
+                          ds(
+                              ie,
+                              some(
+                                  as<mathia::impl::Product>(ds(ds(n2, n2), ds(x, x))))),
+                          ds(y, y))) = [&]
+        {
+            EXPECT_EQ(toString(*ie), "x");
+            return true;
+        },
+        pattern | _ = expr(false));
+    EXPECT_TRUE(result);
+}
+
+TEST(asCoeffAndRest, sum3)
+{
+    auto const n2 = constant(2);
+    auto const x = symbol("x");
+    auto const f3o2 = fraction(3, 2);
+    auto const y = symbol("y");
+
+    auto const e = n2 * x + y + f3o2 * x;
+
+    EXPECT_EQ(toString(e), "(+ (* 7/2 x) y)");
+
+    using namespace matchit;
+    Id<std::shared_ptr<mathia::impl::Expr>> ie;
+    auto result = match(*(e))(
+        pattern | as<mathia::impl::Sum>(
+                      ds(
+                          ds(
+                              ie,
+                              some(
+                                  as<mathia::impl::Product>(ds(ds(fraction(7, 2), fraction(7, 2)), ds(x, x))))),
+                          ds(y, y))) = [&]
+        {
+            EXPECT_EQ(toString(*ie), "x");
+            return true;
+        },
+        pattern | _ = expr(false));
     EXPECT_TRUE(result);
 }

@@ -399,7 +399,7 @@ namespace mathia
                 {
                     return ((*coeff1) + (*coeff2)) * (*rest);
                 },
-                pattern | _                            = [&] { return std::make_shared<Expr>(Sum{{{lhs, lhs}, {rhs, rhs}}}); }
+                pattern | _                            = [&] { return std::make_shared<Expr>(Sum{{{coeffAndTerm(*lhs).second, lhs}, {coeffAndTerm(*rhs).second, rhs}}}); }
                 // clang-format on
             );
         }
@@ -468,7 +468,7 @@ namespace mathia
                 {
                     return (*base)^((*exp1) + (*exp2));
                 },
-                pattern | _                            = [&] { return std::make_shared<Expr>(Product{{{lhs, lhs}, {rhs, rhs}}}); }
+                pattern | _                            = [&] { return std::make_shared<Expr>(Product{{{baseAndExp(*lhs).first, lhs}, {baseAndExp(*rhs).first, rhs}}}); }
                 // clang-format on
             );
         }
