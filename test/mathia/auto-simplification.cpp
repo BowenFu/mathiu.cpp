@@ -74,3 +74,31 @@ TEST(asCoeffAndRest, 3)
     );
     EXPECT_TRUE(result);
 }
+
+TEST(asBaseAndExp, 1)
+{
+    using namespace matchit;
+    Id<std::shared_ptr<mathia::impl::Expr>> base;
+    Id<std::shared_ptr<mathia::impl::Expr>> exp;
+
+    auto result = match(*symbol("x"))
+    (
+        pattern | mathia::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == constant(1); },
+        pattern | _ = expr(false)
+    );
+    EXPECT_TRUE(result);
+}
+
+TEST(asBaseAndExp, 2)
+{
+    using namespace matchit;
+    Id<std::shared_ptr<mathia::impl::Expr>> base;
+    Id<std::shared_ptr<mathia::impl::Expr>> exp;
+
+    auto result = match(*(symbol("x")^constant(2)))
+    (
+        pattern | mathia::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == constant(2); },
+        pattern | _ = expr(false)
+    );
+    EXPECT_TRUE(result);
+}

@@ -412,6 +412,8 @@ namespace mathia
 
         inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
         
+        inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
+
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             auto const mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs;} ;
@@ -421,7 +423,6 @@ namespace mathia
             Id<double> id1, id2;
             Id<std::shared_ptr<Expr>> iu, iv, iw;
             Id<std::shared_ptr<Expr>> exp1, exp2, base;
-            auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
