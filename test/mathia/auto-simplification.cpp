@@ -33,8 +33,9 @@ TEST(Simplification, distributive)
     auto const n3 = constant(3);
     auto const e1 = x + n2 * x;
     auto const e2 = n3 * x;
-    EXPECT_EQ(toString(e1), "(+ x (* 2 x))");
+    EXPECT_EQ(toString(e1), "(* 3 x)");
     EXPECT_EQ(toString(e2), "(* 3 x)");
+    EXPECT_EQ(e1, e2);
 }
 
 TEST(asCoeffAndRest, 1)
@@ -70,6 +71,30 @@ TEST(asCoeffAndRest, 3)
     auto result = match(*(constant(5) * symbol("x")))
     (
         pattern | mathia::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(5); },
+        pattern | _ = expr(false)
+    );
+    EXPECT_TRUE(result);
+}
+
+TEST(asCoeffAndRest, 4)
+{
+    using namespace matchit;
+    Id<std::shared_ptr<mathia::impl::Expr>> rest;
+    auto result = match(*(constant(5) * symbol("x")))
+    (
+        pattern | mathia::impl::asCoeffAndRest(_, rest) = [&] { return (*rest) == symbol("x"); },
+        pattern | _ = expr(false)
+    );
+    EXPECT_TRUE(result);
+}
+
+TEST(asCoeffAndRest, multiple)
+{
+    using namespace matchit;
+    Id<std::shared_ptr<mathia::impl::Expr>> coeff1, coeff2, rest;
+    auto result = match(*(constant(5) * symbol("x")), *symbol("x"))
+    (
+        pattern | ds(mathia::impl::asCoeffAndRest(coeff1, rest), mathia::impl::asCoeffAndRest(coeff2, rest)) = [&] { return (*rest) == symbol("x"); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);

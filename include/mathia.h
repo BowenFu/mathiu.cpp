@@ -342,13 +342,19 @@ namespace mathia
             Id<std::shared_ptr<Expr>> icoeff;
             Id<Product> ip;
             return match(e)(
-                pattern | firstIsCoeff(icoeff, ip) = [&] {
-                    auto pCopy = *ip;
-                    pCopy.erase(pCopy.begin());
-                    return std::make_pair( *icoeff, std::make_shared<Expr>(Product{pCopy}) );
+                pattern | firstIsCoeff(icoeff, ip) = [&]
+                {
+                    if ((*ip).size() > 2)
+                    {
+                        auto pCopy = *ip;
+                        pCopy.erase(pCopy.begin());
+                        return std::make_pair(*icoeff, std::make_shared<Expr>(Product{pCopy}));
+                    }
+                    // single value left.
+                    return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
-                pattern | _ = [&]{ return std::make_pair(constant(1), std::make_shared<Expr>(e)); }
-            );
+                pattern | _ = [&]
+                { return std::make_pair(constant(1), std::make_shared<Expr>(e)); });
         }
 
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
