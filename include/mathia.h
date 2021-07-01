@@ -277,12 +277,6 @@ namespace mathia
             );
         }
 
-        template <typename C, typename T, typename Op>
-        auto insertSorted(C const& c, T const& t, Op op)
-        {
-            return merge(c, C{{{t, t}}}, op);
-        }
-
         template <typename C, typename Op>
         auto merge(C const& c1, C const& c2, Op op) -> C
         {
@@ -357,6 +351,12 @@ namespace mathia
                 { return std::make_pair(constant(1), std::make_shared<Expr>(e)); });
         }
 
+        template <typename C, typename T, typename Op>
+        auto insertSum(C const& c, T const& t, Op op)
+        {
+            return merge(c, C{{{coeffAndTerm(*t).second, t}}}, op);
+        }
+
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
 
         inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
@@ -380,10 +380,10 @@ namespace mathia
                     return std::make_shared<Expr>(Sum{{ merge(*iSl, *iSr, add) }});
                 },
                 pattern | ds(as<Sum>(iSl), _) = [&] {
-                    return std::make_shared<Expr>(Sum{{ insertSorted(*iSl, rhs, add) }});
+                    return std::make_shared<Expr>(Sum{{ insertSum(*iSl, rhs, add) }});
                 },
                 pattern | ds(_, as<Sum>(iSr)) = [&] {
-                    return std::make_shared<Expr>(Sum{{ insertSorted(*iSr, lhs, add) }});
+                    return std::make_shared<Expr>(Sum{{ insertSum(*iSr, lhs, add) }});
                 },
                 // basic identity transformation
                 pattern | ds(as<int32_t>(0), _) = expr(rhs),
@@ -416,6 +416,12 @@ namespace mathia
             );
         }
 
+        template <typename C, typename T, typename Op>
+        auto insertProduct(C const& c, T const& t, Op op)
+        {
+            return merge(c, C{{{baseAndExp(*t).first, t}}}, op);
+        }
+
         inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
         
         inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
@@ -440,10 +446,10 @@ namespace mathia
                     return std::make_shared<Expr>(Product{{ merge(*iSl, *iSr, mul) }});
                 },
                 pattern | ds(as<Product>(iSl), _) = [&] {
-                    return std::make_shared<Expr>(Product{{ insertSorted(*iSl, rhs, mul) }});
+                    return std::make_shared<Expr>(Product{{ insertProduct(*iSl, rhs, mul) }});
                 },
                 pattern | ds(_, as<Product>(iSr)) = [&] {
-                    return std::make_shared<Expr>(Product{{ insertSorted(*iSr, lhs, mul) }});
+                    return std::make_shared<Expr>(Product{{ insertProduct(*iSr, lhs, mul) }});
                 },
                 // basic identity transformation
                 pattern | ds(as<int32_t>(0), _) = expr(constant(0)),
