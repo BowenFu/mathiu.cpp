@@ -1,6 +1,5 @@
 #include "mathia.h"
 #include "gtest/gtest.h"
-#include <iostream>
 using namespace mathia;
 
 TEST(Simplification, power)
