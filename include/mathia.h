@@ -327,8 +327,15 @@ namespace mathia
         inline std::complex<double> ceval(const std::shared_ptr<Expr> &ex);
 
         inline constexpr auto asCoeff = or_(as<int32_t>(_), as<Fraction>(_));
-        inline constexpr auto first = [](auto&& p) { return p.first; };
-        inline constexpr auto firstIsCoeff = [](auto&& id, auto&& whole) { return as<Product>(whole.at(ds(app(first, id.at(asCoeff)), ooo)));};
+        inline constexpr auto second = [](auto&& p)
+        {
+            return p.second;
+        };
+        inline constexpr auto firstIsCoeff = [](auto &&id, auto &&whole)
+        {
+            // second part of the first pair
+            return as<Product>(whole.at(ds(app(second, id.at(some(asCoeff))), ooo)));
+        };
 
         inline std::pair<std::shared_ptr<Expr>, std::shared_ptr<Expr>> coeffAndTerm(Expr const &e)
         {
@@ -346,6 +353,8 @@ namespace mathia
 
         inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
 
+        inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
+
         inline std::shared_ptr<Expr> operator+(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             Id<Sum> iSl, iSr;
@@ -353,7 +362,6 @@ namespace mathia
             Id<int32_t> ii1, ii2;
             Id<double> id1, id2;
             Id<std::shared_ptr<Expr>> coeff1, coeff2, rest;
-            auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
             auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs;} ;
             return match(*lhs, *rhs)(
                 // clang-format off
