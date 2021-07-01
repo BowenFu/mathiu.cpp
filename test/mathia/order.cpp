@@ -67,12 +67,15 @@ TEST(Order, product1)
 
 TEST(Order, sum)
 {
-    auto const a = symbol("a");
-    auto const b = symbol("b");
-    auto const c = symbol("c");
     auto const d = symbol("d");
+    auto const c = symbol("c");
+    auto const b = symbol("b");
+    auto const a = symbol("a");
+    
     EXPECT_EQ(toString(a + b), "(+ a b)");
+    EXPECT_EQ(toString(a + c), "(+ a c)");
     EXPECT_EQ(toString(a + c + d), "(+ a c d)");
+    EXPECT_EQ(toString(b + c + d), "(+ b c d)");
     EXPECT_TRUE(less(a + b, a + c));
     EXPECT_TRUE(less(a + c + d, b + c + d));
 }

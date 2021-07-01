@@ -36,7 +36,21 @@ namespace mathia
         inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         inline const auto i = std::make_shared<Expr>(Constant{{i_}});
 
-        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+        inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+
+        template <typename T>
+        inline bool less(T const t1, T const t2)
+        {
+            return t1 < t2;
+        }
+
+        inline constexpr auto lessLambda = [](auto&& x, auto&& y) { return less(x, y); };
+
+        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            return less(lhs, rhs);
+        }
+
 
         struct Sum : std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
         {
@@ -108,16 +122,6 @@ namespace mathia
         {
             return std::make_shared<Expr>(Symbol{{name}});
         }
-
-        inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
-
-        template <typename T>
-        inline bool less(T const t1, T const t2)
-        {
-            return t1 < t2;
-        }
-
-        inline constexpr auto lessLambda = [](auto&& x, auto&& y) { return less(x, y); };
 
         inline std::string toString(const std::shared_ptr<Expr> &ex);
 
@@ -239,11 +243,6 @@ namespace mathia
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
-        }
-
-        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
-        {
-            return less(lhs, rhs);
         }
 
         // The equality relation
