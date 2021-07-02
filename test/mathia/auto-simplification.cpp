@@ -588,3 +588,60 @@ TEST(autoSimplification, power12)
     EXPECT_EQ(toString(e), "(* x y (^ (* x y) 1/2))");
 }
 
+TEST(autoSimplification, difference)
+{
+    auto const u = symbol("u");
+    auto const e = -u;
+    EXPECT_EQ(toString(e), "(* -1 u)");
+}
+
+TEST(autoSimplification, difference1)
+{
+    auto const u = symbol("u");
+    auto const v = symbol("v");
+    auto const e = u - v;
+    EXPECT_EQ(toString(e), "(+ u (* -1 v))");
+}
+
+TEST(autoSimplification, quotient)
+{
+    auto const u = symbol("u");
+    auto const v = symbol("v");
+    auto const e = u / v;
+    EXPECT_EQ(toString(e), "(* u (^ v -1))");
+}
+
+TEST(autoSimplification, quotient1)
+{
+    auto const a = symbol("a");
+    auto const x = symbol("x");
+    auto const n3 = constant(3);
+    auto const e = (a * (x ^ n3)) / x;
+    EXPECT_EQ(toString(e), "(* a (^ x 2))");
+}
+
+TEST(autoSimplification, identity)
+{
+    auto const u = symbol("u");
+    auto const n0 = constant(0);
+    auto const e = u + n0;
+    EXPECT_EQ(toString(e), "u");
+}
+
+TEST(autoSimplification, identity1)
+{
+    auto const u = symbol("u");
+    auto const n0 = constant(0);
+    auto const e = u * n0;
+    EXPECT_EQ(toString(e), "0");
+}
+
+TEST(autoSimplification, identity2)
+{
+    auto const u = symbol("u");
+    auto const n1 = constant(1);
+    auto const e = u * n1;
+    EXPECT_EQ(toString(e), "u");
+}
+
+
