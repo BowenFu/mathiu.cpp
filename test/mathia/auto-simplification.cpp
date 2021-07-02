@@ -644,4 +644,25 @@ TEST(autoSimplification, identity2)
     EXPECT_EQ(toString(e), "u");
 }
 
+TEST(autoSimplification, identity3)
+{
+    auto const n0 = constant(0);
+    auto const f2o3 = fraction(2, 3);
+    auto const e = n0 ^ f2o3;
+    EXPECT_EQ(toString(e), "0");
+}
 
+TEST(autoSimplification, identity4)
+{
+    auto const n0 = constant(0);
+    auto const w = symbol("w");
+    EXPECT_THROW(n0 ^ w, std::runtime_error);
+}
+
+TEST(autoSimplification, identity5)
+{
+    auto const n1 = constant(1);
+    auto const w = symbol("w");
+    auto const e = n1 ^ w;
+    EXPECT_EQ(toString(e), "1");
+}
