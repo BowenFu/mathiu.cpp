@@ -346,6 +346,7 @@ namespace mathia
                         return std::make_pair(*icoeff, std::make_shared<Expr>(Product{pCopy}));
                     }
                     // single value left.
+                    // the basic unary transformation.
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
                 pattern | _ = [&]
@@ -481,6 +482,7 @@ namespace mathia
         inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             Id<std::shared_ptr<Expr>> iu, iv;
+            Id<int32_t> ii1, ii2, ii3;
             Id<Product> ip;
             return match(*lhs, *rhs)(
                 // clang-format off
@@ -498,6 +500,9 @@ namespace mathia
                 pattern | ds(as<int32_t>(1), _)= [&] { return constant(1);},
                 pattern | ds(_, 0)= expr(constant(1)),
                 pattern | ds(_, 1)= expr(lhs),
+                pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_>0))) = [&] {return constant(static_cast<int32_t>(std::pow(*ii1, *ii2))); },
+                pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<int32_t>(std::pow(*ii1, -(*ii2)))); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(ii3)) = [&] {return simplifyRational(fraction(static_cast<int32_t>(std::pow(*ii1, *ii3)), static_cast<int32_t>(std::pow(*ii2, *ii3)))); },
                 pattern | _ = [&] {
                     return std::make_shared<Expr>(Power{{lhs, rhs}});
                 }

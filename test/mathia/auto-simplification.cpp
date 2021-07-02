@@ -687,3 +687,12 @@ TEST(autoSimplification, identity8)
     auto const e = v ^ n1;
     EXPECT_EQ(toString(e), "v");
 }
+
+TEST(autoSimplification, numerical)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const e = n2 ^ n3;
+    EXPECT_EQ(toString(e), "8");
+}
+
