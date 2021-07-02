@@ -272,6 +272,7 @@ namespace mathia
                     return equalC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return equalC<std::shared_ptr<Expr>>(*iS1, *iS2); },
+                pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEr1))) = [&] { return equal(*iEl1, *iEr1); },
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -365,7 +366,7 @@ namespace mathia
         {
             Id<Sum> iSl, iSr;
             Id<int32_t> iil, iir;
-            Id<int32_t> ii1, ii2;
+            Id<int32_t> ii1, ii2, ii3, ii4;
             Id<double> id1, id2;
             Id<std::shared_ptr<Expr>> coeff1, coeff2, rest;
             auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs;} ;
@@ -392,6 +393,7 @@ namespace mathia
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil + *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii2 + *ii1, *ii2)); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii4 + *ii2 * *ii3, *ii2 * *ii4)); },
                 pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 + *id2);; },
                 pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) + ceval(rhs)); },
                 // basic distributive transformation
@@ -431,7 +433,7 @@ namespace mathia
             auto const mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs;} ;
             Id<Product> iSl, iSr;
             Id<int32_t> iil, iir;
-            Id<int32_t> ii1, ii2;
+            Id<int32_t> ii1, ii2, ii3, ii4;
             Id<double> id1, id2;
             Id<std::shared_ptr<Expr>> iu, iv, iw;
             Id<std::shared_ptr<Expr>> exp1, exp2, base;
@@ -459,6 +461,8 @@ namespace mathia
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil * *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii1, *ii2)); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii3, *ii2 * *ii4)); },
                 pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 * *id2);; },
                 pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) * ceval(rhs)); },
                 // basic power transformation 1
@@ -473,6 +477,7 @@ namespace mathia
             );
         }
 
+        // note the operator^ precedence is not high, wrap the operands with parentheses.
         inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             Id<std::shared_ptr<Expr>> iu, iv;
@@ -480,7 +485,7 @@ namespace mathia
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic power transformation 2,3
-                pattern | ds(as<Power>(ds(iu, iv)), as<int>(_)) = (iu^rhs) * (iv^rhs),
+                pattern | ds(as<Power>(ds(iu, iv)), as<int>(_)) = iu^(iv * rhs),
                 pattern | ds(as<Product>(ip), as<int>(_)) = [&] {
                     return std::accumulate((*ip).begin(), (*ip).end(), constant(1), [&](auto&& p, auto&& e)
                     {
@@ -492,7 +497,7 @@ namespace mathia
                 pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return constant(0);},
                 pattern | ds(as<int32_t>(1), _)= [&] { return constant(1);},
                 pattern | ds(_, 0)= expr(constant(1)),
-                pattern | ds(_, 1)= expr(rhs),
+                pattern | ds(_, 1)= expr(lhs),
                 pattern | _ = [&] {
                     return std::make_shared<Expr>(Power{{lhs, rhs}});
                 }
