@@ -666,3 +666,24 @@ TEST(autoSimplification, identity5)
     auto const e = n1 ^ w;
     EXPECT_EQ(toString(e), "1");
 }
+
+TEST(autoSimplification, identity6)
+{
+    auto const v = symbol("v");
+    auto const n0 = constant(0);
+    EXPECT_EQ(toString(v ^ n0), "1");
+}
+
+TEST(autoSimplification, identity7)
+{
+    auto const n0 = constant(0);
+    EXPECT_THROW(n0 ^ n0, std::runtime_error);
+}
+
+TEST(autoSimplification, identity8)
+{
+    auto const v = symbol("v");
+    auto const n1 = constant(1);
+    auto const e = v ^ n1;
+    EXPECT_EQ(toString(e), "v");
+}
