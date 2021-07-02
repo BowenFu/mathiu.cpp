@@ -177,7 +177,7 @@ TEST(simplifyRational, rational2)
 {
     auto const f3o2 = fraction(3, 2);
 
-    EXPECT_EQ(toString(f3o2 + f3o2), "(* 3/2 2)");
+    EXPECT_EQ(toString(f3o2 + f3o2), "3");
 }
 
 
@@ -331,3 +331,260 @@ TEST(asCoeffAndRest, sum3)
         pattern | _ = expr(false));
     EXPECT_TRUE(result);
 }
+
+TEST(autoSimplification, nonRationalCoeff)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const sqrt2 = constant(1.414);
+    auto const e = n2 * x + n3 * x + sqrt2 * x;
+    EXPECT_EQ(toString(e), "(+ (* 5 x) (* 1.414000 x))");
+}
+
+TEST(autoSimplification, sumSin)
+{
+    auto const x = symbol("x");
+    auto const sinX = sin(x);
+    auto const n2 = constant(2);
+    auto const e1 = sinX;
+    auto const e2 = n2 * sinX;
+    EXPECT_EQ(toString(coeffAndTerm(*e1).second), toString(sinX));
+    EXPECT_EQ(toString(coeffAndTerm(*e2).second), toString(sinX));
+    EXPECT_TRUE(mathia::impl::equal(coeffAndTerm(*e1).second, sinX));
+    EXPECT_TRUE(mathia::impl::equal(coeffAndTerm(*e2).second, sinX));
+    auto const e = e1 + e2;
+    EXPECT_EQ(toString(e), "(* 3 (Sin x))");
+}
+
+TEST(autoSimplification, cancel)
+{
+    auto const x = symbol("x");
+    auto const n1 = constant(1);
+    auto const nm1 = constant(-1);
+    auto const e = x + n1 + nm1 * (x + n1);
+    EXPECT_EQ(toString(e), "(+ 1 x (* -1 (+ 1 x)))"); // should be 0
+}
+
+TEST(autoSimplification, associative)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const e = x + (x + y);
+    EXPECT_EQ(toString(e), "(+ (* 2 x) y)");
+}
+
+TEST(autoSimplification, associative1)
+{
+    auto const w = symbol("w");
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const z = symbol("z");
+    auto const e = (w + x) + (y + z);
+    EXPECT_EQ(toString(e), "(+ w x y z)");
+}
+
+TEST(autoSimplification, associative2)
+{
+    auto const w = symbol("w");
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const z = symbol("z");
+    auto const e = (((w * x) * y) * z);
+    EXPECT_EQ(toString(e), "(* w x y z)");
+}
+
+TEST(autoSimplification, associative3)
+{
+    auto const n1 = constant(1);
+    auto const n2 = constant(2);
+    auto const x = symbol("x");
+    auto const e = (n1 + x) + n2 * (x + n1);
+    EXPECT_EQ(toString(e), "(+ 1 x (* 2 (+ 1 x)))");
+}
+
+TEST(autoSimplification, associative4)
+{
+    auto const u = symbol("u");
+    auto const v = symbol("v");
+    auto const w = symbol("w");
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const z = symbol("z");
+    auto const e = ((((u + v) * w) * x) + y) + z;
+    EXPECT_EQ(toString(e), "(+ (* (+ u v) w x) y z)");
+}
+
+TEST(autoSimplification, associative5)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const n4 = constant(4);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const z = symbol("z");
+    auto const e = n2 * (x * y * z) + n3 * x * (y * z) + n4 * (x * y) * z;
+    EXPECT_EQ(toString(e), "(* 9 x y z)");
+}
+
+TEST(autoSimplification, commutative)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const n4 = constant(4);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const z = symbol("z");
+    auto const e = n2 * z * x * y + n3 * y * x * z + n4 * x * z * y;
+    EXPECT_EQ(toString(e), "(* 9 x y z)");
+}
+
+TEST(autoSimplification, commutative2)
+{
+    auto const n3 = constant(3);
+    auto const x = symbol("x");
+    auto const a = symbol("a");
+    auto const e = x * n3 * a;
+    EXPECT_EQ(toString(e), "(* 3 a x)");
+}
+
+TEST(autoSimplification, commutative3)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const n4 = constant(4);
+    auto const x = symbol("x");
+    auto const e = (x ^ n3) + (x ^ n2) + (x ^ n4);
+    EXPECT_EQ(toString(e), "(+ (^ x 2) (^ x 3) (^ x 4))");
+}
+
+TEST(autoSimplification, commutative4)
+{
+    auto const n1 = constant(1);
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const e = n3 * ((x ^ n2) + n2) * y * (x ^ n3) * ((x ^ n2) + n1);
+    EXPECT_EQ(toString(e), "(* 3 (^ x 3) (+ 1 (^ x 2)) (+ 2 (^ x 2)) y)");
+}
+
+TEST(autoSimplification, power)
+{
+    auto const n2 = constant(2);
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const e = (x * y) * (( x * y) ^ n2);
+    EXPECT_EQ(toString(e), "(* (^ x 3) (^ y 3))");
+}
+
+TEST(autoSimplification, power1)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const x = symbol("x");
+    auto const e = (x ^ n2) * (x ^ n3);
+    EXPECT_EQ(toString(e), "(^ x 5)");
+}
+
+TEST(autoSimplification, power2)
+{
+    auto const f1o2 = fraction(1, 2);
+    auto const f1o3 = fraction(1, 3);
+    auto const x = symbol("x");
+    auto const e = (x ^ f1o2) * (x ^ f1o3);
+    EXPECT_EQ(toString(e), "(^ x 5/6)");
+}
+
+TEST(autoSimplification, power3)
+{
+    auto const x = symbol("x");
+    auto const a = symbol("a");
+    auto const b = symbol("b");
+    auto const e = (x ^ a) * (x ^ b);
+    EXPECT_EQ(toString(e), "(^ x (+ a b))");
+}
+
+TEST(autoSimplification, power4)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const e = (x ^ n2) ^ n3;
+    EXPECT_EQ(toString(e), "(^ x 6)");
+}
+
+TEST(autoSimplification, power5)
+{
+    auto const x = symbol("x");
+    auto const a = symbol("a");
+    auto const n2 = constant(2);
+    auto const e = (x ^ a) ^ n2;
+    EXPECT_EQ(toString(e), "(^ x (* 2 a))");
+}
+
+TEST(autoSimplification, power6)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    auto const f1o2 = fraction(1, 2);
+    auto const e = (x ^ n2) ^ f1o2;
+    EXPECT_EQ(toString(e), "(^ (^ x 2) 1/2)");
+}
+
+TEST(autoSimplification, power7)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    auto const f1o2 = fraction(1, 2);
+    auto const e1 = (x ^ f1o2);
+    EXPECT_EQ(toString(e1), "(^ x 1/2)");
+    auto const e = e1 ^ n2;
+    EXPECT_EQ(toString(e), "x");
+}
+
+TEST(autoSimplification, power8)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    auto const a = symbol("a");
+    auto const e = (x ^ n2) ^ a;
+    EXPECT_EQ(toString(e), "(^ (^ x 2) a)");
+}
+
+TEST(autoSimplification, power9)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const n2 = constant(2);
+    auto const e = (x * y) ^ n2;
+    EXPECT_EQ(toString(e), "(* (^ x 2) (^ y 2))");
+}
+
+TEST(autoSimplification, power10)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const f1o3 = fraction(1, 3);
+    auto const e = (x * y) ^ f1o3;
+    EXPECT_EQ(toString(e), "(^ (* x y) 1/3)");
+}
+
+TEST(autoSimplification, power11)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const a = symbol("a");
+    auto const e = (x * y) ^ a;
+    EXPECT_EQ(toString(e), "(^ (* x y) a)");
+}
+
+TEST(autoSimplification, power12)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const f1o2 = fraction(1, 2);
+    auto const e = (x * y) * ((x * y) ^ f1o2);
+    EXPECT_EQ(toString(e), "(* x y (^ (* x y) 1/2))");
+}
+
