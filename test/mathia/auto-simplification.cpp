@@ -588,3 +588,111 @@ TEST(autoSimplification, power12)
     EXPECT_EQ(toString(e), "(* x y (^ (* x y) 1/2))");
 }
 
+TEST(autoSimplification, difference)
+{
+    auto const u = symbol("u");
+    auto const e = -u;
+    EXPECT_EQ(toString(e), "(* -1 u)");
+}
+
+TEST(autoSimplification, difference1)
+{
+    auto const u = symbol("u");
+    auto const v = symbol("v");
+    auto const e = u - v;
+    EXPECT_EQ(toString(e), "(+ u (* -1 v))");
+}
+
+TEST(autoSimplification, quotient)
+{
+    auto const u = symbol("u");
+    auto const v = symbol("v");
+    auto const e = u / v;
+    EXPECT_EQ(toString(e), "(* u (^ v -1))");
+}
+
+TEST(autoSimplification, quotient1)
+{
+    auto const a = symbol("a");
+    auto const x = symbol("x");
+    auto const n3 = constant(3);
+    auto const e = (a * (x ^ n3)) / x;
+    EXPECT_EQ(toString(e), "(* a (^ x 2))");
+}
+
+TEST(autoSimplification, identity)
+{
+    auto const u = symbol("u");
+    auto const n0 = constant(0);
+    auto const e = u + n0;
+    EXPECT_EQ(toString(e), "u");
+}
+
+TEST(autoSimplification, identity1)
+{
+    auto const u = symbol("u");
+    auto const n0 = constant(0);
+    auto const e = u * n0;
+    EXPECT_EQ(toString(e), "0");
+}
+
+TEST(autoSimplification, identity2)
+{
+    auto const u = symbol("u");
+    auto const n1 = constant(1);
+    auto const e = u * n1;
+    EXPECT_EQ(toString(e), "u");
+}
+
+TEST(autoSimplification, identity3)
+{
+    auto const n0 = constant(0);
+    auto const f2o3 = fraction(2, 3);
+    auto const e = n0 ^ f2o3;
+    EXPECT_EQ(toString(e), "0");
+}
+
+TEST(autoSimplification, identity4)
+{
+    auto const n0 = constant(0);
+    auto const w = symbol("w");
+    EXPECT_THROW(n0 ^ w, std::runtime_error);
+}
+
+TEST(autoSimplification, identity5)
+{
+    auto const n1 = constant(1);
+    auto const w = symbol("w");
+    auto const e = n1 ^ w;
+    EXPECT_EQ(toString(e), "1");
+}
+
+TEST(autoSimplification, identity6)
+{
+    auto const v = symbol("v");
+    auto const n0 = constant(0);
+    EXPECT_EQ(toString(v ^ n0), "1");
+}
+
+TEST(autoSimplification, identity7)
+{
+    auto const n0 = constant(0);
+    EXPECT_THROW(n0 ^ n0, std::runtime_error);
+}
+
+TEST(autoSimplification, identity8)
+{
+    auto const v = symbol("v");
+    auto const n1 = constant(1);
+    auto const e = v ^ n1;
+    EXPECT_EQ(toString(e), "v");
+}
+
+TEST(autoSimplification, numerical)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const e = n2 ^ n3;
+    EXPECT_EQ(toString(e), "8");
+}
+
