@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15...3.19)
 project(
-    mathia
+    mathiu
     VERSION 0.0.1
     LANGUAGES CXX)
 
@@ -30,8 +30,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "MSAN")
 endif() #CMAKE_BUILD_TYPE STREQUAL "MSAN"
 
 # Target.
-add_library(mathia INTERFACE)
-target_include_directories(mathia INTERFACE
+add_library(mathiu INTERFACE)
+target_include_directories(mathiu INTERFACE
   ${PROJECT_SOURCE_DIR}/include)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)

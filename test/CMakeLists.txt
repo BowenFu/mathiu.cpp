@@ -1,3 +1,3 @@
 include(FetchGTest)
 include(GoogleTest)
-add_subdirectory(mathia)
+add_subdirectory(mathiu)
