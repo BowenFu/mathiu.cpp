@@ -51,7 +51,6 @@ namespace mathiu
             return less(lhs, rhs);
         }
 
-
         struct Sum : std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
         {
         };
@@ -68,6 +67,7 @@ namespace mathiu
         {
         };
 
+        // TODO: a uniform Func type, std::tuple<std::string, std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
         struct Sin : std::array<std::shared_ptr<Expr>, 1>
         {
         };
@@ -240,6 +240,7 @@ namespace mathiu
                 {
                     return lessC<std::shared_ptr<Expr>>(Sum{{{lhs, lhs}}}, *iS2);
                 },
+                pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEl2))) = iEl1 < iEl2,
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -312,7 +313,11 @@ namespace mathiu
                         return constant(*ii1 / *ii2);
                     }
                     auto const gcd = std::gcd(*ii1, *ii2);
-                    return fraction(*ii1 / gcd, *ii2 / gcd);
+                    if (*ii2 > 0)
+                    {
+                        return fraction(*ii1 / gcd, *ii2 / gcd);
+                    }
+                    return fraction(-*ii1 / gcd, -*ii2 / gcd);
                 },
                 pattern | _ = expr(r)
             )

@@ -16,9 +16,9 @@ TEST(Order, constant1)
 
 TEST(Order, symbol)
 {
-    EXPECT_TRUE((symbol("a"), symbol("b")));
-    EXPECT_TRUE((symbol("v1"), symbol("v2")));
-    EXPECT_TRUE((symbol("x1"), symbol("xa")));
+    EXPECT_TRUE(less(symbol("a"), symbol("b")));
+    EXPECT_TRUE(less(symbol("v1"), symbol("v2")));
+    EXPECT_TRUE(less(symbol("x1"), symbol("xa")));
 }
 
 TEST(Order, less)
@@ -137,4 +137,11 @@ TEST(Order, compond4)
     auto const x = symbol("x");
     auto const n2 = constant(2);
     EXPECT_TRUE(less(x, x^n2));
+}
+
+TEST(Order, func)
+{
+    auto const x = symbol("x");
+    auto const n2 = constant(2);
+    EXPECT_TRUE(less(sin(x), sin(x^n2)));
 }

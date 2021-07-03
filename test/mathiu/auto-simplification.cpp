@@ -696,3 +696,10 @@ TEST(autoSimplification, numerical)
     EXPECT_EQ(toString(e), "8");
 }
 
+TEST(autoSimplification, rational)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const e = n2 / (-n3);
+    EXPECT_EQ(toString(e), "-2/3");
+}
