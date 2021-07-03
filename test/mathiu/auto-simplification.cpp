@@ -696,3 +696,31 @@ TEST(autoSimplification, numerical)
     EXPECT_EQ(toString(e), "8");
 }
 
+TEST(autoSimplification, rational)
+{
+    auto const n2 = constant(2);
+    auto const n3 = constant(3);
+    auto const e = n2 / (-n3);
+    EXPECT_EQ(toString(e), "-2/3");
+}
+
+TEST(autoSimplification, power13)
+{
+    auto const x = symbol("x");
+    auto const f1o2 = fraction(1, 2);
+    auto const n8 = constant(8);
+    auto const e = (((x^f1o2)^f1o2)^n8);
+    EXPECT_EQ(toString(e), "(^ x 2)");
+}
+
+TEST(autoSimplification, power14)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const z = symbol("z");
+    auto const f1o2 = fraction(1, 2);
+    auto const n2 = constant(2);
+    auto const e = ((((x*y)^f1o2)*(z^n2))^n2);
+    EXPECT_EQ(toString(e), "(* x y (^ z 4))");
+}
+

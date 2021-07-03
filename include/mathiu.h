@@ -51,7 +51,6 @@ namespace mathiu
             return less(lhs, rhs);
         }
 
-
         struct Sum : std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
         {
         };
@@ -68,6 +67,7 @@ namespace mathiu
         {
         };
 
+        // TODO: a uniform Func type, std::tuple<std::string, std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
         struct Sin : std::array<std::shared_ptr<Expr>, 1>
         {
         };
@@ -240,6 +240,7 @@ namespace mathiu
                 {
                     return lessC<std::shared_ptr<Expr>>(Sum{{{lhs, lhs}}}, *iS2);
                 },
+                pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEl2))) = iEl1 < iEl2,
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -312,7 +313,11 @@ namespace mathiu
                         return constant(*ii1 / *ii2);
                     }
                     auto const gcd = std::gcd(*ii1, *ii2);
-                    return fraction(*ii1 / gcd, *ii2 / gcd);
+                    if (*ii2 > 0)
+                    {
+                        return fraction(*ii1 / gcd, *ii2 / gcd);
+                    }
+                    return fraction(-*ii1 / gcd, -*ii2 / gcd);
                 },
                 pattern | _ = expr(r)
             )
@@ -444,6 +449,11 @@ namespace mathiu
                 pattern | _ | when ([&]{ return less(rhs, lhs); }) = [&] {
                     return rhs * lhs;
                 },
+                // basic identity transformation
+                pattern | ds(as<int32_t>(0), _) = expr(constant(0)),
+                pattern | ds(_, as<int32_t>(0)) = expr(constant(0)),
+                pattern | ds(as<int32_t>(1), _) = expr(rhs),
+                pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 // basic associative transformation
                 pattern | ds(as<Product>(iSl), as<Product>(iSr)) = [&] {
                     return std::make_shared<Expr>(Product{{ merge(*iSl, *iSr, mul) }});
@@ -454,11 +464,6 @@ namespace mathiu
                 pattern | ds(_, as<Product>(iSr)) = [&] {
                     return std::make_shared<Expr>(Product{{ insertProduct(*iSr, lhs, mul) }});
                 },
-                // basic identity transformation
-                pattern | ds(as<int32_t>(0), _) = expr(constant(0)),
-                pattern | ds(_, as<int32_t>(0)) = expr(constant(0)),
-                pattern | ds(as<int32_t>(1), _) = expr(rhs),
-                pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil * *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
