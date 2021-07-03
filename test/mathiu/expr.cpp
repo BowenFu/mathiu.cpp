@@ -1,7 +1,7 @@
-#include "mathia.h"
+#include "mathiu.h"
 #include "gtest/gtest.h"
 #include <string>
-using namespace mathia;
+using namespace mathiu;
 
 TEST(Expr, constant)
 {

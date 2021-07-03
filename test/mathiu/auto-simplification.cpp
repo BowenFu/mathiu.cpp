@@ -1,7 +1,7 @@
-#include "mathia.h"
+#include "mathiu.h"
 #include "gtest/gtest.h"
 #include <iostream>
-using namespace mathia;
+using namespace mathiu;
 
 TEST(Simplification, power)
 {
@@ -38,10 +38,10 @@ TEST(Simplification, distributive)
 TEST(asCoeffAndRest, 1)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> coeff;
+    Id<std::shared_ptr<mathiu::impl::Expr>> coeff;
     auto result = match(*(symbol("x")))
     (
-        pattern | mathia::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(1); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(1); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -52,10 +52,10 @@ TEST(asCoeffAndRest, 2)
     auto const e = symbol("x")^constant(2);
 
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> coeff;
+    Id<std::shared_ptr<mathiu::impl::Expr>> coeff;
     auto result = match(*e)
     (
-        pattern | mathia::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(1); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(1); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -64,10 +64,10 @@ TEST(asCoeffAndRest, 2)
 TEST(asCoeffAndRest, 3)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> coeff;
+    Id<std::shared_ptr<mathiu::impl::Expr>> coeff;
     auto result = match(*(constant(5) * symbol("x")))
     (
-        pattern | mathia::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(5); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == constant(5); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -76,10 +76,10 @@ TEST(asCoeffAndRest, 3)
 TEST(asCoeffAndRest, 4)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> rest;
+    Id<std::shared_ptr<mathiu::impl::Expr>> rest;
     auto result = match(*(constant(5) * symbol("x")))
     (
-        pattern | mathia::impl::asCoeffAndRest(_, rest) = [&] { return (*rest) == symbol("x"); },
+        pattern | mathiu::impl::asCoeffAndRest(_, rest) = [&] { return (*rest) == symbol("x"); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -88,10 +88,10 @@ TEST(asCoeffAndRest, 4)
 TEST(asCoeffAndRest, multiple)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> coeff1, coeff2, rest;
+    Id<std::shared_ptr<mathiu::impl::Expr>> coeff1, coeff2, rest;
     auto result = match(*(constant(5) * symbol("x")), *symbol("x"))
     (
-        pattern | ds(mathia::impl::asCoeffAndRest(coeff1, rest), mathia::impl::asCoeffAndRest(coeff2, rest)) = [&] { return (*rest) == symbol("x"); },
+        pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest)) = [&] { return (*rest) == symbol("x"); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -100,12 +100,12 @@ TEST(asCoeffAndRest, multiple)
 TEST(asBaseAndExp, 1)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> base;
-    Id<std::shared_ptr<mathia::impl::Expr>> exp;
+    Id<std::shared_ptr<mathiu::impl::Expr>> base;
+    Id<std::shared_ptr<mathiu::impl::Expr>> exp;
 
     auto result = match(*symbol("x"))
     (
-        pattern | mathia::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == constant(1); },
+        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == constant(1); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -114,12 +114,12 @@ TEST(asBaseAndExp, 1)
 TEST(asBaseAndExp, 2)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> base;
-    Id<std::shared_ptr<mathia::impl::Expr>> exp;
+    Id<std::shared_ptr<mathiu::impl::Expr>> base;
+    Id<std::shared_ptr<mathiu::impl::Expr>> exp;
 
     auto result = match(*(symbol("x")^constant(2)))
     (
-        pattern | mathia::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == constant(2); },
+        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == constant(2); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -162,7 +162,7 @@ TEST(simplifyRational, rational_)
 {
     auto const f7o2 = fraction(14, 4);
 
-    EXPECT_EQ(toString(mathia::impl::simplifyRational(f7o2)), "7/2");
+    EXPECT_EQ(toString(mathiu::impl::simplifyRational(f7o2)), "7/2");
 }
 
 TEST(simplifyRational, rational)
@@ -188,10 +188,10 @@ TEST(asCoeffAndRest, rational)
     auto const f3o2 = fraction(3, 2);
 
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> coeff1, coeff2, rest;
+    Id<std::shared_ptr<mathiu::impl::Expr>> coeff1, coeff2, rest;
     auto result = match(*(n2 * x), *(f3o2 * x))
     (
-        pattern | ds(mathia::impl::asCoeffAndRest(coeff1, rest), mathia::impl::asCoeffAndRest(coeff2, rest))= [&]
+        pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest))= [&]
         {
             ((*coeff1) + (*coeff2)); // * (*rest);
             return (*coeff1) == n2 && (*coeff2) == f3o2 && (*rest) == symbol("x"); },
@@ -218,10 +218,10 @@ TEST(asCoeffAndRest, product)
     auto const f3o2 = fraction(3, 2);
 
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> coeff, rest;
+    Id<std::shared_ptr<mathiu::impl::Expr>> coeff, rest;
     auto result = match(*(f3o2 * x))
     (
-        pattern | mathia::impl::asCoeffAndRest(coeff, rest) = [&] { return (*coeff) == f3o2 && (*rest) == symbol("x"); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, rest) = [&] { return (*coeff) == f3o2 && (*rest) == symbol("x"); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -235,7 +235,7 @@ TEST(asCoeffAndRest, product2)
     using namespace matchit;
     auto result = match(*(f3o2 * x))
     (
-        pattern | as<mathia::impl::Product>(ds(ds(f3o2, f3o2), ds(x, x))) = [&] { return true; },
+        pattern | as<mathiu::impl::Product>(ds(ds(f3o2, f3o2), ds(x, x))) = [&] { return true; },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -248,14 +248,14 @@ TEST(asCoeffAndRest, sum)
     auto const y = symbol("y");
 
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> e;
+    Id<std::shared_ptr<mathiu::impl::Expr>> e;
     auto result = match(*(y + f3o2 * x))(
-        pattern | as<mathia::impl::Sum>(
+        pattern | as<mathiu::impl::Sum>(
                       ds(
                           ds(
                               _,
                               some(
-                                  as<mathia::impl::Product>(ds(ds(f3o2, f3o2), ds(x, x))))),
+                                  as<mathiu::impl::Product>(ds(ds(f3o2, f3o2), ds(x, x))))),
                           ds(y, y))) = [&]
         { return true; },
         pattern | _ = expr(false));
@@ -269,7 +269,7 @@ TEST(asCoeffAndRest, sumCompare)
     auto const y = symbol("y");
 
     auto const e = n2 * x + y;
-    auto const sum = std::get<mathia::impl::Sum>(*e);
+    auto const sum = std::get<mathiu::impl::Sum>(*e);
 
     EXPECT_NE(sum.find(x), sum.end());
 }
@@ -286,14 +286,14 @@ TEST(asCoeffAndRest, sum2)
     EXPECT_EQ(toString(e), "(+ (* 2 x) y)");
 
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> ie;
+    Id<std::shared_ptr<mathiu::impl::Expr>> ie;
     auto result = match(*(e))(
-        pattern | as<mathia::impl::Sum>(
+        pattern | as<mathiu::impl::Sum>(
                       ds(
                           ds(
                               ie,
                               some(
-                                  as<mathia::impl::Product>(ds(ds(n2, n2), ds(x, x))))),
+                                  as<mathiu::impl::Product>(ds(ds(n2, n2), ds(x, x))))),
                           ds(y, y))) = [&]
         {
             EXPECT_EQ(toString(*ie), "x");
@@ -315,14 +315,14 @@ TEST(asCoeffAndRest, sum3)
     EXPECT_EQ(toString(e), "(+ (* 7/2 x) y)");
 
     using namespace matchit;
-    Id<std::shared_ptr<mathia::impl::Expr>> ie;
+    Id<std::shared_ptr<mathiu::impl::Expr>> ie;
     auto result = match(*(e))(
-        pattern | as<mathia::impl::Sum>(
+        pattern | as<mathiu::impl::Sum>(
                       ds(
                           ds(
                               ie,
                               some(
-                                  as<mathia::impl::Product>(ds(ds(fraction(7, 2), fraction(7, 2)), ds(x, x))))),
+                                  as<mathiu::impl::Product>(ds(ds(fraction(7, 2), fraction(7, 2)), ds(x, x))))),
                           ds(y, y))) = [&]
         {
             EXPECT_EQ(toString(*ie), "x");
@@ -351,8 +351,8 @@ TEST(autoSimplification, sumSin)
     auto const e2 = n2 * sinX;
     EXPECT_EQ(toString(coeffAndTerm(*e1).second), toString(sinX));
     EXPECT_EQ(toString(coeffAndTerm(*e2).second), toString(sinX));
-    EXPECT_TRUE(mathia::impl::equal(coeffAndTerm(*e1).second, sinX));
-    EXPECT_TRUE(mathia::impl::equal(coeffAndTerm(*e2).second, sinX));
+    EXPECT_TRUE(mathiu::impl::equal(coeffAndTerm(*e1).second, sinX));
+    EXPECT_TRUE(mathiu::impl::equal(coeffAndTerm(*e2).second, sinX));
     auto const e = e1 + e2;
     EXPECT_EQ(toString(e), "(* 3 (Sin x))");
 }

@@ -1,8 +1,8 @@
-# mathia.cpp
+# mathiu.cpp
 
-mathia : a lightweight computer algebra system in C++
+mathiu : a lightweight computer algebra system in C++
 
-![mathia](./mathia.svg)
+![mathiu](./mathiu.svg)
 
 ![Standard](https://img.shields.io/badge/c%2B%2B-17/20-blue.svg)
 ![Type](https://img.shields.io/badge/type-macro--free-blue)
@@ -11,7 +11,7 @@ mathia : a lightweight computer algebra system in C++
 ![Platform](https://img.shields.io/badge/platform-osx-blue)
 ![Platform](https://img.shields.io/badge/platform-win-blue)
 
-[![CMake](https://github.com/BowenFu/mathia.cpp/actions/workflows/cmake.yml/badge.svg)](https://github.com/BowenFu/mathia.cpp/actions/workflows/cmake.yml)
-[![CMake](https://github.com/BowenFu/mathia.cpp/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/BowenFu/mathia.cpp/actions/workflows/sanitizers.yml)
-![GitHub license](https://img.shields.io/github/license/BowenFu/mathia.cpp.svg)
-[![codecov](https://codecov.io/gh/BowenFu/mathia.cpp/branch/main/graph/badge.svg?token=BNWHFLNNSD)](https://codecov.io/gh/BowenFu/mathia.cpp)
+[![CMake](https://github.com/BowenFu/mathiu.cpp/actions/workflows/cmake.yml/badge.svg)](https://github.com/BowenFu/mathiu.cpp/actions/workflows/cmake.yml)
+[![CMake](https://github.com/BowenFu/mathiu.cpp/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/BowenFu/mathiu.cpp/actions/workflows/sanitizers.yml)
+![GitHub license](https://img.shields.io/github/license/BowenFu/mathiu.cpp.svg)
+[![codecov](https://codecov.io/gh/BowenFu/mathiu.cpp/branch/main/graph/badge.svg?token=BNWHFLNNSD)](https://codecov.io/gh/BowenFu/mathiu.cpp)

@@ -1,5 +1,5 @@
-#ifndef mathia_H
-#define mathia_H
+#ifndef mathiu_H
+#define mathiu_H
 
 #include "matchit.h"
 #include <variant>
@@ -11,7 +11,7 @@
 #include <numeric>
 #include <map>
 
-namespace mathia
+namespace mathiu
 {
     namespace impl
     {
@@ -665,6 +665,6 @@ namespace mathia
     using impl::sin;
     using impl::toString;
     using impl::fraction;
-} // namespace mathia
+} // namespace mathiu
 
-#endif // mathia_H
+#endif // mathiu_H

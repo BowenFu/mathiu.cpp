@@ -1,6 +1,6 @@
-#include "mathia.h"
+#include "mathiu.h"
 #include "gtest/gtest.h"
-using namespace mathia;
+using namespace mathiu;
 
 TEST(Order, constant)
 {
@@ -71,7 +71,7 @@ TEST(Order, sum)
     auto const c = symbol("c");
     auto const b = symbol("b");
     auto const a = symbol("a");
-    
+
     EXPECT_EQ(toString(a + b), "(+ a b)");
     EXPECT_EQ(toString(a + c), "(+ a c)");
     EXPECT_EQ(toString(a + c + d), "(+ a c d)");
