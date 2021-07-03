@@ -478,8 +478,7 @@ namespace mathiu
             );
         }
 
-        // note the operator^ precedence is not high, wrap the operands with parentheses.
-        inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline std::shared_ptr<Expr> pow(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
         {
             Id<std::shared_ptr<Expr>> iu, iv;
             Id<int32_t> ii1, ii2, ii3;
@@ -507,6 +506,12 @@ namespace mathiu
                     return std::make_shared<Expr>(Power{{lhs, rhs}});
                 }
             );
+        }
+
+        // note the operator^ precedence is not high, wrap the operands with parentheses.
+        inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        {
+            return pow(lhs, rhs);
         }
 
         // the basic difference transformation
