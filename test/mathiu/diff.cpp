@@ -50,3 +50,10 @@ TEST(diff, product2)
     auto const e = symbol("x") * integer(2);
     EXPECT_EQ(toString(diff(e, x)), "2");
 }
+
+TEST(diff, power)
+{
+    auto const x = symbol("x");
+    auto const e = symbol("x") ^ integer(2);
+    EXPECT_EQ(toString(diff(e, x)), "(* 2 x)");
+}
