@@ -40,9 +40,9 @@ target_include_directories(mathiu INTERFACE
   ${PROJECT_SOURCE_DIR}/include matchit)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(CTest)
     if(BUILD_TESTING)
         include(Sanitizers)
-        include(CTest)
         add_subdirectory(test)
         add_subdirectory(sample)
     endif()
