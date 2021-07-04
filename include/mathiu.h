@@ -11,6 +11,12 @@
 #include <numeric>
 #include <map>
 
+#define DEBUG 1
+
+#if DEBUG
+#include <iostream>
+#endif // DEBUG
+
 namespace mathiu
 {
     namespace impl
@@ -303,12 +309,12 @@ namespace mathiu
             );
         }
 
-        template <typename C, typename Op>
-        auto merge(C const& c1, C const& c2, Op op) -> C
+        template <typename C, typename Op, typename Identity>
+        auto merge(C const& c1, C const& c2, Op op, Identity identity) -> C
         {
             if (c1.size() < c2.size())
             {
-                return merge(c2, c1, op);
+                return merge(c2, c1, op, identity);
             }
             C result = c1;
             for (auto const& e : c2)
@@ -320,10 +326,42 @@ namespace mathiu
                 }
                 else
                 {
-                    it->second = op(it->second, e.second);
+                    auto const opResult = op(it->second, e.second);
+                    if (opResult == identity)
+                    {
+                        result.erase(it);
+                    }
+                    else
+                    {
+                        it->second = op(it->second, e.second);
+                    }
                 }
             }
             return result;
+        }
+
+        template <typename C>
+        auto mergeSum(C const& c1, C const& c2)
+        {
+            constexpr auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs; };
+            auto result = merge(c1, c2, add, integer(0));;
+            if (result.size() == 1)
+            {
+                return (*result.begin()).second;
+            }
+            return std::make_shared<Expr const>(std::move(result));
+        }
+
+        template <typename C>
+        auto mergeProduct(C const& c1, C const& c2)
+        {
+            constexpr auto mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs; };
+            auto result = merge(c1, c2, mul, integer(1));;
+            if (result.size() == 1)
+            {
+                return (*result.begin()).second;
+            }
+            return std::make_shared<Expr const>(std::move(result));
         }
 
         inline ExprPtr simplifyRational(ExprPtr const &r)
@@ -381,10 +419,10 @@ namespace mathiu
                 { return std::make_pair(integer(1), std::make_shared<Expr const>(e)); });
         }
 
-        template <typename C, typename T, typename Op>
-        auto insertSum(C const& c, T const& t, Op op)
+        template <typename C, typename T>
+        auto insertSum(C const& c, T const& t)
         {
-            return merge(c, C{{{coeffAndTerm(*t).second, t}}}, op);
+            return mergeSum(c, C{{{coeffAndTerm(*t).second, t}}});
         }
 
         inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
@@ -395,7 +433,6 @@ namespace mathiu
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
             Id<ExprPtr> coeff1, coeff2, rest;
-            auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs;} ;
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
@@ -404,13 +441,13 @@ namespace mathiu
                 },
                 // basic associative transformation
                 pattern | ds(as<Sum>(iSl), as<Sum>(iSr)) = [&] {
-                    return std::make_shared<Expr const>(Sum{{ merge(*iSl, *iSr, add) }});
+                    return mergeSum(*iSl, *iSr);
                 },
                 pattern | ds(as<Sum>(iSl), _) = [&] {
-                    return std::make_shared<Expr const>(Sum{{ insertSum(*iSl, rhs, add) }});
+                    return insertSum(*iSl, rhs);
                 },
                 pattern | ds(_, as<Sum>(iSr)) = [&] {
-                    return std::make_shared<Expr const>(Sum{{ insertSum(*iSr, lhs, add) }});
+                    return insertSum(*iSr, lhs);
                 },
                 // basic identity transformation
                 pattern | ds(as<int32_t>(0), _) = expr(rhs),
@@ -442,17 +479,20 @@ namespace mathiu
             );
         }
 
-        template <typename C, typename T, typename Op>
-        auto insertProduct(C const& c, T const& t, Op op)
+        template <typename C, typename T>
+        auto insertProduct(C const& c, T const& t)
         {
-            return merge(c, C{{{baseAndExp(*t).first, t}}}, op);
+            return mergeProduct(c, C{{{baseAndExp(*t).first, t}}});
         }
 
         inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
 
         inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            auto const mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs;} ;
+#if DEBUG
+            std::cout << "operator*: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
+#endif // DEBUG
+
             Id<Product> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
@@ -471,13 +511,13 @@ namespace mathiu
                 pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 // basic associative transformation
                 pattern | ds(as<Product>(iSl), as<Product>(iSr)) = [&] {
-                    return std::make_shared<Expr const>(Product{{ merge(*iSl, *iSr, mul) }});
+                    return mergeProduct(*iSl, *iSr);
                 },
                 pattern | ds(as<Product>(iSl), _) = [&] {
-                    return std::make_shared<Expr const>(Product{{ insertProduct(*iSl, rhs, mul) }});
+                    return insertProduct(*iSl, rhs);
                 },
                 pattern | ds(_, as<Product>(iSr)) = [&] {
-                    return std::make_shared<Expr const>(Product{{ insertProduct(*iSr, lhs, mul) }});
+                    return insertProduct(*iSr, lhs);
                 },
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil * *iir); },

@@ -37,3 +37,16 @@ TEST(diff, sum2)
     EXPECT_EQ(toString(diff(e, x)), "1");
 }
 
+TEST(diff, product)
+{
+    auto const x = symbol("x");
+    auto const e = symbol("x") * symbol("y");
+    EXPECT_EQ(toString(diff(e, x)), "y");
+}
+
+TEST(diff, product2)
+{
+    auto const x = symbol("x");
+    auto const e = symbol("x") * integer(2);
+    EXPECT_EQ(toString(diff(e, x)), "2");
+}

@@ -724,3 +724,11 @@ TEST(autoSimplification, power14)
     EXPECT_EQ(toString(e), "(* x y (^ z 4))");
 }
 
+TEST(autoSimplification, product)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const e = x * y / x;
+    // auto const e = x / x * y;
+    EXPECT_EQ(toString(e), "y");
+}

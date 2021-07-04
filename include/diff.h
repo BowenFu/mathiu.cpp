@@ -11,9 +11,14 @@ namespace mathiu
 
         ExprPtr diffImpl(ExprPtr const& exp, Symbol const& var)
         {
+#if DEBUG
+            std::cout << "diffImpl: " << toString(exp) << "\t" << var[0] << std::endl;
+#endif // DEBUG
+
             using namespace matchit;
             constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             Id<Sum> iS;
+            Id<Product> iP;
             return match(*exp)
             (
                 pattern | isRational = expr(integer(0)),
@@ -21,6 +26,12 @@ namespace mathiu
                 pattern | as<Symbol>(_) = expr(integer(0)),
                 pattern | as<Sum>(iS) = [&] {
                     return std::accumulate((*iS).begin(), (*iS).end(), integer(0), [&](auto&& sum, auto&& e){ return sum + diffImpl(e.second, var); }); 
+                },
+                pattern | as<Product>(iP) = [&] {
+                    return std::accumulate((*iP).begin(), (*iP).end(), integer(0), [&](auto&& sum, auto&& e)
+                    {
+                        return sum + diffImpl(e.second, var) / e.second * exp;
+                    }); 
                 },
                 pattern | _ = [&] { throw std::runtime_error{"No match in diff!"}; return integer(0); }
             );
