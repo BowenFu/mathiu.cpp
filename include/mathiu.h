@@ -332,7 +332,7 @@ namespace mathiu
             return match(*r)
             (
                 pattern | as<Fraction>(ds(ii1, ii2)) = [&]{
-                    if (*ii1 / *ii2 * *ii2 == *ii1)
+                    if (*ii1 % *ii2 == 0)
                     {
                         return integer(*ii1 / *ii2);
                     }
@@ -344,8 +344,7 @@ namespace mathiu
                     return fraction(-*ii1 / gcd, -*ii2 / gcd);
                 },
                 pattern | _ = expr(r)
-            )
-            ;
+            );
         }
 
         inline std::complex<double> evalc(const ExprPtr &ex);
