@@ -34,16 +34,20 @@ endif() #CMAKE_BUILD_TYPE STREQUAL "MSAN"
 # Target.
 add_library(mathiu INTERFACE)
 
+include(FetchMatchit)
+
 target_include_directories(mathiu INTERFACE
-  ${PROJECT_SOURCE_DIR}/include)
+  ${PROJECT_SOURCE_DIR}/include matchit)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    include(Sanitizers)
-    include(CTest)
     if(BUILD_TESTING)
+        message(STATUS "TESTING1 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
+        include(Sanitizers)
+        message(STATUS "TESTING2 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
+        include(CTest)
+        message(STATUS "TESTING3 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
         add_subdirectory(test)
+        message(STATUS "TESTING4 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
         add_subdirectory(sample)
     endif()
 endif()
-
-unset(CMAKE_CXX_STANDARD CACHE)
