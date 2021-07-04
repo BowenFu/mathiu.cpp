@@ -21,6 +21,15 @@ namespace mathiu
 
         using ExprPtr = std::shared_ptr<Expr const>;
 
+        inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs);
+        inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
+        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs);
+        inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs);
+        inline ExprPtr operator-(ExprPtr const &lhs, ExprPtr const &rhs);
+        inline ExprPtr operator-(ExprPtr const &rhs);
+        inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
+        inline ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs);
+
         struct Symbol : std::array<std::string, 1>
         {
         };
@@ -45,8 +54,6 @@ namespace mathiu
         inline const auto i = std::make_shared<Expr const>(I{});
 
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs);
-
-        inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
 
         struct ExprPtrLess
         {
@@ -108,9 +115,21 @@ namespace mathiu
             return std::make_shared<Expr const>(Fraction{{l, r}});
         }
 
-        inline ExprPtr sin(ExprPtr const &expr)
+        inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
+
+        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Sin{{expr}});
+            return equal(lhs, rhs);
+        }
+
+        inline ExprPtr sin(ExprPtr const &ex)
+        {
+            using namespace matchit;
+            return match(ex)(
+                pattern | pi = expr(integer(0)),
+                pattern | (pi / integer(2)) = expr(integer(1)),
+                pattern | _ = [&]
+                { return std::make_shared<Expr const>(Sin{{ex}}); });
         }
 
         inline ExprPtr symbol(std::string const &name)
@@ -129,13 +148,6 @@ namespace mathiu
         inline std::string toString(T const& t)
         {
             return std::to_string((t));
-        }
-
-        inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
-
-        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs)
-        {
-            return equal(lhs, rhs);
         }
 
         inline bool equal(std::pair<ExprPtr const, ExprPtr > const &lhs, std::pair<ExprPtr const, ExprPtr > const &rhs)
@@ -376,8 +388,6 @@ namespace mathiu
             return merge(c, C{{{coeffAndTerm(*t).second, t}}}, op);
         }
 
-        inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
-
         inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
 
         inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -439,8 +449,6 @@ namespace mathiu
             return merge(c, C{{{baseAndExp(*t).first, t}}}, op);
         }
 
-        inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs);
-        
         inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
 
         inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs)
