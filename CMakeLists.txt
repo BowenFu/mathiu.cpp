@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15...3.19)
+
 project(
     mathiu
     VERSION 0.0.1
@@ -9,6 +10,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 if (NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
+
 message(STATUS "CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 list(APPEND
@@ -31,16 +33,17 @@ endif() #CMAKE_BUILD_TYPE STREQUAL "MSAN"
 
 # Target.
 add_library(mathiu INTERFACE)
+
+include(FetchMatchit)
+
 target_include_directories(mathiu INTERFACE
-  ${PROJECT_SOURCE_DIR}/include)
+  ${PROJECT_SOURCE_DIR}/include matchit)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    include(Sanitizers)
     include(CTest)
     if(BUILD_TESTING)
+        include(Sanitizers)
         add_subdirectory(test)
         add_subdirectory(sample)
     endif()
 endif()
-
-unset(CMAKE_CXX_STANDARD CACHE)
