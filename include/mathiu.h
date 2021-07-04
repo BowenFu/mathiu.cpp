@@ -19,7 +19,7 @@ namespace mathiu
 
         struct Expr;
 
-        using ExprPtr = std::shared_ptr<Expr>;
+        using ExprPtr = std::shared_ptr<Expr const>;
 
         struct Symbol : std::array<std::string, 1>
         {
@@ -30,19 +30,19 @@ namespace mathiu
         struct Pi
         {
         };
-        inline const auto pi = std::make_shared<Expr>(Pi{});
+        inline const auto pi = std::make_shared<Expr const>(Pi{});
 
         inline const double e_ = std::exp(1);
         struct E
         {
         };
-        inline const auto e = std::make_shared<Expr>(E{});
+        inline const auto e = std::make_shared<Expr const>(E{});
 
         inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         struct I
         {
         };
-        inline const auto i = std::make_shared<Expr>(I{});
+        inline const auto i = std::make_shared<Expr const>(I{});
 
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs);
 
@@ -100,22 +100,22 @@ namespace mathiu
 
         inline ExprPtr integer(int32_t v)
         {
-            return std::make_shared<Expr>(v);
+            return std::make_shared<Expr const>(v);
         }
 
         inline ExprPtr fraction(int32_t l, int32_t r)
         {
-            return std::make_shared<Expr>(Fraction{{l, r}});
+            return std::make_shared<Expr const>(Fraction{{l, r}});
         }
 
         inline ExprPtr sin(ExprPtr const &expr)
         {
-            return std::make_shared<Expr>(Sin{{expr}});
+            return std::make_shared<Expr const>(Sin{{expr}});
         }
 
         inline ExprPtr symbol(std::string const &name)
         {
-            return std::make_shared<Expr>(Symbol{{name}});
+            return std::make_shared<Expr const>(Symbol{{name}});
         }
 
         inline std::string toString(const ExprPtr &ex);
@@ -191,7 +191,7 @@ namespace mathiu
             return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2), equalLambda);
         }
 
-        inline double eval(const ExprPtr &ex);
+        inline double evald(const ExprPtr &ex);
 
         // The <| order relation
         // for basic commutative transformation
@@ -208,7 +208,7 @@ namespace mathiu
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
-                pattern | ds(isReal, isReal)   = [&] { return eval(lhs) < eval(rhs); },
+                pattern | ds(isReal, isReal)   = [&] { return evald(lhs) < evald(rhs); },
                 pattern | ds(isReal, _)   = [&] { return true; },
                 pattern | ds(_, isReal)   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
@@ -272,7 +272,7 @@ namespace mathiu
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
-                pattern | ds(isReal, isReal)   = [&] { return eval(lhs) == eval(rhs); },
+                pattern | ds(isReal, isReal)   = [&] { return evald(lhs) == evald(rhs); },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl == *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
@@ -336,7 +336,7 @@ namespace mathiu
             ;
         }
 
-        inline std::complex<double> ceval(const ExprPtr &ex);
+        inline std::complex<double> evalc(const ExprPtr &ex);
 
         inline constexpr auto asCoeff = or_(as<int32_t>(_), as<Fraction>(_));
         inline constexpr auto second = [](auto&& p)
@@ -360,14 +360,14 @@ namespace mathiu
                     {
                         auto pCopy = *ip;
                         pCopy.erase(pCopy.begin());
-                        return std::make_pair(*icoeff, std::make_shared<Expr>(Product{pCopy}));
+                        return std::make_pair(*icoeff, std::make_shared<Expr const>(Product{pCopy}));
                     }
                     // single value left.
                     // the basic unary transformation.
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
                 pattern | _ = [&]
-                { return std::make_pair(integer(1), std::make_shared<Expr>(e)); });
+                { return std::make_pair(integer(1), std::make_shared<Expr const>(e)); });
         }
 
         template <typename C, typename T, typename Op>
@@ -395,13 +395,13 @@ namespace mathiu
                 },
                 // basic associative transformation
                 pattern | ds(as<Sum>(iSl), as<Sum>(iSr)) = [&] {
-                    return std::make_shared<Expr>(Sum{{ merge(*iSl, *iSr, add) }});
+                    return std::make_shared<Expr const>(Sum{{ merge(*iSl, *iSr, add) }});
                 },
                 pattern | ds(as<Sum>(iSl), _) = [&] {
-                    return std::make_shared<Expr>(Sum{{ insertSum(*iSl, rhs, add) }});
+                    return std::make_shared<Expr const>(Sum{{ insertSum(*iSl, rhs, add) }});
                 },
                 pattern | ds(_, as<Sum>(iSr)) = [&] {
-                    return std::make_shared<Expr>(Sum{{ insertSum(*iSr, lhs, add) }});
+                    return std::make_shared<Expr const>(Sum{{ insertSum(*iSr, lhs, add) }});
                 },
                 // basic identity transformation
                 pattern | ds(as<int32_t>(0), _) = expr(rhs),
@@ -416,7 +416,7 @@ namespace mathiu
                 {
                     return ((*coeff1) + (*coeff2)) * (*rest);
                 },
-                pattern | _                            = [&] { return std::make_shared<Expr>(Sum{{{coeffAndTerm(*lhs).second, lhs}, {coeffAndTerm(*rhs).second, rhs}}}); }
+                pattern | _                            = [&] { return std::make_shared<Expr const>(Sum{{{coeffAndTerm(*lhs).second, lhs}, {coeffAndTerm(*rhs).second, rhs}}}); }
                 // clang-format on
             );
         }
@@ -429,7 +429,7 @@ namespace mathiu
                 pattern | as<Power>(ds(iBase, iExp)) = [&] {
                     return std::make_pair( *iBase, *iExp);
                 },
-                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr>(e), integer(1)); }
+                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr const>(e), integer(1)); }
             );
         }
 
@@ -464,13 +464,13 @@ namespace mathiu
                 pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 // basic associative transformation
                 pattern | ds(as<Product>(iSl), as<Product>(iSr)) = [&] {
-                    return std::make_shared<Expr>(Product{{ merge(*iSl, *iSr, mul) }});
+                    return std::make_shared<Expr const>(Product{{ merge(*iSl, *iSr, mul) }});
                 },
                 pattern | ds(as<Product>(iSl), _) = [&] {
-                    return std::make_shared<Expr>(Product{{ insertProduct(*iSl, rhs, mul) }});
+                    return std::make_shared<Expr const>(Product{{ insertProduct(*iSl, rhs, mul) }});
                 },
                 pattern | ds(_, as<Product>(iSr)) = [&] {
-                    return std::make_shared<Expr>(Product{{ insertProduct(*iSr, lhs, mul) }});
+                    return std::make_shared<Expr const>(Product{{ insertProduct(*iSr, lhs, mul) }});
                 },
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil * *iir); },
@@ -484,7 +484,7 @@ namespace mathiu
                 {
                     return (*base)^((*exp1) + (*exp2));
                 },
-                pattern | _                            = [&] { return std::make_shared<Expr>(Product{{{baseAndExp(*lhs).first, lhs}, {baseAndExp(*rhs).first, rhs}}}); }
+                pattern | _                            = [&] { return std::make_shared<Expr const>(Product{{{baseAndExp(*lhs).first, lhs}, {baseAndExp(*rhs).first, rhs}}}); }
                 // clang-format on
             );
         }
@@ -505,7 +505,7 @@ namespace mathiu
                     });
                 },
                 // basic identity transformation
-                pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return eval(rhs) > 0; }) = expr(integer(0)),
+                pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return evald(rhs) > 0; }) = expr(integer(0)),
                 pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return integer(0);},
                 pattern | ds(as<int32_t>(1), _)= [&] { return integer(1);},
                 pattern | ds(_, 0)= expr(integer(1)),
@@ -514,7 +514,7 @@ namespace mathiu
                 pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<int32_t>(std::pow(*ii1, -(*ii2)))); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(ii3)) = [&] {return simplifyRational(fraction(static_cast<int32_t>(std::pow(*ii1, *ii3)), static_cast<int32_t>(std::pow(*ii2, *ii3)))); },
                 pattern | _ = [&] {
-                    return std::make_shared<Expr>(Power{{lhs, rhs}});
+                    return std::make_shared<Expr const>(Power{{lhs, rhs}});
                 }
             );
         }
@@ -562,10 +562,10 @@ namespace mathiu
 
         inline ExprPtr log(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr>(Log{{lhs, rhs}});
+            return std::make_shared<Expr const>(Log{{lhs, rhs}});
         }
 
-        inline double eval(const ExprPtr &ex)
+        inline double evald(const ExprPtr &ex)
         {
             assert(ex);
             Id<int32_t> i, il, ir;
@@ -576,24 +576,24 @@ namespace mathiu
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
                 pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
-                pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
+                pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling evald."); return 0; },
                 pattern | as<Sum>(iS)                                = [&]{
-                    return std::accumulate((*iS).begin(), (*iS).end(), 0., [](auto&& sum, auto&& e){ return sum + eval(e.second); }); 
+                    return std::accumulate((*iS).begin(), (*iS).end(), 0., [](auto&& sum, auto&& e){ return sum + evald(e.second); }); 
                 },
                 pattern | as<Product>(iP)                            = [&]{
-                    return std::accumulate((*iP).begin(), (*iP).end(), 1., [](auto&& product, auto&& e){ return product * eval(e.second); }); 
+                    return std::accumulate((*iP).begin(), (*iP).end(), 1., [](auto&& product, auto&& e){ return product * evald(e.second); }); 
                 },
-                pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(eval(*l), eval(*r)); },
-                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(eval(*e)); },
-                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log2(eval(*r)) / std::log2(eval(*l)); },
+                pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(evald(*l), evald(*r)); },
+                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(evald(*e)); },
+                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log2(evald(*r)) / std::log2(evald(*l)); },
                 pattern | as<Pi>(_)                                 = expr(pi_),
                 pattern | as<E>(_)                                  = expr(e_),
-                pattern | _                                         = [&] { throw std::runtime_error{"No match in eval!"}; return 0;}
+                pattern | _                                         = [&] { throw std::runtime_error{"No match in evald!"}; return 0;}
                 // clang-format on
             );
         }
 
-        inline std::complex<double> ceval(const ExprPtr &ex)
+        inline std::complex<double> evalc(const ExprPtr &ex)
         {
             assert(ex);
             Id<int32_t> i, il, ir;
@@ -604,20 +604,20 @@ namespace mathiu
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
                 pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
-                pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling ceval."); return 0; },
+                pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling evalc."); return 0; },
                 pattern | as<Sum>(iS)                                = [&]{
-                    return std::accumulate((*iS).begin(), (*iS).end(), std::complex<double>(0), [](auto&& sum, auto&& e){ return sum + ceval(e.second); }); 
+                    return std::accumulate((*iS).begin(), (*iS).end(), std::complex<double>(0), [](auto&& sum, auto&& e){ return sum + evalc(e.second); }); 
                 },
                 pattern | as<Product>(iP)                            = [&]{
-                    return std::accumulate((*iP).begin(), (*iP).end(), std::complex<double>(1), [](auto&& product, auto&& e){ return product * ceval(e.second); }); 
+                    return std::accumulate((*iP).begin(), (*iP).end(), std::complex<double>(1), [](auto&& product, auto&& e){ return product * evalc(e.second); }); 
                 },
-                pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(ceval(*l), ceval(*r)); },
-                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(ceval(*e)); },
-                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log(ceval(*r)) / std::log(ceval(*l)); },
+                pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(evalc(*l), evalc(*r)); },
+                pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(evalc(*e)); },
+                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log(evalc(*r)) / std::log(evalc(*l)); },
                 pattern | as<Pi>(_)                                 = expr(pi_),
                 pattern | as<E>(_)                                  = expr(e_),
                 pattern | as<I>(_)                                  = expr(i_),
-                pattern | _                                         = [&] { throw std::runtime_error{"No match in ceval!"}; return 0;}
+                pattern | _                                         = [&] { throw std::runtime_error{"No match in evalc!"}; return 0;}
                 // clang-format on
             );
         }
@@ -669,7 +669,8 @@ namespace mathiu
     using impl::operator*;
     using impl::operator/;
     using impl::operator^;
-    using impl::eval;
+    using impl::evald;
+    using impl::evalc;
     using impl::pi;
     using impl::i;
     using impl::e;

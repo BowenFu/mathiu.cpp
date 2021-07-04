@@ -35,7 +35,7 @@ TEST(Order, less)
     auto const b = symbol("b");
     auto const c = symbol("c");
     auto const d = symbol("d");
-    EXPECT_TRUE(impl::lessC<std::shared_ptr<impl::Expr>>({c, d}, {b, c, d}));
+    EXPECT_TRUE(impl::lessC<impl::ExprPtr>({c, d}, {b, c, d}));
 }
 
 TEST(Order, product)
@@ -55,13 +55,13 @@ TEST(Order, product1)
     auto const d = symbol("d");
     EXPECT_EQ(toString(b * d), "(* b d)");
     EXPECT_EQ(toString(b * c * d), "(* b c d)");
-    EXPECT_TRUE(impl::lessC<std::shared_ptr<impl::Expr>>({b, d}, {b, c, d}));
+    EXPECT_TRUE(impl::lessC<impl::ExprPtr>({b, d}, {b, c, d}));
 
     auto const e1 = c * d;
     auto const e2 = b * c * d;
     EXPECT_EQ(toString(e1), "(* c d)");
     EXPECT_EQ(toString(e2), "(* b c d)");
-    EXPECT_TRUE(impl::lessC<std::shared_ptr<impl::Expr>>({c, d}, {b, c, d}));
+    EXPECT_TRUE(impl::lessC<impl::ExprPtr>({c, d}, {b, c, d}));
     EXPECT_TRUE(less(e1, e2));
 }
 

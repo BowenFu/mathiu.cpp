@@ -38,7 +38,7 @@ TEST(Simplification, distributive)
 TEST(asCoeffAndRest, 1)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> coeff;
+    Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*(symbol("x")))
     (
         pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == integer(1); },
@@ -52,7 +52,7 @@ TEST(asCoeffAndRest, 2)
     auto const e = symbol("x")^integer(2);
 
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> coeff;
+    Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*e)
     (
         pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == integer(1); },
@@ -64,7 +64,7 @@ TEST(asCoeffAndRest, 2)
 TEST(asCoeffAndRest, 3)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> coeff;
+    Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*(integer(5) * symbol("x")))
     (
         pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == integer(5); },
@@ -76,7 +76,7 @@ TEST(asCoeffAndRest, 3)
 TEST(asCoeffAndRest, 4)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> rest;
+    Id<mathiu::impl::ExprPtr> rest;
     auto result = match(*(integer(5) * symbol("x")))
     (
         pattern | mathiu::impl::asCoeffAndRest(_, rest) = [&] { return (*rest) == symbol("x"); },
@@ -88,7 +88,7 @@ TEST(asCoeffAndRest, 4)
 TEST(asCoeffAndRest, multiple)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> coeff1, coeff2, rest;
+    Id<mathiu::impl::ExprPtr> coeff1, coeff2, rest;
     auto result = match(*(integer(5) * symbol("x")), *symbol("x"))
     (
         pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest)) = [&] { return (*rest) == symbol("x"); },
@@ -100,8 +100,8 @@ TEST(asCoeffAndRest, multiple)
 TEST(asBaseAndExp, 1)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> base;
-    Id<std::shared_ptr<mathiu::impl::Expr>> exp;
+    Id<mathiu::impl::ExprPtr> base;
+    Id<mathiu::impl::ExprPtr> exp;
 
     auto result = match(*symbol("x"))
     (
@@ -114,8 +114,8 @@ TEST(asBaseAndExp, 1)
 TEST(asBaseAndExp, 2)
 {
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> base;
-    Id<std::shared_ptr<mathiu::impl::Expr>> exp;
+    Id<mathiu::impl::ExprPtr> base;
+    Id<mathiu::impl::ExprPtr> exp;
 
     auto result = match(*(symbol("x")^integer(2)))
     (
@@ -188,7 +188,7 @@ TEST(asCoeffAndRest, rational)
     auto const f3o2 = fraction(3, 2);
 
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> coeff1, coeff2, rest;
+    Id<mathiu::impl::ExprPtr> coeff1, coeff2, rest;
     auto result = match(*(n2 * x), *(f3o2 * x))
     (
         pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest))= [&]
@@ -218,7 +218,7 @@ TEST(asCoeffAndRest, product)
     auto const f3o2 = fraction(3, 2);
 
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> coeff, rest;
+    Id<mathiu::impl::ExprPtr> coeff, rest;
     auto result = match(*(f3o2 * x))
     (
         pattern | mathiu::impl::asCoeffAndRest(coeff, rest) = [&] { return (*coeff) == f3o2 && (*rest) == symbol("x"); },
@@ -248,7 +248,7 @@ TEST(asCoeffAndRest, sum)
     auto const y = symbol("y");
 
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> e;
+    Id<mathiu::impl::ExprPtr> e;
     auto result = match(*(y + f3o2 * x))(
         pattern | as<mathiu::impl::Sum>(
                       ds(
@@ -286,7 +286,7 @@ TEST(asCoeffAndRest, sum2)
     EXPECT_EQ(toString(e), "(+ (* 2 x) y)");
 
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> ie;
+    Id<mathiu::impl::ExprPtr> ie;
     auto result = match(*(e))(
         pattern | as<mathiu::impl::Sum>(
                       ds(
@@ -315,7 +315,7 @@ TEST(asCoeffAndRest, sum3)
     EXPECT_EQ(toString(e), "(+ (* 7/2 x) y)");
 
     using namespace matchit;
-    Id<std::shared_ptr<mathiu::impl::Expr>> ie;
+    Id<mathiu::impl::ExprPtr> ie;
     auto result = match(*(e))(
         pattern | as<mathiu::impl::Sum>(
                       ds(
