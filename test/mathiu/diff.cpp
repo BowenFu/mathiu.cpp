@@ -58,6 +58,13 @@ TEST(diff, power)
     EXPECT_EQ(toString(diff(e, x)), "(* 2 x)");
 }
 
+TEST(diff, power2)
+{
+    auto const x = symbol("x");
+    auto const e = x ^ fraction(2, 3);
+    EXPECT_EQ(toString(diff(e, x)), "(* 2/3 (^ x -1/3))");
+}
+
 TEST(diff, compound)
 {
     auto const x = symbol("x");
