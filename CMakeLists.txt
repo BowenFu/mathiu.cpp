@@ -34,6 +34,8 @@ endif() #CMAKE_BUILD_TYPE STREQUAL "MSAN"
 # Target.
 add_library(mathiu INTERFACE)
 
+include(FetchMatchit)
+
 target_include_directories(mathiu INTERFACE
   ${PROJECT_SOURCE_DIR}/include matchit)
 
