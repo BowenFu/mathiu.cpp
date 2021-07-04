@@ -1,5 +1,5 @@
-#ifndef mathiu_H
-#define mathiu_H
+#ifndef MATHIU_H
+#define MATHIU_H
 
 #include "matchit.h"
 #include <variant>
@@ -213,16 +213,16 @@ namespace mathiu
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
-            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_));
+            constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             constexpr auto canBeProduct = or_(as<Power>(_), as<Sum>(_), as<Symbol>(_));
             constexpr auto canBePower = or_(as<Sum>(_), as<Symbol>(_));
             constexpr auto canBeSum = or_(as<Symbol>(_));
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
-                pattern | ds(isReal, isReal)   = [&] { return evald(lhs) < evald(rhs); },
-                pattern | ds(isReal, _)   = [&] { return true; },
-                pattern | ds(_, isReal)   = [&] { return false; },
+                pattern | ds(isRational, isRational)   = [&] { return evald(lhs) < evald(rhs); },
+                pattern | ds(isRational, _)   = [&] { return true; },
+                pattern | ds(_, isRational)   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
@@ -280,11 +280,11 @@ namespace mathiu
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
-            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_));
+            constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
-                pattern | ds(isReal, isReal)   = [&] { return evald(lhs) == evald(rhs); },
+                pattern | ds(isRational, isRational)   = [&] { return evald(lhs) == evald(rhs); },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl == *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
@@ -686,4 +686,4 @@ namespace mathiu
     using impl::fraction;
 } // namespace mathiu
 
-#endif // mathiu_H
+#endif // MATHIU_H
