@@ -41,13 +41,9 @@ target_include_directories(mathiu INTERFACE
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     if(BUILD_TESTING)
-        message(STATUS "TESTING1 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
         include(Sanitizers)
-        message(STATUS "TESTING2 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
         include(CTest)
-        message(STATUS "TESTING3 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
         add_subdirectory(test)
-        message(STATUS "TESTING4 CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
         add_subdirectory(sample)
     endif()
 endif()
