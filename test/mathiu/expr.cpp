@@ -6,7 +6,7 @@ using namespace mathiu;
 TEST(Expr, integer)
 {
     auto x = integer(5);
-    EXPECT_EQ(eval(x), 5);
+    EXPECT_EQ(evald(x), 5);
 }
 
 TEST(Expr, pi)
@@ -22,22 +22,22 @@ TEST(Expr, pi2)
 {
     auto expr = sin(pi);
     EXPECT_EQ(toString(expr), "(Sin pi)");
-    EXPECT_NEAR(eval(expr), 0, 1e-5);
-    EXPECT_NEAR(eval(sin(pi / integer(2))), 1, 1e-5);
+    EXPECT_NEAR(evald(expr), 0, 1e-5);
+    EXPECT_NEAR(evald(sin(pi / integer(2))), 1, 1e-5);
 }
 
 TEST(Expr, e)
 {
     auto expr = log(e, e);
     EXPECT_EQ(toString(expr), "(Log e e)");
-    EXPECT_NEAR(eval(expr), 1, 1e-5);
+    EXPECT_NEAR(evald(expr), 1, 1e-5);
 }
 
 TEST(Expr, i)
 {
     auto expr = i * i;
     EXPECT_EQ(toString(expr), "(^ i 2)");
-    auto result = ceval(expr);
+    auto result = evalc(expr);
     EXPECT_NEAR(result.real(), -1, 1e-5);
     EXPECT_NEAR(result.imag(), 0, 1e-5);
 }
@@ -48,12 +48,12 @@ TEST(Expr, fraction)
     EXPECT_EQ(toString(expr), "5/8");
 }
 
-// TEST(Expr, ceval)
+// TEST(Expr, evalc)
 // {
 //     auto expr = e ^ (-i * pi);
 //     auto exprStr = toString(expr);
 //     EXPECT_EQ(exprStr, "(^ e (* (* -1 i) pi))");
-//     auto result = ceval(expr);
+//     auto result = evalc(expr);
 //     EXPECT_NEAR(result.real(), -1, 1e-5);
 //     EXPECT_NEAR(result.imag(), 0, 1e-5);
 // }
@@ -63,7 +63,7 @@ TEST(Expr, ceval1)
     auto expr = (-i * pi);
     auto exprStr = toString(expr);
     EXPECT_EQ(exprStr, "(* -1 pi i)");
-    auto result = ceval(expr);
+    auto result = evalc(expr);
     EXPECT_NEAR(result.real(), 0, 1e-5);
     EXPECT_NEAR(result.imag(), -3.1415926, 1e-5);
 }
@@ -74,7 +74,7 @@ TEST(Expr, product)
     auto y = integer(5);
     auto expr = x * y;
     EXPECT_EQ(toString(expr), "25");
-    EXPECT_EQ(eval(expr), 25);
+    EXPECT_EQ(evald(expr), 25);
 }
 
 TEST(Expr, quotient)
@@ -83,7 +83,7 @@ TEST(Expr, quotient)
     auto y = integer(5);
     auto expr = x / y;
     EXPECT_EQ(toString(expr), "1");
-    EXPECT_EQ(eval(expr), 1);
+    EXPECT_EQ(evald(expr), 1);
 }
 
 TEST(Expr, sum)
@@ -92,7 +92,7 @@ TEST(Expr, sum)
     auto y = integer(5);
     auto expr = x + y;
     EXPECT_EQ(toString(expr), "10");
-    EXPECT_EQ(eval(expr), 10);
+    EXPECT_EQ(evald(expr), 10);
 }
 
 TEST(Expr, sum2)
@@ -101,7 +101,7 @@ TEST(Expr, sum2)
     auto y = integer(5);
     auto expr = x + y / x;
     EXPECT_EQ(toString(expr), "6");
-    EXPECT_EQ(eval(expr), 6);
+    EXPECT_EQ(evald(expr), 6);
 }
 
 TEST(Expr, difference)
@@ -110,7 +110,7 @@ TEST(Expr, difference)
     auto y = integer(5);
     auto expr = x - y;
     EXPECT_EQ(toString(expr), "0");
-    EXPECT_EQ(eval(expr), 0);
+    EXPECT_EQ(evald(expr), 0);
 }
 
 TEST(Expr, compound)
@@ -119,7 +119,7 @@ TEST(Expr, compound)
     auto y = integer(2);
     auto expr = x / y - y * y;
     EXPECT_EQ(toString(expr), "-3/2");
-    EXPECT_EQ(eval(expr), -1.5);
+    EXPECT_EQ(evald(expr), -1.5);
 }
 
 TEST(Expr, symbol)
