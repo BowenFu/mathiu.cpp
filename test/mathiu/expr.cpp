@@ -11,6 +11,15 @@ TEST(Expr, constant)
 
 TEST(Expr, pi)
 {
+    using namespace matchit;
+    match(*pi)
+    (
+        pattern | as<mathiu::impl::Pi>(_) = [&]{}
+    );
+}
+
+TEST(Expr, pi2)
+{
     auto expr = sin(pi);
     EXPECT_EQ(toString(expr), "(Sin pi)");
     EXPECT_NEAR(eval(expr), 0, 1e-5);
@@ -27,7 +36,7 @@ TEST(Expr, e)
 TEST(Expr, i)
 {
     auto expr = i * i;
-    EXPECT_EQ(toString(expr), "-1.000000 + 0.000000i");
+    EXPECT_EQ(toString(expr), "(^ i 2)");
     auto result = ceval(expr);
     EXPECT_NEAR(result.real(), -1, 1e-5);
     EXPECT_NEAR(result.imag(), 0, 1e-5);
