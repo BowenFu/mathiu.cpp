@@ -25,10 +25,6 @@ namespace mathiu
         {
         };
 
-        struct Constant : std::variant<double, std::complex<double>>
-        {
-        };
-
         inline constexpr double pi_ = 3.1415926;
 
         struct Pi
@@ -89,7 +85,7 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Constant, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan>;
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan>;
 
         struct Expr : ExprVariant
         {
@@ -102,7 +98,7 @@ namespace mathiu
                    static_cast<ExprVariant const &>(r);
         }
 
-        inline ExprPtr constant(int32_t v)
+        inline ExprPtr integer(int32_t v)
         {
             return std::make_shared<Expr>(v);
         }
@@ -110,16 +106,6 @@ namespace mathiu
         inline ExprPtr fraction(int32_t l, int32_t r)
         {
             return std::make_shared<Expr>(Fraction{{l, r}});
-        }
-
-        inline ExprPtr constant(double v)
-        {
-            return std::make_shared<Expr>(Constant{{v}});
-        }
-
-        inline ExprPtr constant(std::complex<double> v)
-        {
-            return std::make_shared<Expr>(Constant{{v}});
         }
 
         inline ExprPtr sin(ExprPtr const &expr)
@@ -211,12 +197,11 @@ namespace mathiu
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
-            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
+            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_));
             constexpr auto canBeProduct = or_(as<Power>(_), as<Sum>(_), as<Symbol>(_));
             constexpr auto canBePower = or_(as<Sum>(_), as<Symbol>(_));
             constexpr auto canBeSum = or_(as<Symbol>(_));
@@ -226,12 +211,6 @@ namespace mathiu
                 pattern | ds(isReal, isReal)   = [&] { return eval(lhs) < eval(rhs); },
                 pattern | ds(isReal, _)   = [&] { return true; },
                 pattern | ds(_, isReal)   = [&] { return false; },
-                pattern | ds(as<Constant>(as<std::complex<double>>(ic1)), as<Constant>(as<std::complex<double>>(ic2)))   = [&]
-                {
-                    return lessC<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
-                },
-                pattern | ds(as<Constant>(as<std::complex<double>>(_)), _)   = [&] { return true; },
-                pattern | ds(_, as<Constant>(as<std::complex<double>>(_)))   = [&] { return false; },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
@@ -247,10 +226,10 @@ namespace mathiu
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), canBePower)   = [&] {
-                    return lessC<ExprPtr>({*iEl2, *iEl1}, {constant(1), rhs});
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {integer(1), rhs});
                 },
                 pattern | ds(canBePower, as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    return lessC<ExprPtr>({constant(1), lhs}, {*iEr2, *iEr1});
+                    return lessC<ExprPtr>({integer(1), lhs}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&]
                 {
@@ -285,20 +264,15 @@ namespace mathiu
         // for basic commutative transformation
         inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
-            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
+            constexpr auto isReal = or_(as<int>(_), as<Fraction>(_));
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
                 pattern | ds(isReal, isReal)   = [&] { return eval(lhs) == eval(rhs); },
-                pattern | ds(as<Constant>(as<std::complex<double>>(ic1)), as<Constant>(as<std::complex<double>>(ic2)))   = [&]
-                {
-                    return equalC<double>({(*ic1).imag(), (*ic1).real()}, {(*ic2).imag(), (*ic2).real()});
-                },
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl == *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
@@ -348,7 +322,7 @@ namespace mathiu
                 pattern | as<Fraction>(ds(ii1, ii2)) = [&]{
                     if (*ii1 / *ii2 * *ii2 == *ii1)
                     {
-                        return constant(*ii1 / *ii2);
+                        return integer(*ii1 / *ii2);
                     }
                     auto const gcd = std::gcd(*ii1, *ii2);
                     if (*ii2 > 0)
@@ -393,7 +367,7 @@ namespace mathiu
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
                 pattern | _ = [&]
-                { return std::make_pair(constant(1), std::make_shared<Expr>(e)); });
+                { return std::make_pair(integer(1), std::make_shared<Expr>(e)); });
         }
 
         template <typename C, typename T, typename Op>
@@ -411,7 +385,6 @@ namespace mathiu
             Id<Sum> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
-            Id<double> id1, id2;
             Id<ExprPtr> coeff1, coeff2, rest;
             auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs;} ;
             return match(*lhs, *rhs)(
@@ -434,12 +407,10 @@ namespace mathiu
                 pattern | ds(as<int32_t>(0), _) = expr(rhs),
                 pattern | ds(_, as<int32_t>(0)) = expr(lhs),
                 // basic distributive transformation
-                pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil + *iir); },
+                pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil + *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii4 + *ii2 * *ii3, *ii2 * *ii4)); },
-                pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 + *id2);; },
-                pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) + ceval(rhs)); },
                 // basic distributive transformation
                 pattern | ds(asCoeffAndRest(coeff1, rest), asCoeffAndRest(coeff2, rest)) = [&]
                 {
@@ -458,7 +429,7 @@ namespace mathiu
                 pattern | as<Power>(ds(iBase, iExp)) = [&] {
                     return std::make_pair( *iBase, *iExp);
                 },
-                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr>(e), constant(1)); }
+                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr>(e), integer(1)); }
             );
         }
 
@@ -478,7 +449,6 @@ namespace mathiu
             Id<Product> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
-            Id<double> id1, id2;
             Id<ExprPtr> iu, iv, iw;
             Id<ExprPtr> exp1, exp2, base;
             return match(*lhs, *rhs)(
@@ -488,8 +458,8 @@ namespace mathiu
                     return rhs * lhs;
                 },
                 // basic identity transformation
-                pattern | ds(as<int32_t>(0), _) = expr(constant(0)),
-                pattern | ds(_, as<int32_t>(0)) = expr(constant(0)),
+                pattern | ds(as<int32_t>(0), _) = expr(integer(0)),
+                pattern | ds(_, as<int32_t>(0)) = expr(integer(0)),
                 pattern | ds(as<int32_t>(1), _) = expr(rhs),
                 pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 // basic associative transformation
@@ -503,12 +473,10 @@ namespace mathiu
                     return std::make_shared<Expr>(Product{{ insertProduct(*iSr, lhs, mul) }});
                 },
                 // basic distributive transformation
-                pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return constant(*iil * *iir); },
+                pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil * *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii3, *ii2 * *ii4)); },
-                pattern | ds(as<Constant>(as<double>(id1)), as<Constant>(as<double>(id2)))   = [&] { return constant(*id1 * *id2);; },
-                pattern | ds(as<Constant>(_), as<Constant>(_)) = [&] { return constant(ceval(lhs) * ceval(rhs)); },
                 // basic power transformation 1
                 pattern | ds(as<Power>(ds(iu, iv)), as<Power>(ds(iu, iw))) = iu^(iv+iw),
                 // basic distributive transformation
@@ -531,18 +499,18 @@ namespace mathiu
                 // basic power transformation 2,3
                 pattern | ds(as<Power>(ds(iu, iv)), as<int>(_)) = iu^(iv * rhs),
                 pattern | ds(as<Product>(ip), as<int>(_)) = [&] {
-                    return std::accumulate((*ip).begin(), (*ip).end(), constant(1), [&](auto&& p, auto&& e)
+                    return std::accumulate((*ip).begin(), (*ip).end(), integer(1), [&](auto&& p, auto&& e)
                     {
                         return p * ((e.second)^rhs);
                     });
                 },
                 // basic identity transformation
-                pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return eval(rhs) > 0; }) = expr(constant(0)),
-                pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return constant(0);},
-                pattern | ds(as<int32_t>(1), _)= [&] { return constant(1);},
-                pattern | ds(_, 0)= expr(constant(1)),
+                pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return eval(rhs) > 0; }) = expr(integer(0)),
+                pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return integer(0);},
+                pattern | ds(as<int32_t>(1), _)= [&] { return integer(1);},
+                pattern | ds(_, 0)= expr(integer(1)),
                 pattern | ds(_, 1)= expr(lhs),
-                pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_>0))) = [&] {return constant(static_cast<int32_t>(std::pow(*ii1, *ii2))); },
+                pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_>0))) = [&] {return integer(static_cast<int32_t>(std::pow(*ii1, *ii2))); },
                 pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<int32_t>(std::pow(*ii1, -(*ii2)))); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(ii3)) = [&] {return simplifyRational(fraction(static_cast<int32_t>(std::pow(*ii1, *ii3)), static_cast<int32_t>(std::pow(*ii2, *ii3)))); },
                 pattern | _ = [&] {
@@ -560,7 +528,7 @@ namespace mathiu
         // the basic difference transformation
         inline ExprPtr operator-(ExprPtr const &rhs)
         {
-            return constant(-1) * rhs;
+            return integer(-1) * rhs;
         }
 
         // the basic difference transformation
@@ -571,7 +539,7 @@ namespace mathiu
                 // basic identity transformation
                 pattern | ds(_, 0) = expr(lhs),
                 pattern | ds(0, _) = [&] { return -rhs; },
-                pattern | _ = [&] { return lhs + constant(-1) * rhs; }
+                pattern | _ = [&] { return lhs + integer(-1) * rhs; }
             );
         }
 
@@ -584,10 +552,10 @@ namespace mathiu
                 // clang-format off
                 pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return simplifyRational(fraction(*il, *ir)); },
                 // basic identity transformation
-                pattern | ds(_, 0) = [&] { throw std::runtime_error{"undefined!"}; return constant(0); },
-                pattern | ds(0, _) = expr(constant(0)),
+                pattern | ds(_, 0) = [&] { throw std::runtime_error{"undefined!"}; return integer(0); },
+                pattern | ds(0, _) = expr(integer(0)),
                 pattern | ds(_, 1) = expr(lhs),
-                pattern | _                                    = expr(lhs * (rhs ^ constant(-1)))
+                pattern | _                                    = expr(lhs * (rhs ^ integer(-1)))
                 // clang-format on
             );
         }
@@ -601,18 +569,14 @@ namespace mathiu
         {
             assert(ex);
             Id<int32_t> i, il, ir;
-            Id<double> d;
             Id<Sum> iS;
             Id<Product> iP;
-            Id<std::complex<double>> c;
             Id<ExprPtr > e, l, r;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
                 pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling eval."); return 0; },
-                pattern | as<Constant>(as<double>(d))               = expr(d),
-                pattern | as<Constant>(as<std::complex<double>>(c)) = [&]{ assert((*c).imag() == 0); return (*c).real(); },
                 pattern | as<Sum>(iS)                                = [&]{
                     return std::accumulate((*iS).begin(), (*iS).end(), 0., [](auto&& sum, auto&& e){ return sum + eval(e.second); }); 
                 },
@@ -633,18 +597,14 @@ namespace mathiu
         {
             assert(ex);
             Id<int32_t> i, il, ir;
-            Id<double> d;
             Id<Sum> iS;
             Id<Product> iP;
-            Id<std::complex<double>> c;
             Id<ExprPtr > e, l, r;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
                 pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling ceval."); return 0; },
-                pattern | as<Constant>(as<double>(d))               = expr(d),
-                pattern | as<Constant>(as<std::complex<double> >(c)) = expr(c),
                 pattern | as<Sum>(iS)                                = [&]{
                     return std::accumulate((*iS).begin(), (*iS).end(), std::complex<double>(0), [](auto&& sum, auto&& e){ return sum + ceval(e.second); }); 
                 },
@@ -666,17 +626,13 @@ namespace mathiu
         {
             assert(ex);
             Id<int32_t> ii, iil, iir;
-            Id<double> id;
             Id<std::string> is;
-            Id<std::complex<double>> ic;
             Id<ExprPtr > ie, il, ir;
             Id<Sum> iS;
             Id<Product> iP;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
-                pattern | as<Constant>(as<double>(id))               = [&]{ return std::to_string(*id); },
-                pattern | as<Constant>(as<std::complex<double> >(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
                 pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
                 pattern | as<Sum>(iS)                                = [&]{
@@ -706,7 +662,7 @@ namespace mathiu
         }
 
     } // namespace impl
-    using impl::constant;
+    using impl::integer;
     using impl::symbol;
     using impl::operator+;
     using impl::operator-;

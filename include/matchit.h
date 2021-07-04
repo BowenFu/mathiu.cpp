@@ -111,7 +111,7 @@ namespace matchit
                            { return v; });
         }
 
-        // for constant
+        // for integer
         template <typename T>
         class EvalTraits
         {
