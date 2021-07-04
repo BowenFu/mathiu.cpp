@@ -19,6 +19,8 @@ namespace mathiu
 
         struct Expr;
 
+        using ExprPtr = std::shared_ptr<Expr>;
+
         struct Symbol : std::array<std::string, 1>
         {
         };
@@ -46,43 +48,40 @@ namespace mathiu
         };
         inline const auto i = std::make_shared<Expr>(I{});
 
-        inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+        inline bool less(ExprPtr const &lhs, ExprPtr const &rhs);
 
-        template <typename T>
-        inline bool less(T const t1, T const t2)
+        inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
+
+        struct ExprPtrLess
         {
-            return t1 < t2;
-        }
+            inline bool operator()(ExprPtr const &lhs, ExprPtr const &rhs) const
+            {
+                return less(lhs, rhs);
+            }
+        };
 
-        inline constexpr auto lessLambda = [](auto&& x, auto&& y) { return less(x, y); };
-
-        inline bool operator<(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
-        {
-            return less(lhs, rhs);
-        }
-
-        struct Sum : std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
+        struct Sum : std::map<ExprPtr, ExprPtr, ExprPtrLess>
         {
         };
 
-        struct Product : std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
+        struct Product : std::map<ExprPtr, ExprPtr, ExprPtrLess>
         {
         };
 
-        struct Power : std::array<std::shared_ptr<Expr>, 2>
+        struct Power : std::array<ExprPtr, 2>
         {
         };
 
-        struct Log : std::array<std::shared_ptr<Expr>, 2>
+        struct Log : std::array<ExprPtr, 2>
         {
         };
 
-        // TODO: a uniform Func type, std::tuple<std::string, std::map<std::shared_ptr<Expr>, std::shared_ptr<Expr>>
-        struct Sin : std::array<std::shared_ptr<Expr>, 1>
+        // TODO: a uniform Func type, std::tuple<std::string, std::map<ExprPtr, ExprPtr>
+        struct Sin : std::array<ExprPtr, 1>
         {
         };
 
-        struct Arctan : std::array<std::shared_ptr<Expr>, 1>
+        struct Arctan : std::array<ExprPtr, 1>
         {
         };
 
@@ -103,37 +102,37 @@ namespace mathiu
                    static_cast<ExprVariant const &>(r);
         }
 
-        inline std::shared_ptr<Expr> constant(int32_t v)
+        inline ExprPtr constant(int32_t v)
         {
             return std::make_shared<Expr>(v);
         }
 
-        inline std::shared_ptr<Expr> fraction(int32_t l, int32_t r)
+        inline ExprPtr fraction(int32_t l, int32_t r)
         {
             return std::make_shared<Expr>(Fraction{{l, r}});
         }
 
-        inline std::shared_ptr<Expr> constant(double v)
+        inline ExprPtr constant(double v)
         {
             return std::make_shared<Expr>(Constant{{v}});
         }
 
-        inline std::shared_ptr<Expr> constant(std::complex<double> v)
+        inline ExprPtr constant(std::complex<double> v)
         {
             return std::make_shared<Expr>(Constant{{v}});
         }
 
-        inline std::shared_ptr<Expr> sin(std::shared_ptr<Expr> const &expr)
+        inline ExprPtr sin(ExprPtr const &expr)
         {
             return std::make_shared<Expr>(Sin{{expr}});
         }
 
-        inline std::shared_ptr<Expr> symbol(std::string const &name)
+        inline ExprPtr symbol(std::string const &name)
         {
             return std::make_shared<Expr>(Symbol{{name}});
         }
 
-        inline std::string toString(const std::shared_ptr<Expr> &ex);
+        inline std::string toString(const ExprPtr &ex);
 
         inline std::string toString(std::string const& s)
         {
@@ -146,14 +145,14 @@ namespace mathiu
             return std::to_string((t));
         }
 
-        inline bool equal(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+        inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
 
-        inline bool operator==(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return equal(lhs, rhs);
         }
 
-        inline bool equal(std::pair<std::shared_ptr<Expr> const, std::shared_ptr<Expr> > const &lhs, std::pair<std::shared_ptr<Expr> const, std::shared_ptr<Expr> > const &rhs)
+        inline bool equal(std::pair<ExprPtr const, ExprPtr > const &lhs, std::pair<ExprPtr const, ExprPtr > const &rhs)
         {
             return equal(lhs.second, rhs.second);
         }
@@ -165,6 +164,21 @@ namespace mathiu
         }
 
         inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
+
+        inline bool less(double lhs, double rhs)
+        {
+            return lhs < rhs;
+        }
+
+        inline bool less(std::pair<ExprPtr const, ExprPtr>const& lhs, std::pair<ExprPtr const, ExprPtr>const& rhs)
+        {
+            return less(lhs.second, rhs.second);
+        }
+
+        inline bool less(std::string const& lhs, std::string const& rhs)
+        {
+            return lhs < rhs;
+        }
 
         template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
         bool lessC(C1 const& v1, C2 const& v2)
@@ -191,15 +205,15 @@ namespace mathiu
             return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2), equalLambda);
         }
 
-        inline double eval(const std::shared_ptr<Expr> &ex);
+        inline double eval(const ExprPtr &ex);
 
         // The <| order relation
         // for basic commutative transformation
-        inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
-            Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
+            Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
             constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
@@ -221,36 +235,36 @@ namespace mathiu
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl < *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
-                    return lessC<std::shared_ptr<Expr>>(*iP1, *iP2);
+                    return lessC<ExprPtr>(*iP1, *iP2);
                 },
                 pattern | ds(as<Product>(iP1), canBeProduct) = [&] {
-                    return lessC<std::shared_ptr<Expr>>(*iP1, Product{{{rhs, rhs}}});
+                    return lessC<ExprPtr>(*iP1, Product{{{rhs, rhs}}});
                 },
                 pattern | ds(canBeProduct, as<Product>(iP2)) = [&] {
-                    return lessC<std::shared_ptr<Expr>>(Product{{{lhs, lhs}}}, *iP2);
+                    return lessC<ExprPtr>(Product{{{lhs, lhs}}}, *iP2);
                 },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    return lessC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), canBePower)   = [&] {
-                    return lessC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {constant(1), rhs});
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {constant(1), rhs});
                 },
                 pattern | ds(canBePower, as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    return lessC<std::shared_ptr<Expr>>({constant(1), lhs}, {*iEr2, *iEr1});
+                    return lessC<ExprPtr>({constant(1), lhs}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&]
                 {
-                    return lessC<std::shared_ptr<Expr>>(*iS1, *iS2);
+                    return lessC<ExprPtr>(*iS1, *iS2);
                 },
                 pattern | ds(as<Sum>(iS1), canBeSum) = [&]
                 {
-                    return lessC<std::shared_ptr<Expr>>(*iS1, Sum{{{rhs, rhs}}});
+                    return lessC<ExprPtr>(*iS1, Sum{{{rhs, rhs}}});
                 },
                 pattern | ds(canBeSum, as<Sum>(iS2)) = [&]
                 {
-                    return lessC<std::shared_ptr<Expr>>(Sum{{{lhs, lhs}}}, *iS2);
+                    return lessC<ExprPtr>(Sum{{{lhs, lhs}}}, *iS2);
                 },
-                pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEl2))) = iEl1 < iEl2,
+                pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEl2))) = [&] { return less(*iEl1, *iEl2); },
                 pattern | ds(_, as<Sin>(_)) = expr(true),
                 pattern | ds(as<Sin>(_), _) = expr(false),
                 pattern | ds(as<I>(_), as<I>(_)) = expr(false),
@@ -269,11 +283,11 @@ namespace mathiu
 
         // The equality relation
         // for basic commutative transformation
-        inline bool equal(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             Id<std::complex<double>> ic1, ic2;
             Id<std::string> isl, isr;
-            Id<std::shared_ptr<Expr>> iEl1, iEl2, iEr1, iEr2;
+            Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
             constexpr auto isReal = or_(as<int>(_), as<Fraction>(_), as<Constant>(as<double>(_)));
@@ -288,12 +302,12 @@ namespace mathiu
                 pattern | ds(as<Symbol>(ds(isl)), as<Symbol>(ds(isr))) = [&] { return *isl == *isr; },
                 pattern | ds(as<Product>(iP1), as<Product>(iP2)) = [&]
                 {
-                    return equalC<std::shared_ptr<Expr>>(*iP1, *iP2);
+                    return equalC<ExprPtr>(*iP1, *iP2);
                 },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    return equalC<std::shared_ptr<Expr>>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                    return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
-                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return equalC<std::shared_ptr<Expr>>(*iS1, *iS2); },
+                pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return equalC<ExprPtr>(*iS1, *iS2); },
                 pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEr1))) = [&] { return equal(*iEl1, *iEr1); },
                 pattern | ds(as<I>(_), as<I>(_)) = expr(true),
                 pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(true),
@@ -326,7 +340,7 @@ namespace mathiu
             return result;
         }
 
-        inline std::shared_ptr<Expr> simplifyRational(std::shared_ptr<Expr> const &r)
+        inline ExprPtr simplifyRational(ExprPtr const &r)
         {
             Id<int32_t> ii1, ii2;
             return match(*r)
@@ -348,7 +362,7 @@ namespace mathiu
             ;
         }
 
-        inline std::complex<double> ceval(const std::shared_ptr<Expr> &ex);
+        inline std::complex<double> ceval(const ExprPtr &ex);
 
         inline constexpr auto asCoeff = or_(as<int32_t>(_), as<Fraction>(_));
         inline constexpr auto second = [](auto&& p)
@@ -361,9 +375,9 @@ namespace mathiu
             return as<Product>(whole.at(ds(app(second, id.at(some(asCoeff))), ooo)));
         };
 
-        inline std::pair<std::shared_ptr<Expr>, std::shared_ptr<Expr>> coeffAndTerm(Expr const &e)
+        inline std::pair<ExprPtr, ExprPtr> coeffAndTerm(Expr const &e)
         {
-            Id<std::shared_ptr<Expr>> icoeff;
+            Id<ExprPtr> icoeff;
             Id<Product> ip;
             return match(e)(
                 pattern | firstIsCoeff(icoeff, ip) = [&]
@@ -388,17 +402,17 @@ namespace mathiu
             return merge(c, C{{{coeffAndTerm(*t).second, t}}}, op);
         }
 
-        inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+        inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
 
         inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
 
-        inline std::shared_ptr<Expr> operator+(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             Id<Sum> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
             Id<double> id1, id2;
-            Id<std::shared_ptr<Expr>> coeff1, coeff2, rest;
+            Id<ExprPtr> coeff1, coeff2, rest;
             auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs;} ;
             return match(*lhs, *rhs)(
                 // clang-format off
@@ -436,10 +450,10 @@ namespace mathiu
             );
         }
 
-        inline std::pair<std::shared_ptr<Expr>, std::shared_ptr<Expr>> baseAndExp(Expr const &e)
+        inline std::pair<ExprPtr, ExprPtr> baseAndExp(Expr const &e)
         {
-            Id<std::shared_ptr<Expr>> iBase;
-            Id<std::shared_ptr<Expr>> iExp;
+            Id<ExprPtr> iBase;
+            Id<ExprPtr> iExp;
             return match(e)(
                 pattern | as<Power>(ds(iBase, iExp)) = [&] {
                     return std::make_pair( *iBase, *iExp);
@@ -454,19 +468,19 @@ namespace mathiu
             return merge(c, C{{{baseAndExp(*t).first, t}}}, op);
         }
 
-        inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
+        inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs);
         
         inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
 
-        inline std::shared_ptr<Expr> operator*(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             auto const mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs;} ;
             Id<Product> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
             Id<double> id1, id2;
-            Id<std::shared_ptr<Expr>> iu, iv, iw;
-            Id<std::shared_ptr<Expr>> exp1, exp2, base;
+            Id<ExprPtr> iu, iv, iw;
+            Id<ExprPtr> exp1, exp2, base;
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic commutative transformation
@@ -507,9 +521,9 @@ namespace mathiu
             );
         }
 
-        inline std::shared_ptr<Expr> pow(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr pow(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            Id<std::shared_ptr<Expr>> iu, iv;
+            Id<ExprPtr> iu, iv;
             Id<int32_t> ii1, ii2, ii3;
             Id<Product> ip;
             return match(*lhs, *rhs)(
@@ -538,19 +552,19 @@ namespace mathiu
         }
 
         // note the operator^ precedence is not high, wrap the operands with parentheses.
-        inline std::shared_ptr<Expr> operator^(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return pow(lhs, rhs);
         }
 
         // the basic difference transformation
-        inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr operator-(ExprPtr const &rhs)
         {
             return constant(-1) * rhs;
         }
 
         // the basic difference transformation
-        inline std::shared_ptr<Expr> operator-(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr operator-(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return match(*lhs, *rhs)
             (
@@ -562,7 +576,7 @@ namespace mathiu
         }
 
         // the basic quotient transformation
-        inline std::shared_ptr<Expr> operator/(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             using namespace matchit;
             Id<int32_t> il, ir;
@@ -578,12 +592,12 @@ namespace mathiu
             );
         }
 
-        inline std::shared_ptr<Expr> log(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs)
+        inline ExprPtr log(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return std::make_shared<Expr>(Log{{lhs, rhs}});
         }
 
-        inline double eval(const std::shared_ptr<Expr> &ex)
+        inline double eval(const ExprPtr &ex)
         {
             assert(ex);
             Id<int32_t> i, il, ir;
@@ -591,7 +605,7 @@ namespace mathiu
             Id<Sum> iS;
             Id<Product> iP;
             Id<std::complex<double>> c;
-            Id<std::shared_ptr<Expr> > e, l, r;
+            Id<ExprPtr > e, l, r;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
@@ -615,7 +629,7 @@ namespace mathiu
             );
         }
 
-        inline std::complex<double> ceval(const std::shared_ptr<Expr> &ex)
+        inline std::complex<double> ceval(const ExprPtr &ex)
         {
             assert(ex);
             Id<int32_t> i, il, ir;
@@ -623,7 +637,7 @@ namespace mathiu
             Id<Sum> iS;
             Id<Product> iP;
             Id<std::complex<double>> c;
-            Id<std::shared_ptr<Expr> > e, l, r;
+            Id<ExprPtr > e, l, r;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(i)                                = expr(i),
@@ -648,14 +662,14 @@ namespace mathiu
             );
         }
 
-        inline std::string toString(const std::shared_ptr<Expr> &ex)
+        inline std::string toString(const ExprPtr &ex)
         {
             assert(ex);
             Id<int32_t> ii, iil, iir;
             Id<double> id;
             Id<std::string> is;
             Id<std::complex<double>> ic;
-            Id<std::shared_ptr<Expr> > ie, il, ir;
+            Id<ExprPtr > ie, il, ir;
             Id<Sum> iS;
             Id<Product> iP;
             return match(*ex)(
