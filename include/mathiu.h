@@ -28,13 +28,23 @@ namespace mathiu
         };
 
         inline constexpr double pi_ = 3.1415926;
-        inline const auto pi = std::make_shared<Expr>(Constant{{pi_}});
+
+        struct Pi
+        {
+        };
+        inline const auto pi = std::make_shared<Expr>(Pi{});
 
         inline const double e_ = std::exp(1);
-        inline const auto e = std::make_shared<Expr>(Constant{{e_}});
+        struct E
+        {
+        };
+        inline const auto e = std::make_shared<Expr>(E{});
 
         inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
-        inline const auto i = std::make_shared<Expr>(Constant{{i_}});
+        struct I
+        {
+        };
+        inline const auto i = std::make_shared<Expr>(I{});
 
         inline bool less(std::shared_ptr<Expr> const &lhs, std::shared_ptr<Expr> const &rhs);
 
@@ -80,7 +90,7 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Constant, Sum, Product, Power, Log, Sin, Arctan>;
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Constant, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan>;
 
         struct Expr : ExprVariant
         {
@@ -241,7 +251,18 @@ namespace mathiu
                     return lessC<std::shared_ptr<Expr>>(Sum{{{lhs, lhs}}}, *iS2);
                 },
                 pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEl2))) = iEl1 < iEl2,
-                pattern | _ = [&] { return false; }
+                pattern | ds(_, as<Sin>(_)) = expr(true),
+                pattern | ds(as<Sin>(_), _) = expr(false),
+                pattern | ds(as<I>(_), as<I>(_)) = expr(false),
+                pattern | ds(_, as<I>(_)) = expr(true),
+                pattern | ds(as<I>(_), _) = expr(false),
+                pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(false),
+                pattern | ds(_, as<Pi>(_)) = expr(true),
+                pattern | ds(as<Pi>(_), _) = expr(false),
+                pattern | ds(as<E>(_), as<E>(_)) = expr(false),
+                pattern | ds(_, as<E>(_)) = expr(true),
+                pattern | ds(as<E>(_), _) = expr(false),
+                pattern | _ = [&] { throw std::runtime_error{"No match in less!"}; return false; }
                 // clang-format on
             );
         }
@@ -274,6 +295,9 @@ namespace mathiu
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return equalC<std::shared_ptr<Expr>>(*iS1, *iS2); },
                 pattern | ds(as<Sin>(ds(iEl1)), as<Sin>(ds(iEr1))) = [&] { return equal(*iEl1, *iEr1); },
+                pattern | ds(as<I>(_), as<I>(_)) = expr(true),
+                pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(true),
+                pattern | ds(as<E>(_), as<E>(_)) = expr(true),
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -583,7 +607,10 @@ namespace mathiu
                 },
                 pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(eval(*l), eval(*r)); },
                 pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(eval(*e)); },
-                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log2(eval(*r)) / std::log2(eval(*l)); }
+                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log2(eval(*r)) / std::log2(eval(*l)); },
+                pattern | as<Pi>(_)                                 = expr(pi_),
+                pattern | as<E>(_)                                  = expr(e_),
+                pattern | _                                         = [&] { throw std::runtime_error{"No match in eval!"}; return 0;}
                 // clang-format on
             );
         }
@@ -612,7 +639,11 @@ namespace mathiu
                 },
                 pattern | as<Power>(ds(l, r))                       = [&]{ return std::pow(ceval(*l), ceval(*r)); },
                 pattern | as<Sin>(ds(e))                            = [&]{ return std::sin(ceval(*e)); },
-                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log(ceval(*r)) / std::log(ceval(*l)); }
+                pattern | as<Log>(ds(l, r))                         = [&]{ return std::log(ceval(*r)) / std::log(ceval(*l)); },
+                pattern | as<Pi>(_)                                 = expr(pi_),
+                pattern | as<E>(_)                                  = expr(e_),
+                pattern | as<I>(_)                                  = expr(i_),
+                pattern | _                                         = [&] { throw std::runtime_error{"No match in ceval!"}; return 0;}
                 // clang-format on
             );
         }
@@ -630,9 +661,6 @@ namespace mathiu
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
-                pattern | as<Constant>(*pi)                          = expr("pi"),
-                pattern | as<Constant>(*e)                           = expr("e"),
-                pattern | as<Constant>(*i)                           = expr("i"),
                 pattern | as<Constant>(as<double>(id))               = [&]{ return std::to_string(*id); },
                 pattern | as<Constant>(as<std::complex<double> >(ic)) = [&]{ return std::to_string((*ic).real()) + " + " + std::to_string((*ic).imag()) + "i"; },
                 pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
@@ -655,7 +683,10 @@ namespace mathiu
                 },
                 pattern | as<Power>(ds(il, ir))                      = [&]{ return "(^ " + toString(*il) + " " + toString(*ir) + ")"; },
                 pattern | as<Log>(ds(il, ir))                        = [&]{ return "(Log " + toString(*il) + " " + toString(*ir) + ")"; },
-                pattern | as<Sin>(ds(ie))                            = [&]{ return "(Sin " + toString(*ie) + ")"; }
+                pattern | as<Sin>(ds(ie))                            = [&]{ return "(Sin " + toString(*ie) + ")"; },
+                pattern | as<Pi>(_)                                  = expr("pi"),
+                pattern | as<E>(_)                                   = expr("e"),
+                pattern | as<I>(_)                                   = expr("i")
                 // clang-format on
             );
         }
