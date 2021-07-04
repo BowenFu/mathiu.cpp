@@ -1,6 +1,6 @@
 # mathiu.cpp
 
-mathiu : a lightweight computer algebra system in C++
+mathiu : a simple computer algebra system in C++
 
 ![mathiu](./mathiu.svg)
 
@@ -15,3 +15,17 @@ mathiu : a lightweight computer algebra system in C++
 [![CMake](https://github.com/BowenFu/mathiu.cpp/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/BowenFu/mathiu.cpp/actions/workflows/sanitizers.yml)
 ![GitHub license](https://img.shields.io/github/license/BowenFu/mathiu.cpp.svg)
 [![codecov](https://codecov.io/gh/BowenFu/mathiu.cpp/branch/main/graph/badge.svg?token=BNWHFLNNSD)](https://codecov.io/gh/BowenFu/mathiu.cpp)
+
+The library originated as a demo library showing the usage of the C++ pattern matching library [`match(it)`](https://github.com/BowenFu/matchit.cpp).
+
+But now it is developed independently.
+
+A simple sample of `mathiu`:
+
+```C++
+auto const x = symbol("x");
+auto const e = x ^ fraction(2, 3);
+auto const d = diff(e, x);
+// prints (* 2/3 (^ x -1/3))
+std::cout << toString(d) << std::endl;
+```

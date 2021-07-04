@@ -29,10 +29,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "MSAN")
     add_link_options("-L${PROJECT_SOURCE_DIR}/libcxx_msan/lib;-lc++abi")
 endif() #CMAKE_BUILD_TYPE STREQUAL "MSAN"
 
+include(FetchMatchit)
+
 # Target.
 add_library(mathiu INTERFACE)
 target_include_directories(mathiu INTERFACE
-  ${PROJECT_SOURCE_DIR}/include)
+  ${PROJECT_SOURCE_DIR}/include ${matchit_SOURCE_DIR}/include)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(Sanitizers)
