@@ -54,6 +54,14 @@ TEST(diff, product2)
 TEST(diff, power)
 {
     auto const x = symbol("x");
-    auto const e = symbol("x") ^ integer(2);
+    auto const e = x ^ integer(2);
     EXPECT_EQ(toString(diff(e, x)), "(* 2 x)");
+}
+
+TEST(diff, compound)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    auto const e = x * y * (x + integer(3));
+    EXPECT_EQ(toString(diff(e, x)), "(+ (* x y) (* (+ 3 x) y))");
 }

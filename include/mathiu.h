@@ -429,6 +429,9 @@ namespace mathiu
 
         inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
         {
+#if DEBUG
+            std::cout << "operator+: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
+#endif // DEBUG
             Id<Sum> iSl, iSr;
             Id<int32_t> iil, iir;
             Id<int32_t> ii1, ii2, ii3, ii4;
@@ -439,6 +442,9 @@ namespace mathiu
                 pattern | _ | when ([&]{ return less(rhs, lhs); }) = [&] {
                     return rhs + lhs;
                 },
+                // basic identity transformation
+                pattern | ds(as<int32_t>(0), _) = expr(rhs),
+                pattern | ds(_, as<int32_t>(0)) = expr(lhs),
                 // basic associative transformation
                 pattern | ds(as<Sum>(iSl), as<Sum>(iSr)) = [&] {
                     return mergeSum(*iSl, *iSr);
@@ -449,9 +455,6 @@ namespace mathiu
                 pattern | ds(_, as<Sum>(iSr)) = [&] {
                     return insertSum(*iSr, lhs);
                 },
-                // basic identity transformation
-                pattern | ds(as<int32_t>(0), _) = expr(rhs),
-                pattern | ds(_, as<int32_t>(0)) = expr(lhs),
                 // basic distributive transformation
                 pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil + *iir); },
                 pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
