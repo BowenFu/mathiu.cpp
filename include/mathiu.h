@@ -158,12 +158,6 @@ namespace mathiu
             using variant::variant;
         };
 
-        // inline bool operator==(Expr const &l, Expr const &r)
-        // {
-        //     return static_cast<ExprVariant const &>(l) ==
-        //            static_cast<ExprVariant const &>(r);
-        // }
-
         inline constexpr auto equalPair = [](auto&& x, auto&& y) { return equal(x.first, y.first) && equal(x.second, y.second); };
         
         inline bool operator==(ExprPtrMap const &l, ExprPtrMap const &r)
@@ -182,11 +176,6 @@ namespace mathiu
         }
 
         inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
-
-        // inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs)
-        // {
-        //     return equal(lhs, rhs);
-        // }
 
         inline ExprPtr sin(ExprPtr const &ex)
         {
