@@ -9,7 +9,7 @@ namespace mathiu
     namespace impl
     {
 
-        ExprPtr diffImpl(ExprPtr const& exp, Symbol const& var)
+        inline ExprPtr diffImpl(ExprPtr const& exp, Symbol const& var)
         {
 #if DEBUG
             std::cout << "diffImpl: " << toString(exp) << "\t" << var[0] << std::endl;
@@ -43,7 +43,7 @@ namespace mathiu
                 });
         }
 
-        ExprPtr diff(ExprPtr const& exp, ExprPtr const& var)
+        inline ExprPtr diff(ExprPtr const& exp, ExprPtr const& var)
         {
             auto const var_ = std::get<Symbol>(*var);
             return diffImpl(exp, var_);
