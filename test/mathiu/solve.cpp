@@ -19,3 +19,10 @@ TEST(solve, freeOf)
     EXPECT_EQ(toString(solve(x, e, x)), "(^ 2 a)");
 }
 
+TEST(solve, alwaysHold)
+{
+    auto const x = symbol("x");
+    auto const e = integer(2)^symbol("a");
+    EXPECT_EQ(toString(solve(e, e, x)), "x");
+}
+

@@ -21,9 +21,10 @@ namespace mathiu
             return match(lhs, rhs)(
                 pattern | ds(some(as<Symbol>(var)), freeOfVar) = expr(rhs),
                 pattern | ds(freeOfVar, some(as<Symbol>(var))) = expr(lhs),
+                pattern | ds(freeOfVar, freeOfVar) | when([&]{ return equal(lhs, rhs);}) = expr(symbol(var[0])),
                 pattern | _ = [&]
                 {
-                    throw std::runtime_error{"No match in diff!"};
+                    throw std::runtime_error{"No match in solve!"};
                     return integer(0);
                 });
         }
