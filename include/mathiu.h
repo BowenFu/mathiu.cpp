@@ -17,24 +17,75 @@
 #include <iostream>
 #endif // DEBUG
 
+namespace mathiu::impl
+{
+    struct Expr;
+    using ExprPtr = std::shared_ptr<Expr const>;
+
+    inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
+
+} // namespace mathiu::impl
+
+namespace matchit::impl
+{
+    template <>
+    class PatternTraits<mathiu::impl::ExprPtr>
+    {
+        using Pattern = mathiu::impl::ExprPtr;
+    public:
+        template <typename Value>
+        using AppResultTuple = std::tuple<>;
+
+        constexpr static auto nbIdV = 0;
+
+        template <typename Value, typename ContextT>
+        constexpr static auto matchPatternImpl(Value &&value, Pattern const &pattern,
+                                               int32_t /* depth */,
+                                               ContextT & /*context*/)
+        {
+            return mathiu::impl::equal(pattern, std::forward<Value>(value));
+        }
+        constexpr static void processIdImpl(Pattern const &, int32_t /*depth*/,
+                                            IdProcess) {}
+    };
+
+    template <>
+    class IdTraits<mathiu::impl::ExprPtr>
+    {
+        using Type = mathiu::impl::ExprPtr;
+    public:
+        static auto
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+            __attribute__((no_sanitize_address))
+#endif
+#endif
+            equal(Type const &lhs, Type const &rhs)
+        {
+            return mathiu::impl::equal(lhs, rhs);
+        }
+    };
+
+} // namespace matchit::impl
+
 namespace mathiu
 {
     namespace impl
     {
-        using namespace matchit;
-
         struct Expr;
 
         using ExprPtr = std::shared_ptr<Expr const>;
 
         inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs);
         inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
-        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs);
+        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
         inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator-(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator-(ExprPtr const &rhs);
         inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs);
+
+        using namespace matchit;
 
         struct Symbol : std::array<std::string, 1>
         {
@@ -69,11 +120,13 @@ namespace mathiu
             }
         };
 
-        struct Sum : std::map<ExprPtr, ExprPtr, ExprPtrLess>
+        using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
+
+        struct Sum : ExprPtrMap
         {
         };
 
-        struct Product : std::map<ExprPtr, ExprPtr, ExprPtrLess>
+        struct Product : ExprPtrMap
         {
         };
 
@@ -85,7 +138,7 @@ namespace mathiu
         {
         };
 
-        // TODO: a uniform Func type, std::tuple<std::string, std::map<ExprPtr, ExprPtr>
+        // TODO: a uniform Func type, std::tuple<std::string, ExprPtrMap>
         struct Sin : std::array<ExprPtr, 1>
         {
         };
@@ -105,10 +158,11 @@ namespace mathiu
             using variant::variant;
         };
 
-        inline bool operator==(Expr const &l, Expr const &r)
+        inline constexpr auto equalPair = [](auto&& x, auto&& y) { return equal(x.first, y.first) && equal(x.second, y.second); };
+        
+        inline bool operator==(ExprPtrMap const &l, ExprPtrMap const &r)
         {
-            return static_cast<ExprVariant const &>(l) ==
-                   static_cast<ExprVariant const &>(r);
+            return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalPair);
         }
 
         inline ExprPtr integer(int32_t v)
@@ -122,11 +176,6 @@ namespace mathiu
         }
 
         inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
-
-        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs)
-        {
-            return equal(lhs, rhs);
-        }
 
         inline ExprPtr sin(ExprPtr const &ex)
         {
@@ -167,8 +216,6 @@ namespace mathiu
             return t1 == t2;
         }
 
-        inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
-
         inline bool less(double lhs, double rhs)
         {
             return lhs < rhs;
@@ -203,6 +250,8 @@ namespace mathiu
             return v1.size() < v2.size();
         }
 
+        inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
+        
         template <typename T, typename C = std::initializer_list<T>>
         bool equalC(C const& v1, C const& v2)
         {
@@ -282,6 +331,10 @@ namespace mathiu
         // for basic commutative transformation
         inline bool equal(ExprPtr const &lhs, ExprPtr const &rhs)
         {
+            if (lhs.get() == rhs.get())
+            {
+                return true;
+            }
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
@@ -327,7 +380,7 @@ namespace mathiu
                 else
                 {
                     auto const opResult = op(it->second, e.second);
-                    if (opResult == identity)
+                    if (equal(opResult, identity))
                     {
                         result.erase(it);
                     }
@@ -558,8 +611,8 @@ namespace mathiu
                 pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return evald(rhs) > 0; }) = expr(integer(0)),
                 pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return integer(0);},
                 pattern | ds(as<int32_t>(1), _)= [&] { return integer(1);},
-                pattern | ds(_, 0)= expr(integer(1)),
-                pattern | ds(_, 1)= expr(lhs),
+                pattern | ds(_, as<int32_t>(0))= expr(integer(1)),
+                pattern | ds(_, as<int32_t>(1))= expr(lhs),
                 pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_>0))) = [&] {return integer(static_cast<int32_t>(std::pow(*ii1, *ii2))); },
                 pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<int32_t>(std::pow(*ii1, -(*ii2)))); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(ii3)) = [&] {return simplifyRational(fraction(static_cast<int32_t>(std::pow(*ii1, *ii3)), static_cast<int32_t>(std::pow(*ii2, *ii3)))); },
@@ -587,8 +640,8 @@ namespace mathiu
             return match(*lhs, *rhs)
             (
                 // basic identity transformation
-                pattern | ds(_, 0) = expr(lhs),
-                pattern | ds(0, _) = [&] { return -rhs; },
+                pattern | ds(_, as<int32_t>(0)) = expr(lhs),
+                pattern | ds(as<int32_t>(0), _) = [&] { return -rhs; },
                 pattern | _ = [&] { return lhs + integer(-1) * rhs; }
             );
         }
@@ -602,9 +655,9 @@ namespace mathiu
                 // clang-format off
                 pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return simplifyRational(fraction(*il, *ir)); },
                 // basic identity transformation
-                pattern | ds(_, 0) = [&] { throw std::runtime_error{"undefined!"}; return integer(0); },
-                pattern | ds(0, _) = expr(integer(0)),
-                pattern | ds(_, 1) = expr(lhs),
+                pattern | ds(_, as<int32_t>(0)) = [&] { throw std::runtime_error{"undefined!"}; return integer(0); },
+                pattern | ds(as<int32_t>(0), _) = expr(integer(0)),
+                pattern | ds(_, as<int32_t>(1)) = expr(lhs),
                 pattern | _                                    = expr(lhs * (rhs ^ integer(-1)))
                 // clang-format on
             );
