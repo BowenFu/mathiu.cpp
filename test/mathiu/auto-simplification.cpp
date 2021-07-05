@@ -32,7 +32,7 @@ TEST(Simplification, distributive)
     auto const e2 = n3 * x;
     EXPECT_EQ(toString(e1), "(* 3 x)");
     EXPECT_EQ(toString(e2), "(* 3 x)");
-    EXPECT_EQ(e1, e2);
+    EXPECT_TRUE(mathiu::impl::equal(e1, e2));
 }
 
 TEST(asCoeffAndRest, 1)
@@ -41,7 +41,7 @@ TEST(asCoeffAndRest, 1)
     Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*(symbol("x")))
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == integer(1); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), integer(1)); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -55,7 +55,7 @@ TEST(asCoeffAndRest, 2)
     Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*e)
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == integer(1); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), integer(1)); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -67,7 +67,7 @@ TEST(asCoeffAndRest, 3)
     Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*(integer(5) * symbol("x")))
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return (*coeff) == integer(5); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), integer(5)); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -79,7 +79,7 @@ TEST(asCoeffAndRest, 4)
     Id<mathiu::impl::ExprPtr> rest;
     auto result = match(*(integer(5) * symbol("x")))
     (
-        pattern | mathiu::impl::asCoeffAndRest(_, rest) = [&] { return (*rest) == symbol("x"); },
+        pattern | mathiu::impl::asCoeffAndRest(_, rest) = [&] { return mathiu::impl::equal((*rest), symbol("x")); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -91,7 +91,7 @@ TEST(asCoeffAndRest, multiple)
     Id<mathiu::impl::ExprPtr> coeff1, coeff2, rest;
     auto result = match(*(integer(5) * symbol("x")), *symbol("x"))
     (
-        pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest)) = [&] { return (*rest) == symbol("x"); },
+        pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest)) = [&] { return mathiu::impl::equal((*rest), symbol("x")); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -105,7 +105,7 @@ TEST(asBaseAndExp, 1)
 
     auto result = match(*symbol("x"))
     (
-        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == integer(1); },
+        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return mathiu::impl::equal((*base), symbol("x")) && mathiu::impl::equal((*exp), integer(1)); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -119,7 +119,7 @@ TEST(asBaseAndExp, 2)
 
     auto result = match(*(symbol("x")^integer(2)))
     (
-        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return (*base) == symbol("x") && (*exp) == integer(2); },
+        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return mathiu::impl::equal((*base), symbol("x")) && mathiu::impl::equal((*exp), integer(2)); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -194,7 +194,7 @@ TEST(asCoeffAndRest, rational)
         pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest))= [&]
         {
             ((*coeff1) + (*coeff2)); // * (*rest);
-            return (*coeff1) == n2 && (*coeff2) == f3o2 && (*rest) == symbol("x"); },
+            return mathiu::impl::equal((*coeff1), n2) && mathiu::impl::equal((*coeff2), f3o2) && mathiu::impl::equal((*rest), symbol("x")); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -221,7 +221,7 @@ TEST(asCoeffAndRest, product)
     Id<mathiu::impl::ExprPtr> coeff, rest;
     auto result = match(*(f3o2 * x))
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, rest) = [&] { return (*coeff) == f3o2 && (*rest) == symbol("x"); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, rest) = [&] { return mathiu::impl::equal((*coeff), f3o2) && mathiu::impl::equal((*rest), symbol("x")); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
