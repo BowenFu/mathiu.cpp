@@ -9,6 +9,24 @@ namespace mathiu
 {
     namespace impl
     {
+        inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var)
+        {
+#if DEBUG
+            std::cout << "solveImpl: " << toString(ex) << ",\t" << toString(var) << std::endl;
+#endif // DEBUG
+
+            auto const var_ = std::get<Symbol>(*var);
+            using namespace matchit;
+            const auto freeOfVar = app([&](auto&& e) { return diffImpl(e, var_); }, integer(0));
+            return match(ex)(
+                pattern | some(as<int32_t>(0)) = expr(set({var})),
+                pattern | freeOfVar = expr(set({})),
+                pattern | _ = [&]
+                {
+                    throw std::runtime_error{"No match in solve!"};
+                    return set({});
+                });
+        }
 
         inline ExprPtr solve(ExprPtr const& lhs, ExprPtr const& rhs, ExprPtr const& var)
         {

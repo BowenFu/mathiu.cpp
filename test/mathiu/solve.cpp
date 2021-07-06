@@ -34,4 +34,18 @@ TEST(solve, alwaysFail)
     EXPECT_EQ(toString(solve(e1, e2, x)), "{}");
 }
 
+// --- solve single
 
+TEST(solve, zero)
+{
+    auto const x = symbol("x");
+    auto const e = integer(0);
+    EXPECT_EQ(toString(solve(e, x)), "{x}");
+}
+
+TEST(solve, nonZero)
+{
+    auto const x = symbol("x");
+    auto const y = symbol("y");
+    EXPECT_EQ(toString(solve(y, x)), "{}");
+}
