@@ -290,6 +290,10 @@ namespace mathiu
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
         {
+#if DEBUG
+            std::cout << "less: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
+#endif // DEBUG
+
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
@@ -348,7 +352,7 @@ namespace mathiu
                 pattern | ds(as<E>(_), as<E>(_)) = expr(false),
                 pattern | ds(_, as<E>(_)) = expr(true),
                 pattern | ds(as<E>(_), _) = expr(false),
-                pattern | _ = [&] { throw std::runtime_error{"No match in less!"}; return false; }
+                pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
                 // clang-format on
             );
         }

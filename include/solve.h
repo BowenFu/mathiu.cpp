@@ -9,38 +9,30 @@ namespace mathiu
 {
     namespace impl
     {
+        // TODO: solve poly
         inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var)
         {
 #if DEBUG
-            std::cout << "solveImpl: " << toString(ex) << ",\t" << toString(var) << std::endl;
+            std::cout << "solve: " << toString(ex) << ",\t" << toString(var) << std::endl;
 #endif // DEBUG
 
             auto const var_ = std::get<Symbol>(*var);
             using namespace matchit;
             const auto freeOfVar = app([&](auto&& e) { return diffImpl(e, var_); }, integer(0));
+            Id<Product> iP;
             return match(ex)(
                 pattern | some(as<int32_t>(0)) = expr(set({var})),
                 pattern | freeOfVar = expr(set({})),
-                pattern | _ = [&]
+                pattern | var = expr(set({integer(0)})), // todo -> solve poly
+                pattern | some(as<Product>(iP)) = [&]
                 {
-                    throw std::runtime_error{"No match in solve!"};
-                    return set({});
-                });
-        }
-
-        inline ExprPtr solve(ExprPtr const& lhs, ExprPtr const& rhs, ExprPtr const& var)
-        {
-#if DEBUG
-            std::cout << "solveImpl: " << toString(lhs) << "\t == \t" << toString(rhs) << ",\t" << toString(var) << std::endl;
-#endif // DEBUG
-
-            auto const var_ = std::get<Symbol>(*var);
-            using namespace matchit;
-            const auto freeOfVar = app([&](auto&& e) { return diffImpl(e, var_); }, integer(0));
-            return match(lhs, rhs)(
-                pattern | ds(some(as<Symbol>(var_)), freeOfVar) = expr(set({rhs})),
-                pattern | ds(freeOfVar, some(as<Symbol>(var_))) = expr(set({lhs})),
-                pattern | ds(freeOfVar, freeOfVar) = [&]{ return equal(lhs, rhs) ? set({var}) : set({}); },
+                    auto solutionSet = std::accumulate((*iP).begin(), (*iP).end(), Set{}, [&](Set solutions, auto&& e) 
+                    {
+                        solutions.merge(const_cast<Set&>(std::get<Set>(*solve(e.second, var)))); // it is safe to const_cast a temp.
+                        return std::move(solutions);
+                    });
+                    return std::make_shared<Expr const>(std::move(solutionSet));
+                },
                 pattern | _ = [&]
                 {
                     throw std::runtime_error{"No match in solve!"};
