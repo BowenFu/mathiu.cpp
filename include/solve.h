@@ -10,30 +10,26 @@ namespace mathiu
     namespace impl
     {
 
-        inline ExprPtr solveImpl(ExprPtr const& lhs, ExprPtr const& rhs, Symbol const& var)
+        inline ExprPtr solve(ExprPtr const& lhs, ExprPtr const& rhs, ExprPtr const& var)
         {
 #if DEBUG
-            std::cout << "solveImpl: " << toString(lhs) << "\t == \t" << toString(rhs) << ",\t" << var[0] << std::endl;
+            std::cout << "solveImpl: " << toString(lhs) << "\t == \t" << toString(rhs) << ",\t" << toString(var) << std::endl;
 #endif // DEBUG
 
+            auto const var_ = std::get<Symbol>(*var);
             using namespace matchit;
-            const auto freeOfVar = app([&](auto&& e) { return diffImpl(e, var); }, integer(0));
+            const auto freeOfVar = app([&](auto&& e) { return diffImpl(e, var_); }, integer(0));
             return match(lhs, rhs)(
-                pattern | ds(some(as<Symbol>(var)), freeOfVar) = expr(rhs),
-                pattern | ds(freeOfVar, some(as<Symbol>(var))) = expr(lhs),
-                pattern | ds(freeOfVar, freeOfVar) | when([&]{ return equal(lhs, rhs);}) = expr(symbol(var[0])),
+                pattern | ds(some(as<Symbol>(var_)), freeOfVar) = expr(set({rhs})),
+                pattern | ds(freeOfVar, some(as<Symbol>(var_))) = expr(set({lhs})),
+                pattern | ds(freeOfVar, freeOfVar) = [&]{ return equal(lhs, rhs) ? set({var}) : set({}); },
                 pattern | _ = [&]
                 {
                     throw std::runtime_error{"No match in solve!"};
-                    return integer(0);
+                    return set({});
                 });
         }
 
-        inline ExprPtr solve(ExprPtr const& lhs, ExprPtr const& rhs, ExprPtr const& var)
-        {
-            auto const var_ = std::get<Symbol>(*var);
-            return solveImpl(lhs, rhs, var_);
-        }
     } // namespace impl
     using impl::solve;
 } // namespace mathiu

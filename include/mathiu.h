@@ -10,6 +10,7 @@
 #include <vector>
 #include <numeric>
 #include <map>
+#include <set>
 
 #define DEBUG 1
 
@@ -121,6 +122,7 @@ namespace mathiu
         };
 
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
+        using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
 
         struct Sum : ExprPtrMap
         {
@@ -151,7 +153,11 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan>;
+        struct Set : ExprPtrSet
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set>;
 
         struct Expr : ExprVariant
         {
@@ -159,10 +165,16 @@ namespace mathiu
         };
 
         inline constexpr auto equalPair = [](auto&& x, auto&& y) { return equal(x.first, y.first) && equal(x.second, y.second); };
+        inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
         
         inline bool operator==(ExprPtrMap const &l, ExprPtrMap const &r)
         {
             return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalPair);
+        }
+
+        inline bool operator==(ExprPtrSet const &l, ExprPtrSet const &r)
+        {
+            return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
         }
 
         inline ExprPtr integer(int32_t v)
@@ -192,6 +204,11 @@ namespace mathiu
             return std::make_shared<Expr const>(Symbol{{name}});
         }
 
+        inline ExprPtr set(std::initializer_list<ExprPtr> const& lst)
+        {
+            return std::make_shared<Expr const>(Set{{lst}});
+        }
+
         inline std::string toString(const ExprPtr &ex);
 
         inline std::string toString(std::string const& s)
@@ -202,7 +219,7 @@ namespace mathiu
         template <typename T>
         inline std::string toString(T const& t)
         {
-            return std::to_string((t));
+            return std::to_string(t);
         }
 
         inline bool equal(std::pair<ExprPtr const, ExprPtr > const &lhs, std::pair<ExprPtr const, ExprPtr > const &rhs)
@@ -250,8 +267,6 @@ namespace mathiu
             return v1.size() < v2.size();
         }
 
-        inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
-        
         template <typename T, typename C = std::initializer_list<T>>
         bool equalC(C const& v1, C const& v2)
         {
@@ -733,6 +748,7 @@ namespace mathiu
             Id<ExprPtr > ie, il, ir;
             Id<Sum> iS;
             Id<Product> iP;
+            Id<Set> iSet;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
@@ -759,7 +775,19 @@ namespace mathiu
                 pattern | as<Sin>(ds(ie))                            = [&]{ return "(Sin " + toString(*ie) + ")"; },
                 pattern | as<Pi>(_)                                  = expr("pi"),
                 pattern | as<E>(_)                                   = expr("e"),
-                pattern | as<I>(_)                                   = expr("i")
+                pattern | as<I>(_)                                   = expr("i"),
+                pattern | as<Set>(iSet)                              = [&]{
+                    if ((*iSet).empty())
+                    {
+                        return std::string("{}");
+                    }
+                    std::string result = "{";
+                    for (auto e : *iSet)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + "}"; 
+                }
                 // clang-format on
             );
         }
