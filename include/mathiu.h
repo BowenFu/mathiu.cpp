@@ -11,6 +11,7 @@
 #include <numeric>
 #include <map>
 #include <set>
+#include <list>
 
 #define DEBUG 1
 
@@ -123,6 +124,7 @@ namespace mathiu
 
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
         using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
+        using ExprPtrList = std::list<ExprPtr>;
 
         struct Sum : ExprPtrMap
         {
@@ -157,7 +159,11 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set>;
+        struct List : ExprPtrList
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List>;
 
         struct Expr : ExprVariant
         {
@@ -173,6 +179,11 @@ namespace mathiu
         }
 
         inline bool operator==(ExprPtrSet const &l, ExprPtrSet const &r)
+        {
+            return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
+        }
+
+        inline bool operator==(ExprPtrList const &l, ExprPtrList const &r)
         {
             return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
         }
@@ -749,6 +760,7 @@ namespace mathiu
             Id<Sum> iS;
             Id<Product> iP;
             Id<Set> iSet;
+            Id<List> iList;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
@@ -787,6 +799,18 @@ namespace mathiu
                         result += toString(e) + " ";
                     }
                     return result.substr(0, result.size()-1) + "}"; 
+                },
+                pattern | as<List>(iList)                              = [&]{
+                    if ((*iList).empty())
+                    {
+                        return std::string("[]");
+                    }
+                    std::string result = "[";
+                    for (auto e : *iList)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + "]"; 
                 }
                 // clang-format on
             );
