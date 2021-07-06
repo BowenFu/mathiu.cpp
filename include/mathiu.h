@@ -11,6 +11,7 @@
 #include <numeric>
 #include <map>
 #include <set>
+#include <list>
 
 #define DEBUG 1
 
@@ -123,6 +124,7 @@ namespace mathiu
 
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
         using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
+        using ExprPtrList = std::list<ExprPtr>;
 
         struct Sum : ExprPtrMap
         {
@@ -157,7 +159,11 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set>;
+        struct List : ExprPtrList
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List>;
 
         struct Expr : ExprVariant
         {
@@ -173,6 +179,11 @@ namespace mathiu
         }
 
         inline bool operator==(ExprPtrSet const &l, ExprPtrSet const &r)
+        {
+            return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
+        }
+
+        inline bool operator==(ExprPtrList const &l, ExprPtrList const &r)
         {
             return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
         }
@@ -279,6 +290,10 @@ namespace mathiu
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
         {
+#if DEBUG
+            std::cout << "less: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
+#endif // DEBUG
+
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
@@ -337,7 +352,7 @@ namespace mathiu
                 pattern | ds(as<E>(_), as<E>(_)) = expr(false),
                 pattern | ds(_, as<E>(_)) = expr(true),
                 pattern | ds(as<E>(_), _) = expr(false),
-                pattern | _ = [&] { throw std::runtime_error{"No match in less!"}; return false; }
+                pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
                 // clang-format on
             );
         }
@@ -749,6 +764,7 @@ namespace mathiu
             Id<Sum> iS;
             Id<Product> iP;
             Id<Set> iSet;
+            Id<List> iList;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
@@ -787,6 +803,18 @@ namespace mathiu
                         result += toString(e) + " ";
                     }
                     return result.substr(0, result.size()-1) + "}"; 
+                },
+                pattern | as<List>(iList)                              = [&]{
+                    if ((*iList).empty())
+                    {
+                        return std::string("[]");
+                    }
+                    std::string result = "[";
+                    for (auto e : *iList)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + "]"; 
                 }
                 // clang-format on
             );
