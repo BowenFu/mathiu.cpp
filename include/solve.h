@@ -29,7 +29,7 @@ namespace mathiu
                     auto solutionSet = std::accumulate((*iP).begin(), (*iP).end(), Set{}, [&](Set solutions, auto&& e) 
                     {
                         solutions.merge(const_cast<Set&>(std::get<Set>(*solve(e.second, var)))); // it is safe to const_cast a temp.
-                        return std::move(solutions);
+                        return solutions;
                     });
                     return std::make_shared<Expr const>(std::move(solutionSet));
                 },
