@@ -17,7 +17,7 @@ namespace mathiu
             (
                 pattern | as<Product>(iP) = [&]
                 {
-                    return std::reduce(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
+                    return std::accumulate(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
                     {
                         auto const exp = baseAndExp(*(*iP).at(e)).second;
                         return sum + std::get<int32_t>(*exp);
@@ -56,7 +56,7 @@ namespace mathiu
             return match(*ex)(
                 pattern | as<Sum>(iS) = [&]
                 {
-                    return std::reduce((*iS).begin(), (*iS).end(), 0, [&](int32_t sum, auto&& e) 
+                    return std::accumulate((*iS).begin(), (*iS).end(), 0, [&](int32_t sum, auto&& e) 
                     {
                         return sum + degreeMonomial(e.second, varSet_);
                     });
