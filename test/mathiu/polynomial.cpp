@@ -85,3 +85,16 @@ TEST(coefficient, 1)
     auto const x = "x"_s;
     EXPECT_EQ(toString(coefficient(a * (x ^ i2) + b * x + c, x, 2)), "a");
 }
+
+TEST(coefficient, 2)
+{
+    auto const i2 = 2_i;
+    auto const i3 = 3_i;
+    auto const i5 = 5_i;
+    auto const i7 = 7_i;
+    auto const i9 = 9_i;
+    auto const x = "x"_s;
+    auto const y = "y"_s;
+    auto const z = "z"_s;
+    EXPECT_EQ(toString(coefficient(i3 * x * (y ^ i2) + i5 * (x^i2) * y + i7*x + i9, x, 1)), "(+ 7 (* 3 (^ y 2)))");
+}
