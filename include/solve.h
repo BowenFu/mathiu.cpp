@@ -18,7 +18,8 @@ namespace mathiu
 
             auto const var_ = std::get<Symbol>(*var);
             using namespace matchit;
-            const auto freeOfVar = app([&](auto&& e) { return diffImpl(e, var_); }, integer(0));
+            const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), integer(0)); };
+            const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
             Id<Product> iP;
             return match(ex)(
                 pattern | some(as<int32_t>(0)) = expr(set({var})),

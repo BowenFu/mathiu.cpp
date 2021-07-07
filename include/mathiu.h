@@ -836,6 +836,7 @@ namespace mathiu
     using impl::sin;
     using impl::toString;
     using impl::fraction;
+    using impl::set;
 } // namespace mathiu
 
 #endif // MATHIU_H
