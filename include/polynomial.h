@@ -58,7 +58,7 @@ namespace mathiu
                 {
                     return std::accumulate((*iS).begin(), (*iS).end(), 0, [&](int32_t sum, auto&& e) 
                     {
-                        return sum + degreeMonomial(e.second, varSet_);
+                        return std::max(sum, degreeMonomial(e.second, varSet_));
                     });
                 },
                 pattern | _ = [&] { return degreeMonomial(ex, varSet_);}

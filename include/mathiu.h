@@ -193,6 +193,11 @@ namespace mathiu
             return std::make_shared<Expr const>(v);
         }
 
+        inline ExprPtr operator ""_i(unsigned long long v)
+        {
+            return integer(static_cast<int32_t>(v));
+        }
+
         inline ExprPtr fraction(int32_t l, int32_t r)
         {
             return std::make_shared<Expr const>(Fraction{{l, r}});
@@ -213,6 +218,11 @@ namespace mathiu
         inline ExprPtr symbol(std::string const &name)
         {
             return std::make_shared<Expr const>(Symbol{{name}});
+        }
+
+        inline ExprPtr operator ""_s(const char* str, std::size_t)
+        {
+            return symbol(str);
         }
 
         inline ExprPtr set(std::initializer_list<ExprPtr> const& lst)
@@ -837,6 +847,8 @@ namespace mathiu
     using impl::toString;
     using impl::fraction;
     using impl::set;
+    using impl::operator""_i;
+    using impl::operator""_s;
 } // namespace mathiu
 
 #endif // MATHIU_H
