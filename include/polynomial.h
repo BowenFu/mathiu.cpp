@@ -1,5 +1,5 @@
-#ifndef SOLVE_H
-#define SOLVE_H
+#ifndef POLYNOMIAL_H
+#define POLYNOMIAL_H
 
 #include "matchit.h"
 #include "mathiu.h"
@@ -9,33 +9,59 @@ namespace mathiu
 {
     namespace impl
     {
-        inline int32_t degreeMonomial(ExprPtr const& ex, ExprPtr const& varSet)
+        inline int32_t degreeMonomial(Product const& monomial, Set const& varSet)
+        {
+            return std::reduce(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
+            {
+                auto const exp = baseAndExp(*monomial.at(e)).second;
+                return sum + std::get<int32_t>(*exp);
+            });
+        }
+
+        inline int32_t degree(ExprPtr const& ex, ExprPtr const& varSet)
         {
 #if DEBUG
-            std::cout << "degreeMonomial: " << toString(ex) << ",\t" << toString(var) << std::endl;
+            std::cout << "degree: " << toString(ex) << ",\t" << toString(varSet) << std::endl;
 #endif // DEBUG
 
-            auto const varSet_ = std::get<Set>(*varSet);
             using namespace matchit;
+            Id<Set> iSet;
+            Id<ExprPtr> base, exp;
+            auto const varSet_ = match(*varSet)
+            (
+                pattern | as<Set>(iSet) = [&]
+                {
+                    return *iSet;
+                },
+                pattern | _ = [&] { return Set{{{varSet}}};}
+            );
+
+            Id<Sum> iS;
             Id<Product> iP;
             return match(*ex)(
-                pattern | as<Product>(iP) = [&]
+                pattern | as<Sum>(iS) = [&]
                 {
-                    return std::reduce(varSet_.begin(), varSet_.end(), 0, [&](int32_t sum, auto&& e) 
+                    return std::reduce((*iS).begin(), (*iS).end(), 0, [&](int32_t sum, auto&& e) 
                     {
-                        auto coeff = baseAndExp((*iP).at(e)).first;
-                        return sum + std::get<int32_t>(*coeff);
+                        return sum + degree(e.second, varSet);
                     });
                 },
-                pattern | _ = [&]
+                pattern | as<Product>(iP) = [&]
                 {
-                    throw std::runtime_error{"No match in solve!"};
-                    return 0;
+                    return degreeMonomial(*iP, varSet_);
+                },
+                pattern | asBaseAndExp(base, exp) = [&]
+                {
+                    auto const iter = varSet_.find(*base);
+                    if (iter== varSet_.end())
+                    {
+                        return 0;
+                    }
+                    return std::get<int32_t>(**exp);
                 });
         }
 
     } // namespace impl
-    using impl::solve;
 } // namespace mathiu
 
-#endif // SOLVE_H
+#endif // POLYNOMIAL_H
