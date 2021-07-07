@@ -63,3 +63,15 @@ TEST(degree, multivar4)
     auto const sinx = sin(x);
     EXPECT_EQ(toString(degree(a * (sinx^i2) + (b*sinx) + c, sinx)), "2");
 }
+
+TEST(degree, multivarr)
+{
+    auto const i2 = 2_i;
+    auto const i3 = 3_i;
+    auto const i6 = 6_i;
+    auto const w = "w"_s;
+    auto const x = "x"_s;
+    auto const y = "y"_s;
+    auto const z = "z"_s;
+    EXPECT_EQ(toString(degree(i2 * (x^i2) * y * (z^i3) + w * x * (z^i6), set({x, z}))), "7");
+}
