@@ -9,13 +9,30 @@ namespace mathiu
 {
     namespace impl
     {
-        inline int32_t degreeMonomial(Product const& monomial, Set const& varSet)
+        inline int32_t degreeMonomial(ExprPtr const& monomial, Set const& varSet)
         {
-            return std::reduce(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
-            {
-                auto const exp = baseAndExp(*monomial.at(e)).second;
-                return sum + std::get<int32_t>(*exp);
-            });
+            Id<Product> iP;
+            Id<ExprPtr> base, exp;
+            return match(*monomial)
+            (
+                pattern | as<Product>(iP) = [&]
+                {
+                    return std::reduce(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
+                    {
+                        auto const exp = baseAndExp(*(*iP).at(e)).second;
+                        return sum + std::get<int32_t>(*exp);
+                    });
+                },
+                pattern | asBaseAndExp(base, exp) = [&]
+                {
+                    auto const iter = varSet.find(*base);
+                    if (iter== varSet.end())
+                    {
+                        return 0;
+                    }
+                    return std::get<int32_t>(**exp);
+                }
+            );
         }
 
         inline int32_t degree(ExprPtr const& ex, ExprPtr const& varSet)
@@ -26,7 +43,6 @@ namespace mathiu
 
             using namespace matchit;
             Id<Set> iSet;
-            Id<ExprPtr> base, exp;
             auto const varSet_ = match(*varSet)
             (
                 pattern | as<Set>(iSet) = [&]
@@ -37,28 +53,16 @@ namespace mathiu
             );
 
             Id<Sum> iS;
-            Id<Product> iP;
             return match(*ex)(
                 pattern | as<Sum>(iS) = [&]
                 {
                     return std::reduce((*iS).begin(), (*iS).end(), 0, [&](int32_t sum, auto&& e) 
                     {
-                        return sum + degree(e.second, varSet);
+                        return sum + degreeMonomial(e.second, varSet_);
                     });
                 },
-                pattern | as<Product>(iP) = [&]
-                {
-                    return degreeMonomial(*iP, varSet_);
-                },
-                pattern | asBaseAndExp(base, exp) = [&]
-                {
-                    auto const iter = varSet_.find(*base);
-                    if (iter== varSet_.end())
-                    {
-                        return 0;
-                    }
-                    return std::get<int32_t>(**exp);
-                });
+                pattern | _ = [&] { return degreeMonomial(ex, varSet_);}
+            );
         }
 
     } // namespace impl
