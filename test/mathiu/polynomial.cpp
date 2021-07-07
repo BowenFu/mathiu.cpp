@@ -75,3 +75,13 @@ TEST(degree, multivarr)
     auto const z = "z"_s;
     EXPECT_EQ(toString(degree(i2 * (x^i2) * y * (z^i3) + w * x * (z^i6), set({x, z}))), "7");
 }
+
+TEST(coefficient, 1)
+{
+    auto const i2 = 2_i;
+    auto const a = "a"_s;
+    auto const b = "b"_s;
+    auto const c = "c"_s;
+    auto const x = "x"_s;
+    EXPECT_EQ(toString(coefficient(a * (x ^ i2) + b * x + c, x, 2)), "a");
+}

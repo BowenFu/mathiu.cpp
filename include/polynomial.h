@@ -65,16 +65,21 @@ namespace mathiu
             );
         }
 
-        inline ExprPtr coefficientMonomial(ExprPtr const& monomial, ExprPtr const& xi)
+        inline ExprPtr coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x, int32_t i)
         {
+#if DEBUG
+            std::cout << "coefficientMonomial: " << toString(monomial) << ",\t" << toString(x) << ",\t" << i << std::endl;
+#endif // DEBUG
+
             Id<Product> iP;
             Id<ExprPtr> base, exp;
+            auto const xi = x^integer(i);
             return match(monomial)
             (
                 pattern | some(as<Product>(iP)) = [&]
                 {
-                    auto const iter = (*iP).find(xi);
-                    if (iter == (*iP).end())
+                    auto const iter = (*iP).find(x);
+                    if (iter == (*iP).end() || !equal((*iter).second, xi))
                     {
                         return integer(0);
                     }
@@ -94,8 +99,6 @@ namespace mathiu
             std::cout << "coefficient: " << toString(u) << ",\t" << toString(x) << ",\t" << i << std::endl;
 #endif // DEBUG
 
-            auto const xi = x^integer(i);
-
             using namespace matchit;
             Id<Sum> iS;
             return match(*u)(
@@ -103,10 +106,10 @@ namespace mathiu
                 {
                     return std::accumulate((*iS).begin(), (*iS).end(), 0_i, [&](ExprPtr sum, auto&& e) 
                     {
-                        return sum + coefficientMonomial(e.second, xi);
+                        return sum + coefficientMonomial(e.second, x, i);
                     });
                 },
-                pattern | _ = [&] { return coefficientMonomial(u, xi);}
+                pattern | _ = [&] { return coefficientMonomial(u, x, i);}
             );
         }
 
