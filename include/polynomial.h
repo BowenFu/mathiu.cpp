@@ -130,11 +130,16 @@ namespace mathiu
             );
         }
 
-        // // internal use
-        // inline std::vector<ExprPtr> coefficientList(ExprPtr const& u, ExprPtr const& x)
-        // {
-        //     auto const deg = degree(u, x);
-        // }
+        inline ExprPtr coefficientList(ExprPtr const& u, ExprPtr const& x)
+        {
+            auto const deg = degree(u, x);
+            List result;
+            for (auto i = 0; i <= deg; ++i)
+            {
+                result.emplace_back(coefficient(u, x, i));
+            }
+            return std::make_shared<Expr const>(std::move(result));
+        }
 
 
     } // namespace impl

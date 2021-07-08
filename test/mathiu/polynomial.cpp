@@ -182,3 +182,13 @@ TEST(coefficient, 7)
     auto const u = i3 * x * (y ^ i2) + i5 * (x^i2) * y + i7* (x^i2) * (y^i3) + i9;
     EXPECT_EQ(toString(coefficient(u, x, 2)), "(+ (* 5 y) (* 7 (^ y 3)))");
 }
+
+TEST(coefficientList, 1)
+{
+    auto const a = "a"_s;
+    auto const b = "b"_s;
+    auto const c = "c"_s;
+    auto const x = "x"_s;
+    auto const u = a * (x ^ 2_i) + b * x + c;
+    EXPECT_EQ(toString(coefficientList(u, x)), "[c b a]");
+}
