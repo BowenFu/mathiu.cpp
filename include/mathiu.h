@@ -681,6 +681,11 @@ namespace mathiu
             return pow(lhs, rhs);
         }
 
+        inline ExprPtr sqrt(ExprPtr const &lhs)
+        {
+            return pow(lhs, 1_i / 2_i);
+        }
+
         // the basic difference transformation
         inline ExprPtr operator-(ExprPtr const &rhs)
         {

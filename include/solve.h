@@ -4,12 +4,39 @@
 #include "matchit.h"
 #include "mathiu.h"
 #include "diff.h"
+#include "polynomial.h"
 
 namespace mathiu
 {
     namespace impl
     {
-        // TODO: solve poly
+        inline ExprPtr solvePoly(ExprPtr const& ex, ExprPtr const& var)
+        {
+#if DEBUG
+            std::cout << "solvePoly: " << toString(ex) << ",\t" << toString(var) << std::endl;
+#endif // DEBUG
+
+            auto coeffList = coefficientList(ex, var);
+
+            Id<ExprPtr> c, b, a;
+
+            using namespace matchit;
+            return match(std::get<List>(*coeffList))(
+                pattern | ds(c, b, a) = [&]
+                {
+                    auto _2a = 2_i * (*a);
+                    auto sqrtB2_4ac = sqrt(((*b)^2_i) - 4_i * (*a) * (*c));
+                    return set({(-(*b) + sqrtB2_4ac) / _2a, (-(*b) - sqrtB2_4ac) / _2a});
+                },
+                pattern | ds(c, b) = [&] { return set({-(*c) / (*b)}); },
+                pattern | ds(c) = [&] { return equal(*c, 0_i) ? set({var}) : set({}); },
+                pattern | _ = [&]
+                {
+                    throw std::runtime_error{"No match in solve!"};
+                    return set({});
+                });
+        }
+
         inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var)
         {
 #if DEBUG
