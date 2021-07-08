@@ -77,8 +77,8 @@ TEST(solve, product)
     EXPECT_EQ(toString(solve(y * x, x)), "{0}");
 }
 
-TEST(solve, ax2_bx_c)
+TEST(solveEq, ax2_bx_c)
 {
     auto const x = "x"_s;
-    EXPECT_EQ(toString(solve(2_i * x * x - 3_i * x + 1_i, x)), "{1/2 1}");
+    EXPECT_EQ(toString(solve(2_i * x * x - 3_i * x + 1_i == 0_i, x)), "{1/2 1}");
 }

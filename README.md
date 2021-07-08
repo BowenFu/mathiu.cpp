@@ -34,8 +34,8 @@ Sample 2 for equation solving.
 
 ```C++
 auto const x = "x"_s;
-auto const e = 2_i * x * x - 3_i * x + 1_i;
-auto const solutions = solve(e, x);
+auto const eq = 2_i * x * x - 3_i * x + 1_i == 0_i;
+auto const solutions = solve(eq, x);
 // prints {1/2 1}
 std::cout << toString(solutions) << std::endl;
 ```
