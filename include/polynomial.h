@@ -65,6 +65,7 @@ namespace mathiu
             );
         }
 
+        // Fix me, check monomial first
         inline ExprPtr coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x, int32_t i)
         {
 #if DEBUG

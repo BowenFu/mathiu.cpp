@@ -309,8 +309,9 @@ namespace mathiu
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
             constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
-            constexpr auto canBeProduct = or_(as<Power>(_), as<Sum>(_), as<Symbol>(_));
-            constexpr auto canBePower = or_(as<Sum>(_), as<Symbol>(_));
+            constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
+            constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
+            constexpr auto canBeLog = or_(as<Sum>(_), as<Symbol>(_));
             constexpr auto canBeSum = or_(as<Symbol>(_));
             return match(*lhs, *rhs)
             ( 
@@ -336,6 +337,15 @@ namespace mathiu
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {integer(1), rhs});
                 },
                 pattern | ds(canBePower, as<Power>(ds(iEr1, iEr2)))   = [&] {
+                    return lessC<ExprPtr>({integer(1), lhs}, {*iEr2, *iEr1});
+                },
+                pattern | ds(as<Log>(ds(iEl1, iEl2)), as<Log>(ds(iEr1, iEr2)))   = [&] {
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
+                pattern | ds(as<Log>(ds(iEl1, iEl2)), canBeLog)   = [&] {
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {integer(1), rhs});
+                },
+                pattern | ds(canBeLog, as<Log>(ds(iEr1, iEr2)))   = [&] {
                     return lessC<ExprPtr>({integer(1), lhs}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&]
@@ -390,6 +400,9 @@ namespace mathiu
                     return equalC<ExprPtr>(*iP1, *iP2);
                 },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), as<Power>(ds(iEr1, iEr2)))   = [&] {
+                    return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
+                pattern | ds(as<Log>(ds(iEl1, iEl2)), as<Log>(ds(iEr1, iEr2)))   = [&] {
                     return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&] { return equalC<ExprPtr>(*iS1, *iS2); },

@@ -732,3 +732,14 @@ TEST(autoSimplification, product)
     // auto const e = x / x * y;
     EXPECT_EQ(toString(e), "y");
 }
+
+TEST(autoSimplification, log)
+{
+    auto const i2 = 2_i;
+    auto const i1 = 1_i;
+    auto const x = "x"_s;
+    auto const lnx = log(e, x);
+    // auto const u = i2 * lnx * x / lnx;
+    auto const u = lnx / lnx;
+    EXPECT_EQ(toString(u), "1");
+}
