@@ -20,7 +20,7 @@ The library originated as a demo library showing the usage of the C++ pattern ma
 
 But now it is developed independently.
 
-Sample 1 for derivative.
+Sample 1 for differentiation.
 
 ```C++
 auto const x = "x"_s;
@@ -35,6 +35,7 @@ Sample 2 for equation solving.
 ```C++
 auto const x = "x"_s;
 auto const e = 2_i * x * x - 3_i * x + 1_i;
+auto const solutions = solve(e, x);
 // prints {1/2 1}
-std::cout << toString(solve(e, x)) << std::endl;
+std::cout << toString(solutions) << std::endl;
 ```
