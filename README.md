@@ -23,8 +23,8 @@ But now it is developed independently.
 Sample 1 for derivative.
 
 ```C++
-auto const x = symbol("x");
-auto const e = x ^ fraction(2, 3);
+auto const x = "x"_s;
+auto const e = x ^ (2_i / 3_i);
 auto const d = diff(e, x);
 // prints (* 2/3 (^ x -1/3))
 std::cout << toString(d) << std::endl;

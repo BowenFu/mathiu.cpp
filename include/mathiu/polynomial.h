@@ -2,7 +2,7 @@
 #define POLYNOMIAL_H
 
 #include "matchit.h"
-#include "mathiu.h"
+#include "core.h"
 #include "diff.h"
 
 namespace mathiu

@@ -2,7 +2,7 @@
 #define SOLVE_H
 
 #include "matchit.h"
-#include "mathiu.h"
+#include "core.h"
 #include "diff.h"
 #include "polynomial.h"
 

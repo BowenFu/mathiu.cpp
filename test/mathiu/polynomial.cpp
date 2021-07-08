@@ -1,5 +1,4 @@
 #include "mathiu.h"
-#include "polynomial.h"
 #include "gtest/gtest.h"
 #include <string>
 using namespace mathiu;

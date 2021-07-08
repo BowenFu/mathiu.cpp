@@ -1,4 +1,4 @@
-#include "solve.h"
+#include "mathiu/solve.h"
 #include "gtest/gtest.h"
 #include <string>
 using namespace mathiu;
