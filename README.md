@@ -20,7 +20,7 @@ The library originated as a demo library showing the usage of the C++ pattern ma
 
 But now it is developed independently.
 
-A simple sample of `mathiu`:
+Sample 1 for derivative.
 
 ```C++
 auto const x = symbol("x");
@@ -28,4 +28,13 @@ auto const e = x ^ fraction(2, 3);
 auto const d = diff(e, x);
 // prints (* 2/3 (^ x -1/3))
 std::cout << toString(d) << std::endl;
+```
+
+Sample 2 for equation solving.
+
+```C++
+auto const x = "x"_s;
+auto const e = 2_i * x * x - 3_i * x + 1_i;
+// prints {1/2 1}
+std::cout << toString(solve(e, x)) << std::endl;
 ```

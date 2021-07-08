@@ -61,10 +61,10 @@ namespace mathiu
                     });
                     return std::make_shared<Expr const>(std::move(solutionSet));
                 },
+                // assume is poly
                 pattern | _ = [&]
                 {
-                    throw std::runtime_error{"No match in solve!"};
-                    return set({});
+                    return solvePoly(ex, var);
                 });
         }
 

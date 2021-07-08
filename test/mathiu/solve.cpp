@@ -76,3 +76,9 @@ TEST(solve, product)
     auto const y = symbol("y");
     EXPECT_EQ(toString(solve(y * x, x)), "{0}");
 }
+
+TEST(solve, ax2_bx_c)
+{
+    auto const x = "x"_s;
+    EXPECT_EQ(toString(solve(2_i * x * x - 3_i * x + 1_i, x)), "{1/2 1}");
+}
