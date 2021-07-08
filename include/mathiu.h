@@ -124,7 +124,7 @@ namespace mathiu
 
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
         using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
-        using ExprPtrList = std::list<ExprPtr>;
+        using ExprPtrList = std::vector<ExprPtr>;
 
         struct Sum : ExprPtrMap
         {
@@ -679,6 +679,11 @@ namespace mathiu
         inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return pow(lhs, rhs);
+        }
+
+        inline ExprPtr sqrt(ExprPtr const &lhs)
+        {
+            return pow(lhs, 1_i / 2_i);
         }
 
         // the basic difference transformation

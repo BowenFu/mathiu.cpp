@@ -66,31 +66,42 @@ namespace mathiu
         }
 
         // Fix me, check monomial first
-        inline ExprPtr coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x, int32_t i)
+        inline std::pair<ExprPtr, int32_t> coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x)
         {
 #if DEBUG
-            std::cout << "coefficientMonomial: " << toString(monomial) << ",\t" << toString(x) << ",\t" << i << std::endl;
+            std::cout << "coefficientMonomial: " << toString(monomial) << ",\t" << toString(x) << std::endl;
 #endif // DEBUG
 
+            const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), integer(0)); };
+            const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, x); });
+
             Id<Product> iP;
-            Id<ExprPtr> base, exp;
-            auto const xi = x^integer(i);
+            Id<int32_t> iiExp;
             return match(monomial)
             (
+                pattern | x = [&]
+                {
+                    return std::make_pair(1_i, 1);
+                },
+                pattern | some(as<Power>(ds(x, some(as<int32_t>(iiExp.at(_ > 1)))))) = [&]
+                {
+                    return std::make_pair(1_i, *iiExp);
+                },
                 pattern | some(as<Product>(iP)) = [&]
                 {
-                    auto const iter = (*iP).find(x);
-                    if (iter == (*iP).end() || !equal((*iter).second, xi))
+                    return std::accumulate((*iP).begin(), (*iP).end(), std::make_pair(monomial, 0), [&](std::pair<ExprPtr, int32_t> const& result, auto&& e) 
                     {
-                        return integer(0);
-                    }
-                    return monomial / xi;
+                        auto f = coefficientMonomial(e.second, x);
+                        int32_t const m = f.second;
+                        if (m == 0)
+                        {
+                            return result;
+                        }
+                        return std::make_pair(monomial / (x ^ integer(m)), m);
+                    });
                 },
-                pattern | xi = [&]
-                {
-                    return integer(1);
-                },
-                pattern | _ = expr(0_i)
+                pattern | freeOfVar = expr(std::make_pair(monomial, 0)),
+                pattern | _ = [&] { throw std::runtime_error("Mismatch in coefficientMonomial!"); return std::make_pair(monomial, 0); }
             );
         }
 
@@ -102,17 +113,34 @@ namespace mathiu
 
             using namespace matchit;
             Id<Sum> iS;
-            return match(*u)(
-                pattern | as<Sum>(iS) = [&]
+            return match(u)(
+                pattern | x = [&] { return i == 1 ? 1_i : 0_i;  },
+                pattern | some(as<Sum>(iS)) = [&]
                 {
-                    return std::accumulate((*iS).begin(), (*iS).end(), 0_i, [&](ExprPtr sum, auto&& e) 
+                    return std::accumulate((*iS).begin(), (*iS).end(), 0_i, [&](ExprPtr c, auto&& e) 
                     {
-                        return sum + coefficientMonomial(e.second, x, i);
+                        auto f = coefficientMonomial(e.second, x);
+                        return (f.second == i) ? c + f.first : c;
                     });
                 },
-                pattern | _ = [&] { return coefficientMonomial(u, x, i);}
+                pattern | _ = [&] {
+                    auto f = coefficientMonomial(u, x);
+                    return (f.second == i) ? f.first : 0_i;
+                }
             );
         }
+
+        inline ExprPtr coefficientList(ExprPtr const& u, ExprPtr const& x)
+        {
+            auto const deg = degree(u, x);
+            List result;
+            for (auto i = 0; i <= deg; ++i)
+            {
+                result.emplace_back(coefficient(u, x, i));
+            }
+            return std::make_shared<Expr const>(std::move(result));
+        }
+
 
     } // namespace impl
 } // namespace mathiu
