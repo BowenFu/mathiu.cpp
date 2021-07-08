@@ -48,7 +48,9 @@ namespace mathiu
             const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), integer(0)); };
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
             Id<Product> iP;
+            Id<ExprPtr> iE1, iE2;
             return match(ex)(
+                pattern | some(as<Equation>(ds(iE1, iE2))) = [&] { return solve(*iE1 - *iE2, var); },
                 pattern | some(as<int32_t>(0)) = expr(set({var})),
                 pattern | freeOfVar = expr(set({})),
                 pattern | var = expr(set({integer(0)})), // todo -> solve poly

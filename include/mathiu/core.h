@@ -80,7 +80,7 @@ namespace mathiu
 
         inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs);
         inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
-        inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
+        // inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
         inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator-(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator-(ExprPtr const &rhs);
@@ -163,7 +163,11 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List>;
+        struct Equation : std::array<ExprPtr, 2>
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Equation>;
 
         struct Expr : ExprVariant
         {
@@ -724,6 +728,11 @@ namespace mathiu
         inline ExprPtr log(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return std::make_shared<Expr const>(Log{{lhs, rhs}});
+        }
+
+        inline ExprPtr operator==(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            return std::make_shared<Expr const>(Equation{{lhs, rhs}});
         }
 
         inline double evald(const ExprPtr &ex)
