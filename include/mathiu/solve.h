@@ -50,7 +50,7 @@ namespace mathiu
             Id<Product> iP;
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
-                pattern | some(as<Equation>(ds(iE1, iE2))) = [&] { return solve(*iE1 - *iE2, var); },
+                pattern | some(as<Relational>(as<Equal>(ds(iE1, iE2)))) = [&] { return solve(*iE1 - *iE2, var); },
                 pattern | some(as<int32_t>(0)) = expr(set({var})),
                 pattern | freeOfVar = expr(set({})),
                 pattern | var = expr(set({integer(0)})), // todo -> solve poly

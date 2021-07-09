@@ -163,11 +163,33 @@ namespace mathiu
         {
         };
 
-        struct Equation : std::array<ExprPtr, 2>
+        struct Equal : std::array<ExprPtr, 2>
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Equation>;
+        struct Less : std::array<ExprPtr, 2>
+        {
+        };
+
+        struct LessEqual : std::array<ExprPtr, 2>
+        {
+        };
+
+        struct Greater : std::array<ExprPtr, 2>
+        {
+        };
+
+        struct GreaterEqual : std::array<ExprPtr, 2>
+        {
+        };
+
+        using Relational = std::variant<Equal, Less, LessEqual, Greater, GreaterEqual>;
+
+        struct PieceWise : std::vector<std::pair<ExprPtr, ExprPtr>>
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
 
         struct Expr : ExprVariant
         {
@@ -732,7 +754,7 @@ namespace mathiu
 
         inline ExprPtr operator==(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Equation{{lhs, rhs}});
+            return std::make_shared<Expr const>(Equal{{lhs, rhs}});
         }
 
         inline double evald(const ExprPtr &ex)
