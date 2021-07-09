@@ -79,7 +79,7 @@ namespace mathiu
         using ExprPtr = std::shared_ptr<Expr const>;
 
         inline ExprPtr operator^(ExprPtr const &lhs, ExprPtr const &rhs);
-        inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
+        // inline bool operator<(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
         // inline bool operator==(ExprPtr const &lhs, ExprPtr const &rhs) = delete;
         inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator-(ExprPtr const &lhs, ExprPtr const &rhs);
@@ -125,6 +125,8 @@ namespace mathiu
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
         using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
         using ExprPtrList = std::vector<ExprPtr>;
+        template <size_t N>
+        using ExprPtrArray = std::array<ExprPtr, N>;
 
         struct Sum : ExprPtrMap
         {
@@ -134,20 +136,20 @@ namespace mathiu
         {
         };
 
-        struct Power : std::array<ExprPtr, 2>
+        struct Power : ExprPtrArray<2>
         {
         };
 
-        struct Log : std::array<ExprPtr, 2>
+        struct Log : ExprPtrArray<2>
         {
         };
 
         // TODO: a uniform Func type, std::tuple<std::string, ExprPtrMap>
-        struct Sin : std::array<ExprPtr, 1>
+        struct Sin : ExprPtrArray<1>
         {
         };
 
-        struct Arctan : std::array<ExprPtr, 1>
+        struct Arctan : ExprPtrArray<1>
         {
         };
 
@@ -163,11 +165,37 @@ namespace mathiu
         {
         };
 
-        struct Equation : std::array<ExprPtr, 2>
+        struct Equal : ExprPtrArray<2>
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Equation>;
+        struct Less : ExprPtrArray<2>
+        {
+        };
+
+        struct LessEqual : ExprPtrArray<2>
+        {
+        };
+
+        struct Greater : ExprPtrArray<2>
+        {
+        };
+
+        struct GreaterEqual : ExprPtrArray<2>
+        {
+        };
+
+        using RelationalVariant = std::variant<Equal, Less, LessEqual, Greater, GreaterEqual>;
+
+        struct Relational : RelationalVariant
+        {
+        };
+
+        struct PieceWise : std::vector<std::pair<ExprPtr, ExprPtr>>
+        {
+        };
+
+        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
 
         struct Expr : ExprVariant
         {
@@ -190,6 +218,12 @@ namespace mathiu
         inline bool operator==(ExprPtrList const &l, ExprPtrList const &r)
         {
             return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
+        }
+
+        template <size_t N>
+        inline bool operator==(ExprPtrArray<N> const &l, ExprPtrArray<N> const &r)
+        {
+            return std::equal(l.begin(), l.end(), r.begin(), equalLambda);
         }
 
         inline ExprPtr integer(int32_t v)
@@ -732,7 +766,27 @@ namespace mathiu
 
         inline ExprPtr operator==(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Equation{{lhs, rhs}});
+            return std::make_shared<Expr const>(Relational{Equal{{lhs, rhs}}});
+        }
+
+        inline ExprPtr operator<(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            return std::make_shared<Expr const>(Relational{Less{{lhs, rhs}}});
+        }
+
+        inline ExprPtr operator>=(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            return std::make_shared<Expr const>(Relational{GreaterEqual{{lhs, rhs}}});
+        }
+
+        inline ExprPtr operator>(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            return std::make_shared<Expr const>(Relational{Greater{{lhs, rhs}}});
+        }
+
+        inline ExprPtr max(ExprPtr const& lhs, ExprPtr const& rhs)
+        {
+            return std::make_shared<Expr const>(PieceWise{{{lhs, lhs >= rhs}, {rhs, lhs < rhs}}});
         }
 
         inline double evald(const ExprPtr &ex)
@@ -802,6 +856,8 @@ namespace mathiu
             Id<Product> iP;
             Id<Set> iSet;
             Id<List> iList;
+            Id<PieceWise> iPieceWise;
+            Id<Relational> iRel;
             return match(*ex)(
                 // clang-format off
                 pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
@@ -852,6 +908,37 @@ namespace mathiu
                         result += toString(e) + " ";
                     }
                     return result.substr(0, result.size()-1) + "]"; 
+                },
+                pattern | as<PieceWise>(iPieceWise)                              = [&]{
+                    if ((*iPieceWise).empty())
+                    {
+                        return std::string("(PieceWise)");
+                    }
+                    std::string result = "(PieceWise ";
+                    for (auto e : *iPieceWise)
+                    {
+                        result += "(" + toString(e.first) + " " + toString(e.second) + ") ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
+                },
+                pattern | as<Relational>(iRel)                      = [&]{
+                    return match(*iRel)(
+                        pattern | as<Equal>(ds(il, ir)) = [&] {
+                            return "(== " + toString(*il) + " " + toString(*ir) + ")";
+                        },
+                        pattern | as<Less>(ds(il, ir)) = [&] {
+                            return "(< " + toString(*il) + " " + toString(*ir) + ")";
+                        },
+                        pattern | as<LessEqual>(ds(il, ir)) = [&] {
+                            return "(<= " + toString(*il) + " " + toString(*ir) + ")";
+                        },
+                        pattern | as<Greater>(ds(il, ir)) = [&] {
+                            return "(> " + toString(*il) + " " + toString(*ir) + ")";
+                        },
+                        pattern | as<GreaterEqual>(ds(il, ir)) = [&] {
+                            return "(>= " + toString(*il) + " " + toString(*ir) + ")";
+                        }
+                    );
                 }
                 // clang-format on
             );
