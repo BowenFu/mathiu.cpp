@@ -26,14 +26,14 @@ namespace mathiu
                 {
                     auto _2a = 2_i * (*a);
                     auto sqrtB2_4ac = sqrt(((*b)^2_i) - 4_i * (*a) * (*c));
-                    return set({(-(*b) + sqrtB2_4ac) / _2a, (-(*b) - sqrtB2_4ac) / _2a});
+                    return set((-(*b) + sqrtB2_4ac) / _2a, (-(*b) - sqrtB2_4ac) / _2a);
                 },
-                pattern | ds(c, b) = [&] { return set({-(*c) / (*b)}); },
-                pattern | ds(c) = [&] { return equal(*c, 0_i) ? set({var}) : set({}); },
+                pattern | ds(c, b) = [&] { return set(-(*c) / (*b)); },
+                pattern | ds(c) = [&] { return equal(*c, 0_i) ? set(var) : set(); },
                 pattern | _ = [&]
                 {
                     throw std::runtime_error{"No match in solve!"};
-                    return set({});
+                    return set();
                 });
         }
 
@@ -51,9 +51,9 @@ namespace mathiu
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
                 pattern | some(as<Relational>(as<Equal>(ds(iE1, iE2)))) = [&] { return solve(*iE1 - *iE2, var); },
-                pattern | some(as<Integer>(0)) = expr(set({var})),
-                pattern | freeOfVar = expr(set({})),
-                pattern | var = expr(set({0_i})), // todo -> solve poly
+                pattern | some(as<Integer>(0)) = expr(set(var)),
+                pattern | freeOfVar = expr(set()),
+                pattern | var = expr(set(0_i)), // todo -> solve poly
                 pattern | some(as<Product>(iP)) = [&]
                 {
                     auto solutionSet = std::accumulate((*iP).begin(), (*iP).end(), Set{}, [&](Set solutions, auto&& e) 

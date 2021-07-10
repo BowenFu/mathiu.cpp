@@ -13,6 +13,7 @@
 #include <set>
 #include <list>
 
+#define VERBOSE_DEBUG 0
 #define DEBUG 1
 
 #if DEBUG
@@ -125,6 +126,7 @@ namespace mathiu
             }
         };
 
+        using ExprPtrPair = std::pair<ExprPtr, ExprPtr>;
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
         using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
         using ExprPtrList = std::vector<ExprPtr>;
@@ -241,12 +243,25 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
+        struct SubstituteMap : ExprPtrMap
+        {
+        };
+
+        struct SubstitutePair : ExprPtrPair
+        {
+        };
+
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, SubstituteMap>;
 
         struct Expr : ExprVariant
         {
             using variant::variant;
         };
+
+        inline bool operator==(ExprPtrPair const &l, ExprPtrPair const &r)
+        {
+            return equal(l.first, r.first) && equal(l.second, r.second);
+        }
 
         inline bool operator==(ExprPtrMap const &l, ExprPtrMap const &r)
         {
@@ -299,6 +314,14 @@ namespace mathiu
                 { return std::make_shared<Expr const>(Sin{{ex}}); });
         }
 
+        inline ExprPtr arctan(ExprPtr const &ex)
+        {
+            using namespace matchit;
+            return match(ex)(
+                pattern | _ = [&]
+                { return std::make_shared<Expr const>(Arctan{{ex}}); });
+        }
+
         inline ExprPtr symbol(std::string const &name)
         {
             return std::make_shared<Expr const>(Symbol{{name}});
@@ -309,9 +332,15 @@ namespace mathiu
             return symbol(str);
         }
 
-        inline ExprPtr set(std::initializer_list<ExprPtr> const& lst)
+        template <typename... Ts>
+        inline ExprPtr set(Ts &&... lst)
         {
-            return std::make_shared<Expr const>(Set{{lst}});
+            return std::make_shared<Expr const>(Set{{lst...}});
+        }
+
+        inline ExprPtr operator>>(ExprPtr const& src, ExprPtr const& dst)
+        {
+            return std::make_shared<Expr const>(SubstitutePair{{src, dst}});
         }
 
         inline std::string toString(ExprPtr const &ex);
@@ -386,14 +415,15 @@ namespace mathiu
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "less: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
+            Id<SubstitutePair> iPair1, iPair2;
             constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
             constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
@@ -458,6 +488,9 @@ namespace mathiu
                 pattern | ds(as<E>(_), as<E>(_)) = expr(false),
                 pattern | ds(_, as<E>(_)) = expr(true),
                 pattern | ds(as<E>(_), _) = expr(false),
+                pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEl2))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEr1, iEr2))))   = [&] {
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
                 // clang-format on
             );
@@ -496,6 +529,9 @@ namespace mathiu
                 pattern | ds(as<I>(_), as<I>(_)) = expr(true),
                 pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(true),
                 pattern | ds(as<E>(_), as<E>(_)) = expr(true),
+                pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEr1))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEl2, iEr2)))) = [&] {
+                    return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -607,6 +643,9 @@ namespace mathiu
                     // the basic unary transformation.
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
+                // rational as coeff for 1.
+                pattern | or_(as<Integer>(_), as<Fraction>(_)) = [&]
+                { return std::make_pair(std::make_shared<Expr const>(e), 1_i); },
                 pattern | _ = [&]
                 { return std::make_pair(1_i, std::make_shared<Expr const>(e)); });
         }
@@ -908,7 +947,7 @@ namespace mathiu
             Id<Relational> iRel;
             return match(*ex)(
                 // clang-format off
-                pattern | as<Integer>(ii)                                = [&]{ return std::to_string(*ii); },
+                pattern | as<Integer>(ii)                            = [&]{ return std::to_string(*ii); },
                 pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
                 pattern | as<Sum>(iS)                                = [&]{
@@ -987,6 +1026,9 @@ namespace mathiu
                             return "(>= " + toString(*il) + " " + toString(*ir) + ")";
                         }
                     );
+                },
+                pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
+                    return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";
                 }
                 // clang-format on
             );
@@ -994,7 +1036,6 @@ namespace mathiu
 
         inline bool freeOf(ExprPtr const &ex, ExprPtr const& var)
         {
-            // using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
             constexpr auto firstOrSecond = [](auto&& p) { return or_(ds(p, _), ds(_, p)); };
             Id<ExprPtrMap> iMap;
             return match(ex)(
@@ -1008,6 +1049,86 @@ namespace mathiu
                 pattern | some(as<Arctan>(ds(var))) = expr(false),
                 pattern | _ = expr(true)
                 );
+        }
+
+        inline ExprPtr substituteImpl(ExprPtr const &ex, ExprPtrMap const &srcDstMap)
+        {
+#if DEBUG
+            std::cout << "substituteImpl: " << toString(ex) << std::endl;
+#endif // DEBUG
+            auto const iter = srcDstMap.find(ex);
+            if (iter != srcDstMap.end())
+            {
+                return iter->second;
+            }
+
+            // using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
+            auto const subs = [&] (auto&& e) { return substituteImpl(e, srcDstMap); };
+            Id<Sum> iSum;
+            Id<Product> iProduct;
+            Id<ExprPtr> iE1, iE2;
+            return match(ex)(
+                pattern | some(as<Sum>(iSum)) = [&]
+                {
+                    return std::accumulate((*iSum).begin(), (*iSum).end(), 0_i, [&](auto&& sum, auto &&e)
+                                   {
+                                       auto elem = subs(e.second);
+                                       return sum + elem;
+                                   });
+                },
+                pattern | some(as<Product>(iProduct)) = [&]
+                {
+                    return std::accumulate((*iProduct).begin(), (*iProduct).end(), 1_i, [&](auto&& product, auto &&e)
+                                   {
+                                       auto elem = subs(e.second);
+                                       return product * elem;
+                                   });
+                },
+                pattern | some(as<Power>(ds(iE1, iE2))) = [&] {
+                    return pow(subs(*iE1), subs(*iE2));
+                },
+                pattern | some(as<Log>(ds(iE1, iE2))) = [&] {
+                    return log(subs(*iE1), subs(*iE2));
+                },
+                pattern | some(as<Sin>(ds(iE1))) = [&] {
+                    return sin(subs(*iE1));
+                },
+                pattern | some(as<Arctan>(ds(iE1))) = [&] {
+                    return arctan(subs(*iE1));
+                },
+                pattern | _ = expr(ex)
+            );
+        }
+
+        inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &srcDstPairs)
+        {
+#if DEBUG
+            std::cout << "substitute: " << toString(ex) << " " << toString(srcDstPairs) << std::endl;
+#endif // DEBUG
+            Id<Set> iSet;
+            Id<SubstitutePair> iPair;
+            auto const subMap = match(*srcDstPairs)(
+                pattern | as<Set>(iSet) = [&]
+                {
+                    ExprPtrMap result;
+                    std::transform((*iSet).begin(), (*iSet).end(), std::inserter(result, result.end()), [&](auto &&e)
+                                   {
+                                       auto pair = std::get<SubstitutePair>(*e);
+                                       return pair;
+                                   });
+                    return result;
+                },
+                pattern | as<SubstitutePair>(iPair) = [&]
+                { return ExprPtrMap{{{(*iPair).first, (*iPair).second}}}; },
+                pattern | _ = [&]
+                { throw std::runtime_error("Mismatch in substitute!"); return ExprPtrMap{}; });
+            return substituteImpl(ex, subMap);
+        }
+
+        template <typename... Pairs>
+        inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &srcDstPairs, Pairs const&... seqPairs)
+        {
+            return substitute(substitute(ex, srcDstPairs), seqPairs...);
         }
 
     } // namespace impl

@@ -782,3 +782,9 @@ TEST(autoSimplification, 5)
     auto const e = "x"_s * "y"_s + 3_i * "y"_s * "x"_s;
     EXPECT_EQ(toString(e), "(* 4 x y)");
 }
+
+TEST(autoSimplification, sumRationalSum)
+{
+    auto const e = (1_i + "a"_s) + (2_i / 5_i + "b"_s);
+    EXPECT_EQ(toString(e), "(+ 7/5 a b)");
+}

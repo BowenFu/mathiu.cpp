@@ -27,7 +27,7 @@ TEST(degree, multivar)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    EXPECT_EQ(toString(degree(x * y, set({x, y}))), "2");
+    EXPECT_EQ(toString(degree(x * y, set(x, y))), "2");
 }
 
 TEST(degree, multivar2)
@@ -39,7 +39,7 @@ TEST(degree, multivar2)
     auto const x = "x"_s;
     auto const y = "y"_s;
     auto const z = "z"_s;
-    EXPECT_EQ(toString(degree(i3 * w * (x^i2) * (y^i3) * (z^i4), set({x, z}))), "6");
+    EXPECT_EQ(toString(degree(i3 * w * (x^i2) * (y^i3) * (z^i4), set(x, z))), "6");
 }
 
 TEST(degree, multivar3)
@@ -72,7 +72,7 @@ TEST(degree, multivarr)
     auto const x = "x"_s;
     auto const y = "y"_s;
     auto const z = "z"_s;
-    EXPECT_EQ(toString(degree(i2 * (x^i2) * y * (z^i3) + w * x * (z^i6), set({x, z}))), "7");
+    EXPECT_EQ(toString(degree(i2 * (x^i2) * y * (z^i3) + w * x * (z^i6), set(x, z))), "7");
 }
 
 TEST(coefficient, 1)
