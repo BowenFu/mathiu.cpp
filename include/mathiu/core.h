@@ -331,9 +331,10 @@ namespace mathiu
             return symbol(str);
         }
 
-        inline ExprPtr set(std::initializer_list<ExprPtr> const& lst)
+        template <typename... Ts>
+        inline ExprPtr set(Ts &&... lst)
         {
-            return std::make_shared<Expr const>(Set{{lst}});
+            return std::make_shared<Expr const>(Set{{lst...}});
         }
 
         inline ExprPtr operator>>(ExprPtr const& src, ExprPtr const& dst)
@@ -421,6 +422,7 @@ namespace mathiu
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
+            Id<SubstitutePair> iPair1, iPair2;
             constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
             constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
@@ -485,6 +487,7 @@ namespace mathiu
                 pattern | ds(as<E>(_), as<E>(_)) = expr(false),
                 pattern | ds(_, as<E>(_)) = expr(true),
                 pattern | ds(as<E>(_), _) = expr(false),
+                pattern | ds(as<SubstitutePair>(iPair1), as<SubstitutePair>(iPair2)) = [&] { return lessC<ExprPtr>({(*iPair1).second, (*iPair1).second}, {(*iPair1).first, (*iPair1).first});  },
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
                 // clang-format on
             );
@@ -935,7 +938,7 @@ namespace mathiu
             Id<Relational> iRel;
             return match(*ex)(
                 // clang-format off
-                pattern | as<Integer>(ii)                                = [&]{ return std::to_string(*ii); },
+                pattern | as<Integer>(ii)                            = [&]{ return std::to_string(*ii); },
                 pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
                 pattern | as<Sum>(iS)                                = [&]{
@@ -1014,6 +1017,9 @@ namespace mathiu
                             return "(>= " + toString(*il) + " " + toString(*ir) + ")";
                         }
                     );
+                },
+                pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
+                    return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";
                 }
                 // clang-format on
             );
@@ -1108,6 +1114,12 @@ namespace mathiu
                 pattern | _ = [&]
                 { throw std::runtime_error("Mismatch in substitute!"); return ExprPtrMap{}; });
             return substituteImpl(ex, subMap);
+        }
+
+        template <typename... Pairs>
+        inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &srcDstPairs, Pairs const&... seqPairs)
+        {
+            return substitute(substitute(ex, srcDstPairs), seqPairs...);
         }
 
     } // namespace impl
