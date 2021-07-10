@@ -13,6 +13,7 @@
 #include <set>
 #include <list>
 
+#define VERBOSE_DEBUG 0
 #define DEBUG 1
 
 #if DEBUG
@@ -414,9 +415,9 @@ namespace mathiu
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "less: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<std::string> isl, isr;
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
@@ -487,7 +488,9 @@ namespace mathiu
                 pattern | ds(as<E>(_), as<E>(_)) = expr(false),
                 pattern | ds(_, as<E>(_)) = expr(true),
                 pattern | ds(as<E>(_), _) = expr(false),
-                pattern | ds(as<SubstitutePair>(iPair1), as<SubstitutePair>(iPair2)) = [&] { return lessC<ExprPtr>({(*iPair1).second, (*iPair1).second}, {(*iPair1).first, (*iPair1).first});  },
+                pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEl2))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEr1, iEr2))))   = [&] {
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
                 // clang-format on
             );
@@ -526,6 +529,9 @@ namespace mathiu
                 pattern | ds(as<I>(_), as<I>(_)) = expr(true),
                 pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(true),
                 pattern | ds(as<E>(_), as<E>(_)) = expr(true),
+                pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEr1))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEl2, iEr2)))) = [&] {
+                    return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
                 pattern | _ = [&] { return false; }
                 // clang-format on
             );
@@ -1047,6 +1053,9 @@ namespace mathiu
 
         inline ExprPtr substituteImpl(ExprPtr const &ex, ExprPtrMap const &srcDstMap)
         {
+#if DEBUG
+            std::cout << "substituteImpl: " << toString(ex) << std::endl;
+#endif // DEBUG
             auto const iter = srcDstMap.find(ex);
             if (iter != srcDstMap.end())
             {
@@ -1093,6 +1102,9 @@ namespace mathiu
 
         inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &srcDstPairs)
         {
+#if DEBUG
+            std::cout << "substitute: " << toString(ex) << " " << toString(srcDstPairs) << std::endl;
+#endif // DEBUG
             Id<Set> iSet;
             Id<SubstitutePair> iPair;
             auto const subMap = match(*srcDstPairs)(

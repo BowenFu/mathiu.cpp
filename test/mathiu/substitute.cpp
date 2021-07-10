@@ -50,3 +50,34 @@ TEST(conSubstitute, 3)
     auto const e = substitute("x"_s * ("x"_s + "y"_s), set("x"_s >> 2_i, ("x"_s + "y"_s) >> 3_i));
     EXPECT_EQ(toString(e), "6");
 }
+
+TEST(seqSubstitute, 4)
+{
+    auto const e = substitute("x"_s + ("y"_s ^ 2_i), "x"_s >> "y"_s, "y"_s >> "x"_s);
+    EXPECT_EQ(toString(e), "(+ x (^ x 2))");
+}
+
+TEST(conSubstitute, 4)
+{
+    auto const e = substitute("x"_s + ("y"_s ^ 2_i), set("x"_s >> "y"_s, "y"_s >> "x"_s));
+    EXPECT_EQ(toString(e), "(+ (^ x 2) y)");
+}
+
+TEST(seqSubstitute, 5)
+{
+    auto const e = substitute("a"_s + "b"_s + "c"_s, "a"_s >> "b"_s, "b"_s >> "c"_s, "c"_s >> "a"_s);
+    EXPECT_EQ(toString(e), "(* 3 a)");
+}
+
+TEST(conSubstitute, 5_)
+{
+    EXPECT_EQ(toString(set("a"_s , "b"_s, "c"_s)), "{a b c}");
+    EXPECT_EQ(toString(set("a"_s + "b"_s , "b"_s + "c"_s, "c"_s + "a"_s)), "{(+ a b) (+ a c) (+ b c)}");
+    EXPECT_EQ(toString(set("x"_s >> "y"_s, "y"_s >> "z"_s, "z"_s >> "x"_s)), "{(SubstitutePair x y) (SubstitutePair y z) (SubstitutePair z x)}");
+}
+
+TEST(conSubstitute, 5)
+{
+    auto const e = substitute("a"_s + "b"_s + "c"_s, set("a"_s >> "b"_s, "b"_s >> "c"_s, "c"_s >> "a"_s));
+    EXPECT_EQ(toString(e), "(+ a b c)");
+}
