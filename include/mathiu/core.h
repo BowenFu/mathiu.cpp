@@ -87,30 +87,33 @@ namespace mathiu
         inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs);
 
+        // Atomic expressions
+
         using Integer = int32_t;
 
         struct Symbol : std::array<std::string, 1>
         {
         };
 
-        inline constexpr double pi_ = 3.1415926;
-
         struct Pi
         {
         };
         inline const auto pi = std::make_shared<Expr const>(Pi{});
+        inline constexpr double pi_ = 3.1415926;
 
-        inline const double e_ = std::exp(1);
         struct E
         {
         };
         inline const auto e = std::make_shared<Expr const>(E{});
+        inline const double e_ = std::exp(1);
 
-        inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
         struct I
         {
         };
         inline const auto i = std::make_shared<Expr const>(I{});
+        inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
+
+        // Compound expressions
 
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs);
 
@@ -214,14 +217,14 @@ namespace mathiu
             using variant::variant;
         };
 
-        inline constexpr auto equalPair = [](auto&& x, auto&& y) { return equal(x.first, y.first) && equal(x.second, y.second); };
-        inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
-        
         inline bool operator==(ExprPtrMap const &l, ExprPtrMap const &r)
         {
+            constexpr auto equalPair = [](auto&& x, auto&& y) { return equal(x.first, y.first) && equal(x.second, y.second); };
             return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalPair);
         }
 
+        inline constexpr auto equalLambda = [](auto&& x, auto&& y) { return equal(x, y); };
+        
         inline bool operator==(ExprPtrSet const &l, ExprPtrSet const &r)
         {
             return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), equalLambda);
