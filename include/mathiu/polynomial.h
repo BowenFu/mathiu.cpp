@@ -9,7 +9,7 @@ namespace mathiu
 {
     namespace impl
     {
-        inline int32_t degreeMonomial(ExprPtr const& monomial, Set const& varSet)
+        inline Integer degreeMonomial(ExprPtr const& monomial, Set const& varSet)
         {
 #if DEBUG
             std::cout << "degreeMonomial: " << toString(monomial) << ",\t" << std::endl;
@@ -21,11 +21,11 @@ namespace mathiu
             (
                 pattern | as<Product>(iP) = [&]
                 {
-                    return std::accumulate(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
+                    return std::accumulate(varSet.begin(), varSet.end(), 0, [&](Integer sum, auto&& e) 
                     {
                         // FIXME, iP does not contain e. instead a sum of e.
                         auto const exp = baseAndExp(*(*iP).at(e)).second;
-                        return sum + std::get<int32_t>(*exp);
+                        return sum + std::get<Integer>(*exp);
                     });
                 },
                 pattern | asBaseAndExp(base, exp) = [&]
@@ -35,12 +35,12 @@ namespace mathiu
                     {
                         return 0;
                     }
-                    return std::get<int32_t>(**exp);
+                    return std::get<Integer>(**exp);
                 }
             );
         }
 
-        inline int32_t degree(ExprPtr const& ex, ExprPtr const& varSet)
+        inline Integer degree(ExprPtr const& ex, ExprPtr const& varSet)
         {
 #if DEBUG
             std::cout << "degree: " << toString(ex) << ",\t" << toString(varSet) << std::endl;
@@ -61,7 +61,7 @@ namespace mathiu
             return match(*ex)(
                 pattern | as<Sum>(iS) = [&]
                 {
-                    return std::accumulate((*iS).begin(), (*iS).end(), 0, [&](int32_t sum, auto&& e) 
+                    return std::accumulate((*iS).begin(), (*iS).end(), 0, [&](Integer sum, auto&& e) 
                     {
                         return std::max(sum, degreeMonomial(e.second, varSet_));
                     });
@@ -71,33 +71,33 @@ namespace mathiu
         }
 
         // Fix me, check monomial first
-        inline std::pair<ExprPtr, int32_t> coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x)
+        inline std::pair<ExprPtr, Integer> coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x)
         {
 #if DEBUG
             std::cout << "coefficientMonomial: " << toString(monomial) << ",\t" << toString(x) << std::endl;
 #endif // DEBUG
 
-            const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), integer(0)); };
+            const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), 0_i); };
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, x); });
 
             Id<Product> iP;
-            Id<int32_t> iiExp;
+            Id<Integer> iiExp;
             return match(monomial)
             (
                 pattern | x = [&]
                 {
                     return std::make_pair(1_i, 1);
                 },
-                pattern | some(as<Power>(ds(x, some(as<int32_t>(iiExp.at(_ > 1)))))) = [&]
+                pattern | some(as<Power>(ds(x, some(as<Integer>(iiExp.at(_ > 1)))))) = [&]
                 {
                     return std::make_pair(1_i, *iiExp);
                 },
                 pattern | some(as<Product>(iP)) = [&]
                 {
-                    return std::accumulate((*iP).begin(), (*iP).end(), std::make_pair(monomial, 0), [&](std::pair<ExprPtr, int32_t> const& result, auto&& e) 
+                    return std::accumulate((*iP).begin(), (*iP).end(), std::make_pair(monomial, 0), [&](std::pair<ExprPtr, Integer> const& result, auto&& e) 
                     {
                         auto f = coefficientMonomial(e.second, x);
-                        int32_t const m = f.second;
+                        Integer const m = f.second;
                         if (m == 0)
                         {
                             return result;
@@ -110,7 +110,7 @@ namespace mathiu
             );
         }
 
-        inline ExprPtr coefficient(ExprPtr const& u, ExprPtr const& x, int32_t i)
+        inline ExprPtr coefficient(ExprPtr const& u, ExprPtr const& x, Integer i)
         {
 #if DEBUG
             std::cout << "coefficient: " << toString(u) << ",\t" << toString(x) << ",\t" << i << std::endl;

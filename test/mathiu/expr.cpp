@@ -3,9 +3,9 @@
 #include <string>
 using namespace mathiu;
 
-TEST(Expr, integer)
+TEST(Expr, Integer)
 {
-    auto x = integer(5);
+    auto x = 5_i;
     EXPECT_EQ(evald(x), 5);
 }
 
@@ -26,7 +26,7 @@ TEST(Expr, pi2)
 
 TEST(Expr, pi3)
 {
-    auto expr = sin(pi / integer(2));
+    auto expr = sin(pi / 2_i);
     EXPECT_EQ(toString(expr), "1");
 }
 
@@ -48,7 +48,7 @@ TEST(Expr, i)
 
 TEST(Expr, fraction)
 {
-    auto expr = integer(5) / integer(8);
+    auto expr = 5_i / 8_i;
     EXPECT_EQ(toString(expr), "5/8");
 }
 
@@ -74,8 +74,8 @@ TEST(Expr, ceval1)
 
 TEST(Expr, product)
 {
-    auto x = integer(5);
-    auto y = integer(5);
+    auto x = 5_i;
+    auto y = 5_i;
     auto expr = x * y;
     EXPECT_EQ(toString(expr), "25");
     EXPECT_EQ(evald(expr), 25);
@@ -83,8 +83,8 @@ TEST(Expr, product)
 
 TEST(Expr, quotient)
 {
-    auto x = integer(5);
-    auto y = integer(5);
+    auto x = 5_i;
+    auto y = 5_i;
     auto expr = x / y;
     EXPECT_EQ(toString(expr), "1");
     EXPECT_EQ(evald(expr), 1);
@@ -92,8 +92,8 @@ TEST(Expr, quotient)
 
 TEST(Expr, sum)
 {
-    auto x = integer(5);
-    auto y = integer(5);
+    auto x = 5_i;
+    auto y = 5_i;
     auto expr = x + y;
     EXPECT_EQ(toString(expr), "10");
     EXPECT_EQ(evald(expr), 10);
@@ -101,8 +101,8 @@ TEST(Expr, sum)
 
 TEST(Expr, sum2)
 {
-    auto x = integer(5);
-    auto y = integer(5);
+    auto x = 5_i;
+    auto y = 5_i;
     auto expr = x + y / x;
     EXPECT_EQ(toString(expr), "6");
     EXPECT_EQ(evald(expr), 6);
@@ -110,8 +110,8 @@ TEST(Expr, sum2)
 
 TEST(Expr, difference)
 {
-    auto x = integer(5);
-    auto y = integer(5);
+    auto x = 5_i;
+    auto y = 5_i;
     auto expr = x - y;
     EXPECT_EQ(toString(expr), "0");
     EXPECT_EQ(evald(expr), 0);
@@ -119,8 +119,8 @@ TEST(Expr, difference)
 
 TEST(Expr, compound)
 {
-    auto x = integer(5);
-    auto y = integer(2);
+    auto x = 5_i;
+    auto y = 2_i;
     auto expr = x / y - y * y;
     EXPECT_EQ(toString(expr), "-3/2");
     EXPECT_EQ(evald(expr), -1.5);
@@ -136,7 +136,7 @@ TEST(Expr, symbol)
 
 TEST(Expr, symbol2)
 {
-    auto x = integer(5);
+    auto x = 5_i;
     auto y = symbol("y");
     auto expr = x / y - y * y;
     auto result = toString(expr);

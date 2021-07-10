@@ -3,10 +3,10 @@
 #include <string>
 using namespace mathiu;
 
-TEST(diff, integer)
+TEST(diff, Integer)
 {
     auto const x = symbol("x");
-    auto const e = integer(2);
+    auto const e = 2_i;
     EXPECT_EQ(toString(diff(e, x)), "0");
 }
 
@@ -26,7 +26,7 @@ TEST(diff, symbol2)
 TEST(diff, sum)
 {
     auto const x = symbol("x");
-    auto const e = symbol("x") + integer(2);
+    auto const e = symbol("x") + 2_i;
     EXPECT_EQ(toString(diff(e, x)), "1");
 }
 
@@ -47,14 +47,14 @@ TEST(diff, product)
 TEST(diff, product2)
 {
     auto const x = symbol("x");
-    auto const e = symbol("x") * integer(2);
+    auto const e = symbol("x") * 2_i;
     EXPECT_EQ(toString(diff(e, x)), "2");
 }
 
 TEST(diff, power)
 {
     auto const x = symbol("x");
-    auto const e = x ^ integer(2);
+    auto const e = x ^ 2_i;
     EXPECT_EQ(toString(diff(e, x)), "(* 2 x)");
 }
 
@@ -69,6 +69,6 @@ TEST(diff, compound)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    auto const e = x * y * (x + integer(3));
+    auto const e = x * y * (x + 3_i);
     EXPECT_EQ(toString(diff(e, x)), "(+ (* x y) (* (+ 3 x) y))");
 }

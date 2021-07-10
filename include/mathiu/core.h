@@ -87,7 +87,7 @@ namespace mathiu
         inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
         inline ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs);
 
-        using namespace matchit;
+        using Integer = int32_t;
 
         struct Symbol : std::array<std::string, 1>
         {
@@ -153,7 +153,7 @@ namespace mathiu
         {
         };
 
-        struct Fraction : std::array<int32_t, 2>
+        struct Fraction : std::array<Integer, 2>
         {
         };
 
@@ -207,7 +207,7 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<int32_t, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
 
         struct Expr : ExprVariant
         {
@@ -238,17 +238,17 @@ namespace mathiu
             return std::equal(l.begin(), l.end(), r.begin(), equalLambda);
         }
 
-        inline ExprPtr integer(int32_t v)
+        inline ExprPtr integer(Integer v)
         {
             return std::make_shared<Expr const>(v);
         }
 
         inline ExprPtr operator ""_i(unsigned long long v)
         {
-            return integer(static_cast<int32_t>(v));
+            return integer(static_cast<Integer>(v));
         }
 
-        inline ExprPtr fraction(int32_t l, int32_t r)
+        inline ExprPtr fraction(Integer l, Integer r)
         {
             return std::make_shared<Expr const>(Fraction{{l, r}});
         }
@@ -259,8 +259,8 @@ namespace mathiu
         {
             using namespace matchit;
             return match(ex)(
-                pattern | pi = expr(integer(0)),
-                pattern | (pi / integer(2)) = expr(integer(1)),
+                pattern | pi = expr(0_i),
+                pattern | (pi / 2_i) = expr(1_i),
                 pattern | _ = [&]
                 { return std::make_shared<Expr const>(Sin{{ex}}); });
         }
@@ -346,6 +346,8 @@ namespace mathiu
 
         inline double evald(const ExprPtr &ex);
 
+        using namespace matchit;
+
         // The <| order relation
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -384,19 +386,19 @@ namespace mathiu
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Power>(ds(iEl1, iEl2)), canBePower)   = [&] {
-                    return lessC<ExprPtr>({*iEl2, *iEl1}, {integer(1), rhs});
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {1_i, rhs});
                 },
                 pattern | ds(canBePower, as<Power>(ds(iEr1, iEr2)))   = [&] {
-                    return lessC<ExprPtr>({integer(1), lhs}, {*iEr2, *iEr1});
+                    return lessC<ExprPtr>({1_i, lhs}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Log>(ds(iEl1, iEl2)), as<Log>(ds(iEr1, iEr2)))   = [&] {
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Log>(ds(iEl1, iEl2)), canBeLog)   = [&] {
-                    return lessC<ExprPtr>({*iEl2, *iEl1}, {integer(1), rhs});
+                    return lessC<ExprPtr>({*iEl2, *iEl1}, {1_i, rhs});
                 },
                 pattern | ds(canBeLog, as<Log>(ds(iEr1, iEr2)))   = [&] {
-                    return lessC<ExprPtr>({integer(1), lhs}, {*iEr2, *iEr1});
+                    return lessC<ExprPtr>({1_i, lhs}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<Sum>(iS1), as<Sum>(iS2)) = [&]
                 {
@@ -500,7 +502,7 @@ namespace mathiu
         auto mergeSum(C const& c1, C const& c2)
         {
             constexpr auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs; };
-            auto result = merge(c1, c2, add, integer(0));;
+            auto result = merge(c1, c2, add, 0_i);;
             if (result.size() == 1)
             {
                 return (*result.begin()).second;
@@ -512,7 +514,7 @@ namespace mathiu
         auto mergeProduct(C const& c1, C const& c2)
         {
             constexpr auto mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs; };
-            auto result = merge(c1, c2, mul, integer(1));;
+            auto result = merge(c1, c2, mul, 1_i);;
             if (result.size() == 1)
             {
                 return (*result.begin()).second;
@@ -522,7 +524,7 @@ namespace mathiu
 
         inline ExprPtr simplifyRational(ExprPtr const &r)
         {
-            Id<int32_t> ii1, ii2;
+            Id<Integer> ii1, ii2;
             return match(*r)
             (
                 pattern | as<Fraction>(ds(ii1, ii2)) = [&]{
@@ -543,7 +545,7 @@ namespace mathiu
 
         inline std::complex<double> evalc(const ExprPtr &ex);
 
-        inline constexpr auto asCoeff = or_(as<int32_t>(_), as<Fraction>(_));
+        inline constexpr auto asCoeff = or_(as<Integer>(_), as<Fraction>(_));
         inline constexpr auto second = [](auto&& p)
         {
             return p.second;
@@ -572,7 +574,7 @@ namespace mathiu
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
                 pattern | _ = [&]
-                { return std::make_pair(integer(1), std::make_shared<Expr const>(e)); });
+                { return std::make_pair(1_i, std::make_shared<Expr const>(e)); });
         }
 
         template <typename C, typename T>
@@ -589,8 +591,8 @@ namespace mathiu
             std::cout << "operator+: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
 #endif // DEBUG
             Id<Sum> iSl, iSr;
-            Id<int32_t> iil, iir;
-            Id<int32_t> ii1, ii2, ii3, ii4;
+            Id<Integer> iil, iir;
+            Id<Integer> ii1, ii2, ii3, ii4;
             Id<ExprPtr> coeff1, coeff2, rest;
             return match(*lhs, *rhs)(
                 // clang-format off
@@ -599,8 +601,8 @@ namespace mathiu
                     return rhs + lhs;
                 },
                 // basic identity transformation
-                pattern | ds(as<int32_t>(0), _) = expr(rhs),
-                pattern | ds(_, as<int32_t>(0)) = expr(lhs),
+                pattern | ds(as<Integer>(0), _) = expr(rhs),
+                pattern | ds(_, as<Integer>(0)) = expr(lhs),
                 // basic associative transformation
                 pattern | ds(as<Sum>(iSl), as<Sum>(iSr)) = [&] {
                     return mergeSum(*iSl, *iSr);
@@ -612,9 +614,9 @@ namespace mathiu
                     return insertSum(*iSr, lhs);
                 },
                 // basic distributive transformation
-                pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil + *iir); },
-                pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
-                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii2 + *ii1, *ii2)); },
+                pattern | ds(as<Integer>(iil), as<Integer>(iir))   = [&] { return integer(*iil + *iir); },
+                pattern | ds(as<Integer>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Integer>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii4 + *ii2 * *ii3, *ii2 * *ii4)); },
                 // basic distributive transformation
                 pattern | ds(asCoeffAndRest(coeff1, rest), asCoeffAndRest(coeff2, rest)) = [&]
@@ -634,7 +636,7 @@ namespace mathiu
                 pattern | as<Power>(ds(iBase, iExp)) = [&] {
                     return std::make_pair( *iBase, *iExp);
                 },
-                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr const>(e), integer(1)); }
+                pattern | _ = [&]{ return std::make_pair(std::make_shared<Expr const>(e), 1_i); }
             );
         }
 
@@ -653,8 +655,8 @@ namespace mathiu
 #endif // DEBUG
 
             Id<Product> iSl, iSr;
-            Id<int32_t> iil, iir;
-            Id<int32_t> ii1, ii2, ii3, ii4;
+            Id<Integer> iil, iir;
+            Id<Integer> ii1, ii2, ii3, ii4;
             Id<ExprPtr> iu, iv, iw;
             Id<ExprPtr> exp1, exp2, base;
             return match(*lhs, *rhs)(
@@ -664,10 +666,10 @@ namespace mathiu
                     return rhs * lhs;
                 },
                 // basic identity transformation
-                pattern | ds(as<int32_t>(0), _) = expr(integer(0)),
-                pattern | ds(_, as<int32_t>(0)) = expr(integer(0)),
-                pattern | ds(as<int32_t>(1), _) = expr(rhs),
-                pattern | ds(_, as<int32_t>(1)) = expr(lhs),
+                pattern | ds(as<Integer>(0), _) = expr(0_i),
+                pattern | ds(_, as<Integer>(0)) = expr(0_i),
+                pattern | ds(as<Integer>(1), _) = expr(rhs),
+                pattern | ds(_, as<Integer>(1)) = expr(lhs),
                 // basic associative transformation
                 pattern | ds(as<Product>(iSl), as<Product>(iSr)) = [&] {
                     return mergeProduct(*iSl, *iSr);
@@ -679,9 +681,9 @@ namespace mathiu
                     return insertProduct(*iSr, lhs);
                 },
                 // basic distributive transformation
-                pattern | ds(as<int32_t>(iil), as<int32_t>(iir))   = [&] { return integer(*iil * *iir); },
-                pattern | ds(as<int32_t>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
-                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii1, *ii2)); },
+                pattern | ds(as<Integer>(iil), as<Integer>(iir))   = [&] { return integer(*iil * *iir); },
+                pattern | ds(as<Integer>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii1, *ii2)); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Integer>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii3, *ii2 * *ii4)); },
                 // basic power transformation 1
                 pattern | ds(as<Power>(ds(iu, iv)), as<Power>(ds(iu, iw))) = iu^(iv+iw),
@@ -698,27 +700,27 @@ namespace mathiu
         inline ExprPtr pow(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             Id<ExprPtr> iu, iv;
-            Id<int32_t> ii1, ii2, ii3;
+            Id<Integer> ii1, ii2, ii3;
             Id<Product> ip;
             return match(*lhs, *rhs)(
                 // clang-format off
                 // basic power transformation 2,3
                 pattern | ds(as<Power>(ds(iu, iv)), as<int>(_)) = iu^(iv * rhs),
                 pattern | ds(as<Product>(ip), as<int>(_)) = [&] {
-                    return std::accumulate((*ip).begin(), (*ip).end(), integer(1), [&](auto&& p, auto&& e)
+                    return std::accumulate((*ip).begin(), (*ip).end(), 1_i, [&](auto&& p, auto&& e)
                     {
                         return p * ((e.second)^rhs);
                     });
                 },
                 // basic identity transformation
-                pattern | ds(as<int32_t>(0), or_(as<int32_t>(_), as<Fraction>(_))) | when([&]{ return evald(rhs) > 0; }) = expr(integer(0)),
-                pattern | ds(as<int32_t>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return integer(0);},
-                pattern | ds(as<int32_t>(1), _)= [&] { return integer(1);},
-                pattern | ds(_, as<int32_t>(0))= expr(integer(1)),
-                pattern | ds(_, as<int32_t>(1))= expr(lhs),
-                pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_>0))) = [&] {return integer(static_cast<int32_t>(std::pow(*ii1, *ii2))); },
-                pattern | ds(as<int32_t>(ii1), as<int32_t>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<int32_t>(std::pow(*ii1, -(*ii2)))); },
-                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<int32_t>(ii3)) = [&] {return simplifyRational(fraction(static_cast<int32_t>(std::pow(*ii1, *ii3)), static_cast<int32_t>(std::pow(*ii2, *ii3)))); },
+                pattern | ds(as<Integer>(0), or_(as<Integer>(_), as<Fraction>(_))) | when([&]{ return evald(rhs) > 0; }) = expr(0_i),
+                pattern | ds(as<Integer>(0), _)= [&] { throw std::runtime_error{"undefined!"}; return 0_i;},
+                pattern | ds(as<Integer>(1), _)= [&] { return 1_i;},
+                pattern | ds(_, as<Integer>(0))= expr(1_i),
+                pattern | ds(_, as<Integer>(1))= expr(lhs),
+                pattern | ds(as<Integer>(ii1), as<Integer>(ii2.at(_>0))) = [&] {return integer(static_cast<Integer>(std::pow(*ii1, *ii2))); },
+                pattern | ds(as<Integer>(ii1), as<Integer>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<Integer>(std::pow(*ii1, -(*ii2)))); },
+                pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Integer>(ii3)) = [&] {return simplifyRational(fraction(static_cast<Integer>(std::pow(*ii1, *ii3)), static_cast<Integer>(std::pow(*ii2, *ii3)))); },
                 pattern | _ = [&] {
                     return std::make_shared<Expr const>(Power{{lhs, rhs}});
                 }
@@ -748,9 +750,9 @@ namespace mathiu
             return match(*lhs, *rhs)
             (
                 // basic identity transformation
-                pattern | ds(_, as<int32_t>(0)) = expr(lhs),
-                pattern | ds(as<int32_t>(0), _) = [&] { return -rhs; },
-                pattern | _ = [&] { return lhs + integer(-1) * rhs; }
+                pattern | ds(_, as<Integer>(0)) = expr(lhs),
+                pattern | ds(as<Integer>(0), _) = [&] { return -rhs; },
+                pattern | _ = [&] { return lhs + -1_i * rhs; }
             );
         }
 
@@ -758,15 +760,15 @@ namespace mathiu
         inline ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             using namespace matchit;
-            Id<int32_t> il, ir;
+            Id<Integer> il, ir;
             return match(*lhs, *rhs)(
                 // clang-format off
-                pattern | ds(as<int32_t>(il), as<int32_t>(ir)) = [&] { return simplifyRational(fraction(*il, *ir)); },
+                pattern | ds(as<Integer>(il), as<Integer>(ir)) = [&] { return simplifyRational(fraction(*il, *ir)); },
                 // basic identity transformation
-                pattern | ds(_, as<int32_t>(0)) = [&] { throw std::runtime_error{"undefined!"}; return integer(0); },
-                pattern | ds(as<int32_t>(0), _) = expr(integer(0)),
-                pattern | ds(_, as<int32_t>(1)) = expr(lhs),
-                pattern | _                                    = expr(lhs * (rhs ^ integer(-1)))
+                pattern | ds(_, as<Integer>(0)) = [&] { throw std::runtime_error{"undefined!"}; return 0_i; },
+                pattern | ds(as<Integer>(0), _) = expr(0_i),
+                pattern | ds(_, as<Integer>(1)) = expr(lhs),
+                pattern | _                                    = expr(lhs * (rhs ^ -1_i))
                 // clang-format on
             );
         }
@@ -804,13 +806,13 @@ namespace mathiu
         inline double evald(const ExprPtr &ex)
         {
             assert(ex);
-            Id<int32_t> i, il, ir;
+            Id<Integer> i, il, ir;
             Id<Sum> iS;
             Id<Product> iP;
             Id<ExprPtr > e, l, r;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int32_t>(i)                                = expr(i),
+                pattern | as<Integer>(i)                                = expr(i),
                 pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling evald."); return 0; },
                 pattern | as<Sum>(iS)                                = [&]{
@@ -832,13 +834,13 @@ namespace mathiu
         inline std::complex<double> evalc(const ExprPtr &ex)
         {
             assert(ex);
-            Id<int32_t> i, il, ir;
+            Id<Integer> i, il, ir;
             Id<Sum> iS;
             Id<Product> iP;
             Id<ExprPtr > e, l, r;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int32_t>(i)                                = expr(i),
+                pattern | as<Integer>(i)                                = expr(i),
                 pattern | as<Fraction>(ds(il, ir))                  = [&]{ return double(*il) / * ir; },
                 pattern | as<Symbol>(_)                             = [&]{ throw std::runtime_error("Symbol should be replaced before calling evalc."); return 0; },
                 pattern | as<Sum>(iS)                                = [&]{
@@ -861,7 +863,7 @@ namespace mathiu
         inline std::string toString(const ExprPtr &ex)
         {
             assert(ex);
-            Id<int32_t> ii, iil, iir;
+            Id<Integer> ii, iil, iir;
             Id<std::string> is;
             Id<ExprPtr > ie, il, ir;
             Id<Sum> iS;
@@ -872,7 +874,7 @@ namespace mathiu
             Id<Relational> iRel;
             return match(*ex)(
                 // clang-format off
-                pattern | as<int32_t>(ii)                                = [&]{ return std::to_string(*ii); },
+                pattern | as<Integer>(ii)                                = [&]{ return std::to_string(*ii); },
                 pattern | as<Fraction>(ds(iil, iir))                 = [&]{ return std::to_string(*iil) + "/" + std::to_string(*iir); },
                 pattern | as<Symbol>(ds(is))                         = expr(is),
                 pattern | as<Sum>(iS)                                = [&]{
@@ -957,7 +959,7 @@ namespace mathiu
         }
 
     } // namespace impl
-    using impl::integer;
+    using impl::Integer;
     using impl::symbol;
     using impl::operator+;
     using impl::operator-;

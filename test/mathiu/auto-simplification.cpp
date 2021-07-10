@@ -7,8 +7,8 @@ TEST(Simplification, power)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const e = (x*y)*((x*y)^n2);
     EXPECT_EQ(toString(e), "(* (^ x 3) (^ y 3))");
 }
@@ -17,8 +17,8 @@ TEST(Simplification, quotient)
 {
     auto const a = symbol("a");
     auto const x = symbol("x");
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const e = (a * (x ^ n3)) / x;
     EXPECT_EQ(toString(e), "(* a (^ x 2))");
 }
@@ -26,8 +26,8 @@ TEST(Simplification, quotient)
 TEST(Simplification, distributive)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const e1 = x + n2 * x;
     auto const e2 = n3 * x;
     EXPECT_EQ(toString(e1), "(* 3 x)");
@@ -41,7 +41,7 @@ TEST(asCoeffAndRest, 1)
     Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*(symbol("x")))
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), integer(1)); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), 1_i); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -49,13 +49,13 @@ TEST(asCoeffAndRest, 1)
 
 TEST(asCoeffAndRest, 2)
 {
-    auto const e = symbol("x")^integer(2);
+    auto const e = symbol("x")^2_i;
 
     using namespace matchit;
     Id<mathiu::impl::ExprPtr> coeff;
     auto result = match(*e)
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), integer(1)); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), 1_i); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -65,9 +65,9 @@ TEST(asCoeffAndRest, 3)
 {
     using namespace matchit;
     Id<mathiu::impl::ExprPtr> coeff;
-    auto result = match(*(integer(5) * symbol("x")))
+    auto result = match(*(5_i * symbol("x")))
     (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), integer(5)); },
+        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), 5_i); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -77,7 +77,7 @@ TEST(asCoeffAndRest, 4)
 {
     using namespace matchit;
     Id<mathiu::impl::ExprPtr> rest;
-    auto result = match(*(integer(5) * symbol("x")))
+    auto result = match(*(5_i * symbol("x")))
     (
         pattern | mathiu::impl::asCoeffAndRest(_, rest) = [&] { return mathiu::impl::equal((*rest), symbol("x")); },
         pattern | _ = expr(false)
@@ -89,7 +89,7 @@ TEST(asCoeffAndRest, multiple)
 {
     using namespace matchit;
     Id<mathiu::impl::ExprPtr> coeff1, coeff2, rest;
-    auto result = match(*(integer(5) * symbol("x")), *symbol("x"))
+    auto result = match(*(5_i * symbol("x")), *symbol("x"))
     (
         pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest)) = [&] { return mathiu::impl::equal((*rest), symbol("x")); },
         pattern | _ = expr(false)
@@ -105,7 +105,7 @@ TEST(asBaseAndExp, 1)
 
     auto result = match(*symbol("x"))
     (
-        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return mathiu::impl::equal((*base), symbol("x")) && mathiu::impl::equal((*exp), integer(1)); },
+        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return mathiu::impl::equal((*base), symbol("x")) && mathiu::impl::equal((*exp), 1_i); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -117,9 +117,9 @@ TEST(asBaseAndExp, 2)
     Id<mathiu::impl::ExprPtr> base;
     Id<mathiu::impl::ExprPtr> exp;
 
-    auto result = match(*(symbol("x")^integer(2)))
+    auto result = match(*(symbol("x")^2_i))
     (
-        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return mathiu::impl::equal((*base), symbol("x")) && mathiu::impl::equal((*exp), integer(2)); },
+        pattern | mathiu::impl::asBaseAndExp(base, exp) = [&] { return mathiu::impl::equal((*base), symbol("x")) && mathiu::impl::equal((*exp), 2_i); },
         pattern | _ = expr(false)
     );
     EXPECT_TRUE(result);
@@ -134,16 +134,16 @@ TEST(Simplification, mul2Pow)
 
 TEST(Simplification, distributive2_1)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
-    auto const n3 = integer(3);
+    auto const n3 = 3_i;
     auto const e = n2 * x + n3 * x;
     EXPECT_EQ(toString(e), "(* 5 x)");
 }
 
 TEST(Simplification, distributive2_2)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const f3o2 = fraction(3, 2);
     auto const e = n2 * x + f3o2 * x;
@@ -152,8 +152,8 @@ TEST(Simplification, distributive2_2)
 
 TEST(simplifyRational, int)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
 
     EXPECT_EQ(toString(n2 + n3), "5");
 }
@@ -167,7 +167,7 @@ TEST(simplifyRational, rational_)
 
 TEST(simplifyRational, rational)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const f3o2 = fraction(3, 2);
 
     EXPECT_EQ(toString(n2 + f3o2), "7/2");
@@ -183,7 +183,7 @@ TEST(simplifyRational, rational2)
 
 TEST(asCoeffAndRest, rational)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const f3o2 = fraction(3, 2);
 
@@ -203,7 +203,7 @@ TEST(asCoeffAndRest, rational)
 
 TEST(Simplification, distributive2)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
     auto const f3o2 = fraction(3, 2);
@@ -264,7 +264,7 @@ TEST(asCoeffAndRest, sum)
 
 TEST(asCoeffAndRest, sumCompare)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
 
@@ -277,7 +277,7 @@ TEST(asCoeffAndRest, sumCompare)
 
 TEST(asCoeffAndRest, sum2)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
 
@@ -305,7 +305,7 @@ TEST(asCoeffAndRest, sum2)
 
 TEST(asCoeffAndRest, sum3)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const f3o2 = fraction(3, 2);
     auto const y = symbol("y");
@@ -335,8 +335,8 @@ TEST(asCoeffAndRest, sum3)
 TEST(autoSimplification, nonRationalCoeff)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const sqrt2 = n2 ^ fraction(1, 2);
     auto const e = n2 * x + n3 * x + sqrt2 * x;
     EXPECT_EQ(toString(e), "(+ (* 5 x) (* (^ 2 1/2) x))");
@@ -346,7 +346,7 @@ TEST(autoSimplification, sumSin)
 {
     auto const x = symbol("x");
     auto const sinX = sin(x);
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const e1 = sinX;
     auto const e2 = n2 * sinX;
     EXPECT_EQ(toString(coeffAndTerm(*e1).second), toString(sinX));
@@ -360,8 +360,8 @@ TEST(autoSimplification, sumSin)
 TEST(autoSimplification, cancel)
 {
     auto const x = symbol("x");
-    auto const n1 = integer(1);
-    auto const nm1 = integer(-1);
+    auto const n1 = 1_i;
+    auto const nm1 = -1_i;
     auto const e = x + n1 + nm1 * (x + n1);
     EXPECT_EQ(toString(e), "(+ 1 x (* -1 (+ 1 x)))"); // should be 0
 }
@@ -396,8 +396,8 @@ TEST(autoSimplification, associative2)
 
 TEST(autoSimplification, associative3)
 {
-    auto const n1 = integer(1);
-    auto const n2 = integer(2);
+    auto const n1 = 1_i;
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const e = (n1 + x) + n2 * (x + n1);
     EXPECT_EQ(toString(e), "(+ 1 x (* 2 (+ 1 x)))");
@@ -417,9 +417,9 @@ TEST(autoSimplification, associative4)
 
 TEST(autoSimplification, associative5)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
-    auto const n4 = integer(4);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
+    auto const n4 = 4_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
     auto const z = symbol("z");
@@ -429,9 +429,9 @@ TEST(autoSimplification, associative5)
 
 TEST(autoSimplification, commutative)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
-    auto const n4 = integer(4);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
+    auto const n4 = 4_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
     auto const z = symbol("z");
@@ -441,7 +441,7 @@ TEST(autoSimplification, commutative)
 
 TEST(autoSimplification, commutative2)
 {
-    auto const n3 = integer(3);
+    auto const n3 = 3_i;
     auto const x = symbol("x");
     auto const a = symbol("a");
     auto const e = x * n3 * a;
@@ -450,9 +450,9 @@ TEST(autoSimplification, commutative2)
 
 TEST(autoSimplification, commutative3)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
-    auto const n4 = integer(4);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
+    auto const n4 = 4_i;
     auto const x = symbol("x");
     auto const e = (x ^ n3) + (x ^ n2) + (x ^ n4);
     EXPECT_EQ(toString(e), "(+ (^ x 2) (^ x 3) (^ x 4))");
@@ -460,9 +460,9 @@ TEST(autoSimplification, commutative3)
 
 TEST(autoSimplification, commutative4)
 {
-    auto const n1 = integer(1);
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n1 = 1_i;
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
     auto const e = n3 * ((x ^ n2) + n2) * y * (x ^ n3) * ((x ^ n2) + n1);
@@ -471,7 +471,7 @@ TEST(autoSimplification, commutative4)
 
 TEST(autoSimplification, power)
 {
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
     auto const e = (x * y) * (( x * y) ^ n2);
@@ -480,8 +480,8 @@ TEST(autoSimplification, power)
 
 TEST(autoSimplification, power1)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const x = symbol("x");
     auto const e = (x ^ n2) * (x ^ n3);
     EXPECT_EQ(toString(e), "(^ x 5)");
@@ -508,8 +508,8 @@ TEST(autoSimplification, power3)
 TEST(autoSimplification, power4)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const e = (x ^ n2) ^ n3;
     EXPECT_EQ(toString(e), "(^ x 6)");
 }
@@ -518,7 +518,7 @@ TEST(autoSimplification, power5)
 {
     auto const x = symbol("x");
     auto const a = symbol("a");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const e = (x ^ a) ^ n2;
     EXPECT_EQ(toString(e), "(^ x (* 2 a))");
 }
@@ -526,7 +526,7 @@ TEST(autoSimplification, power5)
 TEST(autoSimplification, power6)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const f1o2 = fraction(1, 2);
     auto const e = (x ^ n2) ^ f1o2;
     EXPECT_EQ(toString(e), "(^ (^ x 2) 1/2)");
@@ -535,7 +535,7 @@ TEST(autoSimplification, power6)
 TEST(autoSimplification, power7)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const f1o2 = fraction(1, 2);
     auto const e1 = (x ^ f1o2);
     EXPECT_EQ(toString(e1), "(^ x 1/2)");
@@ -546,7 +546,7 @@ TEST(autoSimplification, power7)
 TEST(autoSimplification, power8)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const a = symbol("a");
     auto const e = (x ^ n2) ^ a;
     EXPECT_EQ(toString(e), "(^ (^ x 2) a)");
@@ -556,7 +556,7 @@ TEST(autoSimplification, power9)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const e = (x * y) ^ n2;
     EXPECT_EQ(toString(e), "(* (^ x 2) (^ y 2))");
 }
@@ -615,7 +615,7 @@ TEST(autoSimplification, quotient1)
 {
     auto const a = symbol("a");
     auto const x = symbol("x");
-    auto const n3 = integer(3);
+    auto const n3 = 3_i;
     auto const e = (a * (x ^ n3)) / x;
     EXPECT_EQ(toString(e), "(* a (^ x 2))");
 }
@@ -623,7 +623,7 @@ TEST(autoSimplification, quotient1)
 TEST(autoSimplification, identity)
 {
     auto const u = symbol("u");
-    auto const n0 = integer(0);
+    auto const n0 = 0_i;
     auto const e = u + n0;
     EXPECT_EQ(toString(e), "u");
 }
@@ -631,7 +631,7 @@ TEST(autoSimplification, identity)
 TEST(autoSimplification, identity1)
 {
     auto const u = symbol("u");
-    auto const n0 = integer(0);
+    auto const n0 = 0_i;
     auto const e = u * n0;
     EXPECT_EQ(toString(e), "0");
 }
@@ -639,14 +639,14 @@ TEST(autoSimplification, identity1)
 TEST(autoSimplification, identity2)
 {
     auto const u = symbol("u");
-    auto const n1 = integer(1);
+    auto const n1 = 1_i;
     auto const e = u * n1;
     EXPECT_EQ(toString(e), "u");
 }
 
 TEST(autoSimplification, identity3)
 {
-    auto const n0 = integer(0);
+    auto const n0 = 0_i;
     auto const f2o3 = fraction(2, 3);
     auto const e = n0 ^ f2o3;
     EXPECT_EQ(toString(e), "0");
@@ -654,14 +654,14 @@ TEST(autoSimplification, identity3)
 
 TEST(autoSimplification, identity4)
 {
-    auto const n0 = integer(0);
+    auto const n0 = 0_i;
     auto const w = symbol("w");
     EXPECT_THROW(n0 ^ w, std::runtime_error);
 }
 
 TEST(autoSimplification, identity5)
 {
-    auto const n1 = integer(1);
+    auto const n1 = 1_i;
     auto const w = symbol("w");
     auto const e = n1 ^ w;
     EXPECT_EQ(toString(e), "1");
@@ -670,36 +670,36 @@ TEST(autoSimplification, identity5)
 TEST(autoSimplification, identity6)
 {
     auto const v = symbol("v");
-    auto const n0 = integer(0);
+    auto const n0 = 0_i;
     EXPECT_EQ(toString(v ^ n0), "1");
 }
 
 TEST(autoSimplification, identity7)
 {
-    auto const n0 = integer(0);
+    auto const n0 = 0_i;
     EXPECT_THROW(n0 ^ n0, std::runtime_error);
 }
 
 TEST(autoSimplification, identity8)
 {
     auto const v = symbol("v");
-    auto const n1 = integer(1);
+    auto const n1 = 1_i;
     auto const e = v ^ n1;
     EXPECT_EQ(toString(e), "v");
 }
 
 TEST(autoSimplification, numerical)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const e = n2 ^ n3;
     EXPECT_EQ(toString(e), "8");
 }
 
 TEST(autoSimplification, rational)
 {
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const e = n2 / (-n3);
     EXPECT_EQ(toString(e), "-2/3");
 }
@@ -708,7 +708,7 @@ TEST(autoSimplification, power13)
 {
     auto const x = symbol("x");
     auto const f1o2 = fraction(1, 2);
-    auto const n8 = integer(8);
+    auto const n8 = 8_i;
     auto const e = (((x^f1o2)^f1o2)^n8);
     EXPECT_EQ(toString(e), "(^ x 2)");
 }
@@ -719,7 +719,7 @@ TEST(autoSimplification, power14)
     auto const y = symbol("y");
     auto const z = symbol("z");
     auto const f1o2 = fraction(1, 2);
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     auto const e = ((((x*y)^f1o2)*(z^n2))^n2);
     EXPECT_EQ(toString(e), "(* x y (^ z 4))");
 }

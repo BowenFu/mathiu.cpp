@@ -22,20 +22,20 @@ namespace mathiu
             Id<ExprPtr> iEBase, iEExp, iENat;
             Id<ExprPtr> iE;
             return match(exp)(
-                pattern | some(isRational) = expr(integer(0)),
-                pattern | var = expr(integer(1)),
-                pattern | some(as<Symbol>(_)) = expr(integer(0)),
+                pattern | some(isRational) = expr(0_i),
+                pattern | var = expr(1_i),
+                pattern | some(as<Symbol>(_)) = expr(0_i),
                 pattern | some(as<Sum>(iS)) = [&]
-                { return std::accumulate((*iS).begin(), (*iS).end(), integer(0), [&](auto &&sum, auto &&e)
+                { return std::accumulate((*iS).begin(), (*iS).end(), 0_i, [&](auto &&sum, auto &&e)
                                          { return sum + diff(e.second, var); }); },
                 pattern | some(as<Product>(iP)) = [&]
-                { return std::accumulate((*iP).begin(), (*iP).end(), integer(0), [&](auto &&sum, auto &&e)
+                { return std::accumulate((*iP).begin(), (*iP).end(), 0_i, [&](auto &&sum, auto &&e)
                                          { return sum + diff(e.second, var) / e.second * exp; }); },
                 pattern | some(as<Power>(ds(iEBase, iEExp))) = [&]
                 {
                     auto const &n = *iEExp;
                     auto const &u = *iEBase;
-                    return n * (u ^ (n - integer(1))) * diff(u, var);
+                    return n * (u ^ (n - 1_i)) * diff(u, var);
                 },
                 pattern | some(as<Sin>(ds(iE))) = [&]
                 {
@@ -44,7 +44,7 @@ namespace mathiu
                 pattern | _ = [&]
                 {
                     throw std::runtime_error{"No match in diff!"};
-                    return integer(0);
+                    return 0_i;
                 });
         }
     } // namespace impl
