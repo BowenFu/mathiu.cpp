@@ -637,6 +637,9 @@ namespace mathiu
                     // the basic unary transformation.
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
+                // rational as coeff for 1.
+                pattern | or_(as<Integer>(_), as<Fraction>(_)) = [&]
+                { return std::make_pair(std::make_shared<Expr const>(e), 1_i); },
                 pattern | _ = [&]
                 { return std::make_pair(1_i, std::make_shared<Expr const>(e)); });
         }
@@ -1058,25 +1061,19 @@ namespace mathiu
             return match(ex)(
                 pattern | some(as<Sum>(iSum)) = [&]
                 {
-                    Sum result;
-                    std::transform((*iSum).begin(), (*iSum).end(), std::inserter(result, result.end()), [&](auto &&e)
+                    return std::accumulate((*iSum).begin(), (*iSum).end(), 0_i, [&](auto&& sum, auto &&e)
                                    {
                                        auto elem = subs(e.second);
-                                       auto cAndT = coeffAndTerm(*elem);
-                                       return std::make_pair(cAndT.second, elem);
+                                       return sum + elem;
                                    });
-                    return std::make_shared<Expr const>(std::move(result));
                 },
                 pattern | some(as<Product>(iProduct)) = [&]
                 {
-                    Product result;
-                    std::transform((*iProduct).begin(), (*iProduct).end(), std::inserter(result, result.end()), [&](auto &&e)
+                    return std::accumulate((*iProduct).begin(), (*iProduct).end(), 1_i, [&](auto&& product, auto &&e)
                                    {
                                        auto elem = subs(e.second);
-                                       auto bAndE = baseAndExp(*elem);
-                                       return std::make_pair(bAndE.first, elem);
+                                       return product * elem;
                                    });
-                    return std::make_shared<Expr const>(std::move(result));
                 },
                 pattern | some(as<Power>(ds(iE1, iE2))) = [&] {
                     return pow(subs(*iE1), subs(*iE2));
