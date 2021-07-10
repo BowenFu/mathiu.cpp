@@ -13,7 +13,7 @@
 #include <set>
 #include <list>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #include <iostream>
@@ -182,6 +182,18 @@ namespace mathiu
         };
 
         struct GreaterEqual : ExprPtrArray<2>
+        {
+        };
+
+        struct And : ExprPtrList
+        {
+        };
+
+        struct Or : ExprPtrList
+        {
+        };
+
+        struct Not : ExprPtrArray<1>
         {
         };
 
