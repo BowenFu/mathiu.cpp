@@ -11,6 +11,10 @@ namespace mathiu
     {
         inline int32_t degreeMonomial(ExprPtr const& monomial, Set const& varSet)
         {
+#if DEBUG
+            std::cout << "degreeMonomial: " << toString(monomial) << ",\t" << std::endl;
+#endif // DEBUG
+
             Id<Product> iP;
             Id<ExprPtr> base, exp;
             return match(*monomial)
@@ -19,6 +23,7 @@ namespace mathiu
                 {
                     return std::accumulate(varSet.begin(), varSet.end(), 0, [&](int32_t sum, auto&& e) 
                     {
+                        // FIXME, iP does not contain e. instead a sum of e.
                         auto const exp = baseAndExp(*(*iP).at(e)).second;
                         return sum + std::get<int32_t>(*exp);
                     });

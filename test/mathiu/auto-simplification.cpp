@@ -743,3 +743,33 @@ TEST(autoSimplification, log)
     auto const u = lnx / lnx;
     EXPECT_EQ(toString(u), "1");
 }
+
+TEST(autoSimplification, 1)
+{
+    auto const e = 2_i + 3_i/4_i + 5_i/6_i;
+    EXPECT_EQ(toString(e), "43/12");
+}
+
+TEST(autoSimplification, 2)
+{
+    auto const e = "x"_s + "y"_s + 2_i * "x"_s;
+    EXPECT_EQ(toString(e), "(+ (* 3 x) y)");
+}
+
+TEST(autoSimplification, 3)
+{
+    auto const e = "x"_s * "y"_s * ("x"_s ^ 2_i);
+    EXPECT_EQ(toString(e), "(* (^ x 3) y)");
+}
+
+TEST(autoSimplification, 4)
+{
+    auto const e = 1_i * ("x"_s ^ 3_i) + "a"_s * ("x"_s ^ 0_i) + "b"_s * ("x"_s ^ 1_i) + 0_i * ("x"_s ^ 2_i);
+    EXPECT_EQ(toString(e), "(+ a (* b x) (^ x 3))");
+}
+
+TEST(autoSimplification, 5)
+{
+    auto const e = "x"_s * "y"_s + 3_i * "y"_s * "x"_s;
+    EXPECT_EQ(toString(e), "(* 4 x y)");
+}

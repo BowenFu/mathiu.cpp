@@ -82,3 +82,13 @@ TEST(solveEq, ax2_bx_c)
     auto const x = "x"_s;
     EXPECT_EQ(toString(solve(2_i * x * x - 3_i * x + 1_i == 0_i, x)), "{1/2 1}");
 }
+
+#if 0
+TEST(solveEq, 2)
+{
+    auto const x = "x"_s;
+    auto const e1 = x * 2_i;
+    auto const e2 = 5_i - x;
+    EXPECT_EQ(toString(solve(e1 == e2, x)), "(PieceWise ((* 2 x) (>= (* 2 x) (+ 5 (* -1 x)))) ((+ 5 (* -1 x)) (< (* 2 x) (+ 5 (* -1 x)))))");
+}
+#endif // 0
