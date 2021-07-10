@@ -131,6 +131,8 @@ namespace mathiu
         template <size_t N>
         using ExprPtrArray = std::array<ExprPtr, N>;
 
+        // algebraic
+
         struct Sum : ExprPtrMap
         {
         };
@@ -168,6 +170,7 @@ namespace mathiu
         {
         };
 
+        // relational
         struct Equal : ExprPtrArray<2>
         {
         };
@@ -188,6 +191,14 @@ namespace mathiu
         {
         };
 
+        using RelationalVariant = std::variant<Equal, Less, LessEqual, Greater, GreaterEqual>;
+
+        struct Relational : RelationalVariant
+        {
+        };
+
+        // logical
+
         struct And : ExprPtrList
         {
         };
@@ -200,9 +211,29 @@ namespace mathiu
         {
         };
 
-        using RelationalVariant = std::variant<Equal, Less, LessEqual, Greater, GreaterEqual>;
+        using LogicalVariant = std::variant<And, Or, Not>;
 
-        struct Relational : RelationalVariant
+        struct Logical : LogicalVariant
+        {
+        };
+
+        // set
+
+        struct Union : ExprPtrList
+        {
+        };
+
+        struct Intersection : ExprPtrList
+        {
+        };
+
+        struct Difference : ExprPtrArray<2>
+        {
+        };
+
+        using SetOpVariant = std::variant<Union, Intersection, Difference>;
+
+        struct SetOp : SetOpVariant
         {
         };
 
