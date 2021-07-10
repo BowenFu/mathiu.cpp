@@ -77,7 +77,6 @@ namespace mathiu
             std::cout << "coefficientMonomial: " << toString(monomial) << ",\t" << toString(x) << std::endl;
 #endif // DEBUG
 
-            const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), 0_i); };
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, x); });
 
             Id<Product> iP;

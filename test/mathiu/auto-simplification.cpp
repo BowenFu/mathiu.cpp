@@ -160,9 +160,9 @@ TEST(simplifyRational, int)
 
 TEST(simplifyRational, rational_)
 {
-    auto const f7o2 = fraction(14, 4);
+    auto const f7o2 = fraction(14, -4);
 
-    EXPECT_EQ(toString(mathiu::impl::simplifyRational(f7o2)), "7/2");
+    EXPECT_EQ(toString(mathiu::impl::simplifyRational(f7o2)), "-7/2");
 }
 
 TEST(simplifyRational, rational)
@@ -355,6 +355,15 @@ TEST(autoSimplification, sumSin)
     EXPECT_TRUE(mathiu::impl::equal(coeffAndTerm(*e2).second, sinX));
     auto const e = e1 + e2;
     EXPECT_EQ(toString(e), "(* 3 (Sin x))");
+}
+
+TEST(autoSimplification, cancel0)
+{
+    auto const x = symbol("x");
+    auto const n1 = 1_i;
+    auto const nm1 = -1_i;
+    auto const e = x - x;
+    EXPECT_EQ(toString(e), "0");
 }
 
 TEST(autoSimplification, cancel)

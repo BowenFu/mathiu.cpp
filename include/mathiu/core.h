@@ -314,7 +314,7 @@ namespace mathiu
             return std::make_shared<Expr const>(Set{{lst}});
         }
 
-        inline std::string toString(const ExprPtr &ex);
+        inline std::string toString(ExprPtr const &ex);
 
         inline std::string toString(std::string const& s)
         {
@@ -378,7 +378,7 @@ namespace mathiu
             return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2), equalLambda);
         }
 
-        inline double evald(const ExprPtr &ex);
+        inline double evald(ExprPtr const &ex);
 
         using namespace matchit;
 
@@ -577,7 +577,7 @@ namespace mathiu
             );
         }
 
-        inline std::complex<double> evalc(const ExprPtr &ex);
+        inline std::complex<double> evalc(ExprPtr const &ex);
 
         inline constexpr auto asCoeff = or_(as<Integer>(_), as<Fraction>(_));
         inline constexpr auto second = [](auto&& p)
@@ -837,7 +837,7 @@ namespace mathiu
             return std::make_shared<Expr const>(PieceWise{{{lhs, lhs >= rhs}, {rhs, lhs < rhs}}});
         }
 
-        inline double evald(const ExprPtr &ex)
+        inline double evald(ExprPtr const &ex)
         {
             assert(ex);
             Id<Integer> i, il, ir;
@@ -865,7 +865,7 @@ namespace mathiu
             );
         }
 
-        inline std::complex<double> evalc(const ExprPtr &ex)
+        inline std::complex<double> evalc(ExprPtr const &ex)
         {
             assert(ex);
             Id<Integer> i, il, ir;
@@ -894,7 +894,7 @@ namespace mathiu
             );
         }
 
-        inline std::string toString(const ExprPtr &ex)
+        inline std::string toString(ExprPtr const &ex)
         {
             assert(ex);
             Id<Integer> ii, iil, iir;
@@ -990,6 +990,24 @@ namespace mathiu
                 }
                 // clang-format on
             );
+        }
+
+        inline bool freeOf(ExprPtr const &ex, ExprPtr const& var)
+        {
+            // using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
+            constexpr auto firstOrSecond = [](auto&& p) { return or_(ds(p, _), ds(_, p)); };
+            Id<ExprPtrMap> iMap;
+            return match(ex)(
+                pattern | var = expr(false),
+                pattern | some(or_(as<Sum>(iMap), as<Product>(iMap))) = [&]
+                { return std::all_of((*iMap).begin(), (*iMap).end(), [&](auto &&e)
+                                     { return freeOf(e.second, var); }); },
+                pattern | some(as<Power>(firstOrSecond(var))) = expr(false),
+                pattern | some(as<Log>(firstOrSecond(var))) = expr(false),
+                pattern | some(as<Sin>(ds(var))) = expr(false),
+                pattern | some(as<Arctan>(ds(var))) = expr(false),
+                pattern | _ = expr(true)
+                );
         }
 
     } // namespace impl
