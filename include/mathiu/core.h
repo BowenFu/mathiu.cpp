@@ -299,6 +299,14 @@ namespace mathiu
                 { return std::make_shared<Expr const>(Sin{{ex}}); });
         }
 
+        inline ExprPtr arctan(ExprPtr const &ex)
+        {
+            using namespace matchit;
+            return match(ex)(
+                pattern | _ = [&]
+                { return std::make_shared<Expr const>(Arctan{{ex}}); });
+        }
+
         inline ExprPtr symbol(std::string const &name)
         {
             return std::make_shared<Expr const>(Symbol{{name}});
@@ -994,7 +1002,6 @@ namespace mathiu
 
         inline bool freeOf(ExprPtr const &ex, ExprPtr const& var)
         {
-            // using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
             constexpr auto firstOrSecond = [](auto&& p) { return or_(ds(p, _), ds(_, p)); };
             Id<ExprPtrMap> iMap;
             return match(ex)(
@@ -1008,6 +1015,53 @@ namespace mathiu
                 pattern | some(as<Arctan>(ds(var))) = expr(false),
                 pattern | _ = expr(true)
                 );
+        }
+
+        inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &src, ExprPtr const &dst)
+        {
+            // using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
+            auto const subs = [&] (auto&& e) { return substitute(e, src, dst); };
+            Id<Sum> iSum;
+            Id<Product> iProduct;
+            Id<ExprPtr> iE1, iE2;
+            return match(ex)(
+                pattern | src = expr(dst),
+                pattern | some(as<Sum>(iSum)) = [&]
+                {
+                    Sum result;
+                    std::transform((*iSum).begin(), (*iSum).end(), std::inserter(result, result.end()), [&](auto &&e)
+                                   {
+                                       auto elem = subs(e.second);
+                                       auto cAndT = coeffAndTerm(*elem);
+                                       return std::make_pair(cAndT.second, elem);
+                                   });
+                    return std::make_shared<Expr const>(std::move(result));
+                },
+                pattern | some(as<Product>(iProduct)) = [&]
+                {
+                    Product result;
+                    std::transform((*iProduct).begin(), (*iProduct).end(), std::inserter(result, result.end()), [&](auto &&e)
+                                   {
+                                       auto elem = subs(e.second);
+                                       auto bAndE = baseAndExp(*elem);
+                                       return std::make_pair(bAndE.first, elem);
+                                   });
+                    return std::make_shared<Expr const>(std::move(result));
+                },
+                pattern | some(as<Power>(ds(iE1, iE2))) = [&] {
+                    return pow(subs(*iE1), subs(*iE2));
+                },
+                pattern | some(as<Log>(ds(iE1, iE2))) = [&] {
+                    return log(subs(*iE1), subs(*iE2));
+                },
+                pattern | some(as<Sin>(ds(iE1))) = [&] {
+                    return sin(subs(*iE1));
+                },
+                pattern | some(as<Arctan>(ds(iE1))) = [&] {
+                    return arctan(subs(*iE1));
+                },
+                pattern | _ = expr(ex)
+            );
         }
 
     } // namespace impl
