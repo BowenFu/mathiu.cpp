@@ -32,3 +32,8 @@ TEST(freeOf, 6)
 {
     EXPECT_TRUE(freeOf(("y"_s + 2_i * "x"_s - "y"_s) / "x"_s, "x"_s));
 }
+
+TEST(freeOf, 7)
+{
+    EXPECT_TRUE(freeOf(("x"_s * "y"_s) ^ 2_i, "x"_s * "y"_s));
+}
