@@ -125,6 +125,7 @@ namespace mathiu
             }
         };
 
+        using ExprPtrPair = std::pair<ExprPtr, ExprPtr>;
         using ExprPtrMap = std::map<ExprPtr, ExprPtr, ExprPtrLess>;
         using ExprPtrSet = std::set<ExprPtr, ExprPtrLess>;
         using ExprPtrList = std::vector<ExprPtr>;
@@ -241,12 +242,25 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
+        struct SubstituteMap : ExprPtrMap
+        {
+        };
+
+        struct SubstitutePair : ExprPtrPair
+        {
+        };
+
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, SubstituteMap>;
 
         struct Expr : ExprVariant
         {
             using variant::variant;
         };
+
+        inline bool operator==(ExprPtrPair const &l, ExprPtrPair const &r)
+        {
+            return equal(l.first, r.first) && equal(l.second, r.second);
+        }
 
         inline bool operator==(ExprPtrMap const &l, ExprPtrMap const &r)
         {
@@ -320,6 +334,11 @@ namespace mathiu
         inline ExprPtr set(std::initializer_list<ExprPtr> const& lst)
         {
             return std::make_shared<Expr const>(Set{{lst}});
+        }
+
+        inline ExprPtr operator>>(ExprPtr const& src, ExprPtr const& dst)
+        {
+            return std::make_shared<Expr const>(SubstitutePair{{src, dst}});
         }
 
         inline std::string toString(ExprPtr const &ex);
@@ -1017,15 +1036,20 @@ namespace mathiu
                 );
         }
 
-        inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &src, ExprPtr const &dst)
+        inline ExprPtr substituteImpl(ExprPtr const &ex, ExprPtrMap const &srcDstMap)
         {
+            auto const iter = srcDstMap.find(ex);
+            if (iter != srcDstMap.end())
+            {
+                return iter->second;
+            }
+
             // using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise>;
-            auto const subs = [&] (auto&& e) { return substitute(e, src, dst); };
+            auto const subs = [&] (auto&& e) { return substituteImpl(e, srcDstMap); };
             Id<Sum> iSum;
             Id<Product> iProduct;
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
-                pattern | src = expr(dst),
                 pattern | some(as<Sum>(iSum)) = [&]
                 {
                     Sum result;
@@ -1062,6 +1086,28 @@ namespace mathiu
                 },
                 pattern | _ = expr(ex)
             );
+        }
+
+        inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &srcDstPairs)
+        {
+            Id<Set> iSet;
+            Id<SubstitutePair> iPair;
+            auto const subMap = match(*srcDstPairs)(
+                pattern | as<Set>(iSet) = [&]
+                {
+                    ExprPtrMap result;
+                    std::transform((*iSet).begin(), (*iSet).end(), std::inserter(result, result.end()), [&](auto &&e)
+                                   {
+                                       auto pair = std::get<SubstitutePair>(*e);
+                                       return pair;
+                                   });
+                    return result;
+                },
+                pattern | as<SubstitutePair>(iPair) = [&]
+                { return ExprPtrMap{{{(*iPair).first, (*iPair).second}}}; },
+                pattern | _ = [&]
+                { throw std::runtime_error("Mismatch in substitute!"); return ExprPtrMap{}; });
+            return substituteImpl(ex, subMap);
         }
 
     } // namespace impl
