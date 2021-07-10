@@ -2,10 +2,10 @@
 #include "gtest/gtest.h"
 using namespace mathiu;
 
-TEST(Order, integer)
+TEST(Order, Integer)
 {
-    EXPECT_TRUE(less(integer(2), fraction(5, 2)));
-    EXPECT_TRUE(less(fraction(5, 2), integer(7)));
+    EXPECT_TRUE(less(2_i, fraction(5, 2)));
+    EXPECT_TRUE(less(fraction(5, 2), 7_i));
 }
 
 TEST(Order, constant1)
@@ -25,7 +25,7 @@ TEST(Order, less)
 {
     EXPECT_TRUE(impl::lessC<double>({}, {1}));
     EXPECT_TRUE(impl::lessC<double>({1}, {1, 2}));
-    EXPECT_TRUE(impl::lessC<int32_t>({2}, {1, 2}));
+    EXPECT_TRUE(impl::lessC<Integer>({2}, {1, 2}));
     EXPECT_TRUE(impl::lessC<float>({2.0}, {1.0, 2.0}));
     EXPECT_TRUE(impl::lessC<double>({2.0}, {1.0, 2.0}));
     EXPECT_TRUE(impl::lessC<double>({2}, {1, 2}));
@@ -91,9 +91,9 @@ TEST(Order, sum1)
 
 TEST(Order, power)
 {
-    auto const n1 = integer(1);
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n1 = 1_i;
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     auto const x = symbol("x");
     auto const y = symbol("y");
     auto const e1 = (n1 + x) ^ n2;
@@ -108,8 +108,8 @@ TEST(Order, compond)
 {
     auto const a = symbol("a");
     auto const x = symbol("x");
-    auto const n2 = integer(2);
-    auto const n3 = integer(3);
+    auto const n2 = 2_i;
+    auto const n3 = 3_i;
     EXPECT_EQ(toString(a*(x^n2)), "(* a (^ x 2))");
     EXPECT_EQ(toString(x^n3), "(^ x 3)");
     EXPECT_TRUE(less(a*(x^n2), x^n3));
@@ -119,8 +119,8 @@ TEST(Order, compond2)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    auto const n1 = integer(1);
-    auto const n3 = integer(3);
+    auto const n1 = 1_i;
+    auto const n3 = 3_i;
     EXPECT_TRUE(less((n1 + x)^n3, n1 + y));
 }
 
@@ -128,20 +128,20 @@ TEST(Order, compond3)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    auto const n1 = integer(1);
+    auto const n1 = 1_i;
     EXPECT_TRUE(less(n1 + x, y));
 }
 
 TEST(Order, compond4)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     EXPECT_TRUE(less(x, x^n2));
 }
 
 TEST(Order, func)
 {
     auto const x = symbol("x");
-    auto const n2 = integer(2);
+    auto const n2 = 2_i;
     EXPECT_TRUE(less(sin(x), sin(x^n2)));
 }
