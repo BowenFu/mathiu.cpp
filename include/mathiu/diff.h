@@ -21,6 +21,7 @@ namespace mathiu
             Id<Product> iP;
             Id<ExprPtr> iEBase, iEExp, iENat;
             Id<ExprPtr> iE;
+            Id<PieceWise> iPieceWise;
             return match(exp)(
                 pattern | some(isRational) = expr(0_i),
                 pattern | var = expr(1_i),
@@ -40,6 +41,14 @@ namespace mathiu
                 pattern | some(as<Sin>(ds(iE))) = [&]
                 {
                     return sin(pi / 2_i - *iE) * diff(*iE, var);
+                },
+                pattern | some(as<PieceWise>(iPieceWise))                              = [&]{
+                    PieceWise result;
+                    for (auto const& e: *iPieceWise)
+                    {
+                        result.push_back({diff(e.first, var), e.second});
+                    }
+                    return std::make_shared<Expr const>(std::move(result));
                 },
                 pattern | _ = [&]
                 {

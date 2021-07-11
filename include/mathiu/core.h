@@ -251,12 +251,18 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval>;
+        struct Complexes
+        {
+        };
+
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval, Complexes>;
 
         struct Expr : ExprVariant
         {
             using variant::variant;
         };
+
+        inline const auto complexes = std::make_shared<Expr const>(Complexes{});
 
         inline bool operator==(ExprPtrPair const &l, ExprPtrPair const &r)
         {
@@ -424,6 +430,7 @@ namespace mathiu
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
             Id<SubstitutePair> iPair1, iPair2;
+            Id<PieceWise> iPieceWise1, iPieceWise2;
             constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
             constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
@@ -491,6 +498,11 @@ namespace mathiu
                 pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEl2))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEr1, iEr2))))   = [&] {
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
+                pattern | ds(as<PieceWise>(iPieceWise1), as<PieceWise>(iPieceWise2))   = [&] {
+                    return lessC<ExprPtr>(*iPieceWise1, *iPieceWise2);
+                },
+                pattern | ds(_, as<PieceWise>(_))   = expr(true),
+                pattern | ds(as<PieceWise>(_), _)   = expr(false),
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
                 // clang-format on
             );
@@ -1066,6 +1078,12 @@ namespace mathiu
                 },
                 pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
                     return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";
+                },
+                pattern | as<CCInterval>(as<ExprPtrPair>(ds(il, ir))) = [&] {
+                    return "(CCInterval " + toString(*il) + " " + toString(*ir) + ")";
+                },
+                pattern | as<Complexes>(_) = [&] {
+                    return "complexes";
                 }
                 // clang-format on
             );

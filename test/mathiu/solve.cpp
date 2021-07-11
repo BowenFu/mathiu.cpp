@@ -88,3 +88,16 @@ TEST(solveEq, 2)
     auto const e2 = 5_i - x;
     EXPECT_EQ(toString(solve(e1 == e2, x)), "{5/3}");
 }
+
+#if 0
+TEST(solveEq, 3)
+{
+    auto const x = "x"_s;
+    auto const e1 = x * 2_i;
+    auto const e2 = 5_i - x;
+    auto const e = min(e1, e2);
+    // TODO simplify conditions
+    EXPECT_EQ(toString(e), "(PieceWise ((* 2 x) (<= (* 2 x) (+ 5 (* -1 x)))) ((+ 5 (* -1 x)) (> (* 2 x) (+ 5 (* -1 x)))))");
+    EXPECT_EQ(toString(solve(e, x)), "{5/3}");
+}
+#endif

@@ -37,10 +37,16 @@ namespace mathiu
                 });
         }
 
-        inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var)
+        inline ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs)
+        {
+            (void)rhs;
+            return lhs;
+        }
+
+        inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain = complexes)
         {
 #if DEBUG
-            std::cout << "solve: " << toString(ex) << ",\t" << toString(var) << std::endl;
+            std::cout << "solve: " << toString(ex) << ",\t" << toString(var) << ",\t" << toString(domain) << std::endl;
 #endif // DEBUG
 
             auto const var_ = std::get<Symbol>(*var);
@@ -50,7 +56,7 @@ namespace mathiu
             Id<Product> iP;
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
-                pattern | some(as<Relational>(as<Equal>(ds(iE1, iE2)))) = [&] { return solve(expand(*iE1 - *iE2), var); },
+                pattern | some(as<Relational>(as<Equal>(ds(iE1, iE2)))) = [&] { return solve(expand(*iE1 - *iE2), var, domain); },
                 pattern | some(as<Integer>(0)) = expr(set(var)),
                 pattern | freeOfVar = expr(set()),
                 pattern | var = expr(set(0_i)), // todo -> solve poly
@@ -58,7 +64,7 @@ namespace mathiu
                 {
                     auto solutionSet = std::accumulate((*iP).begin(), (*iP).end(), Set{}, [&](Set solutions, auto&& e) 
                     {
-                        solutions.merge(const_cast<Set&>(std::get<Set>(*solve(e.second, var)))); // it is safe to const_cast a temp.
+                        solutions.merge(const_cast<Set&>(std::get<Set>(*solve(e.second, var, domain)))); // it is safe to const_cast a temp.
                         return solutions;
                     });
                     return std::make_shared<Expr const>(std::move(solutionSet));
@@ -66,7 +72,8 @@ namespace mathiu
                 // assume is poly
                 pattern | _ = [&]
                 {
-                    return solvePoly(ex, var);
+                    auto const sol = solvePoly(ex, var);
+                    return intersect(sol, domain);
                 });
         }
 
