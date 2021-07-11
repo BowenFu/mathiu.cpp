@@ -243,15 +243,11 @@ namespace mathiu
         {
         };
 
-        struct SubstituteMap : ExprPtrMap
-        {
-        };
-
         struct SubstitutePair : ExprPtrPair
         {
         };
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, SubstituteMap>;
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair>;
 
         struct Expr : ExprVariant
         {
