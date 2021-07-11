@@ -8,7 +8,8 @@
 
 #include "mathiu/core.h"
 #include "mathiu/diff.h"
-#include "mathiu/solve.h"
+#include "mathiu/function_range.h"
 #include "mathiu/polynomial.h"
+#include "mathiu/solve.h"
 
 #endif // MATHIU_H
