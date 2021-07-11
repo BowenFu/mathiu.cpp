@@ -25,8 +25,8 @@ TEST(solvePoly, deg2)
     auto const b = "b"_s;
     auto const a = "a"_s;
     EXPECT_EQ(toString(solvePoly(a * (x ^ 2_i) + b * x + c, x)),
-              "{(* 1/2 (^ a -1) (+ (* -1 b) (^ (+ (^ b 2) (* -1 4 a c)) 1/2))) "
-              "(* 1/2 (^ a -1) (+ (* -1 b) (* -1 (^ (+ (^ b 2) (* -1 4 a c)) 1/2))))}");
+              "{(* 1/2 (^ a -1) (+ (* -1 b) (^ (+ (^ b 2) (* -4 a c)) 1/2))) "
+              "(* 1/2 (^ a -1) (+ (* -1 b) (* -1 (^ (+ (^ b 2) (* -4 a c)) 1/2))))}");
 }
 
 TEST(solvePoly, freeOf)

@@ -203,3 +203,9 @@ TEST(expand, 2)
     auto const e = ("a"_s + "c"_s) * ("c"_s - "a"_s);
     EXPECT_EQ(toString(expand(e)), "(+ (* -1 (^ a 2)) (^ c 2))");
 }
+
+TEST(expand, 3)
+{
+    auto const e = (("a"_s - "b"_s) ^ 2_i);
+    EXPECT_EQ(toString(expand(e)), "(+ (^ a 2) (* -2 a b) (^ b 2))");
+}
