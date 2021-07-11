@@ -4,6 +4,7 @@
 #include "matchit.h"
 #include "core.h"
 #include "diff.h"
+#include <cmath>
 
 namespace mathiu
 {
@@ -177,6 +178,38 @@ namespace mathiu
             );
         }
 
+        inline Integer factorial(Integer n)
+        {
+            assert(n >= 0);
+            return static_cast<Integer>(std::tgamma(n + 1));
+        }
+
+        inline ExprPtr expandPower(ExprPtr const& base, int32_t const n)
+        {
+#if DEBUG
+            std::cout << "expandPower: " << toString(base) << ",\t" << n << std::endl;
+#endif // DEBUG
+
+            Id<ExprPtr> iFirst;
+            return match(*base)
+            (
+                pattern | as<Sum>(ds(ds(_, iFirst), ooo)) = [&]
+                {
+                    auto const f = *iFirst;
+                    auto const r = base - f;
+                    auto sum = 0_i;
+                    for (int k = 0; k <= n; ++k)
+                    {
+                        auto const c = factorial(n) / (factorial(k) * factorial(n - k));
+                        sum = sum + expandProduct(integer(c) * (f ^ integer(n - k)), expandPower(r, k));
+                    }
+                    return sum;
+                },
+                pattern | _ = [&] { return base ^ integer(n); }
+            );
+        }
+
+
         inline ExprPtr expand(ExprPtr const& ex)
         {
 #if DEBUG
@@ -185,6 +218,8 @@ namespace mathiu
 
             Id<Sum> iSum;
             Id<Product> iProduct;
+            Id<ExprPtr> iBase;
+            Id<Integer> iiExp;
             return match(*ex)
             (
                 pattern | as<Sum>(iSum) = [&]
@@ -204,7 +239,10 @@ namespace mathiu
                     }
                     );
                 },
-                // todo power
+                pattern | as<Power>(ds(iBase, some(as<Integer>(iiExp.at(_>1))))) = [&]
+                {
+                    return expandPower(expand(*iBase), *iiExp);
+                },
                 pattern | _ = expr(ex)
             );
         }

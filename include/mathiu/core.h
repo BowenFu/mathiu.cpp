@@ -545,9 +545,13 @@ namespace mathiu
                 return merge(c2, c1, op, identity);
             }
             C result = c1;
+            auto const isRational = some(or_(as<Integer>(_), as<Fraction>(_)));
+            // We assume rational is at the beginning.
+            auto const firstIsRational = matched(result.begin()->second, isRational);
             for (auto const& e : c2)
             {
-                auto const it = result.find(e.first);
+                auto const bothRational = firstIsRational && matched(e.second, isRational);
+                auto const it = bothRational? result.begin(): result.find(e.first);
                 if (it == result.end())
                 {
                     result.insert(e);
@@ -561,7 +565,7 @@ namespace mathiu
                     }
                     else
                     {
-                        it->second = op(it->second, e.second);
+                        it->second = opResult;
                     }
                 }
             }
@@ -643,9 +647,6 @@ namespace mathiu
                     // the basic unary transformation.
                     return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
                 },
-                // rational as coeff for 1.
-                pattern | or_(as<Integer>(_), as<Fraction>(_)) = [&]
-                { return std::make_pair(std::make_shared<Expr const>(e), 1_i); },
                 pattern | _ = [&]
                 { return std::make_pair(1_i, std::make_shared<Expr const>(e)); });
         }

@@ -788,3 +788,10 @@ TEST(autoSimplification, sumRationalSum)
     auto const e = (1_i + "a"_s) + (2_i / 5_i + "b"_s);
     EXPECT_EQ(toString(e), "(+ 7/5 a b)");
 }
+
+TEST(autoSimplification, prodXprod)
+{
+    auto const e = (2_i * "a"_s) * (-"b"_s);
+    EXPECT_EQ(toString(e), "(* -2 a b)");
+}
+
