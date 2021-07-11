@@ -239,7 +239,7 @@ namespace mathiu
         {
         };
 
-        struct PieceWise : std::vector<std::pair<ExprPtr, ExprPtr>>
+        struct PieceWise : std::vector<ExprPtrPair>
         {
         };
 
@@ -247,7 +247,11 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair>;
+        struct CCInterval : ExprPtrPair
+        {
+        };
+
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval>;
 
         struct Expr : ExprVariant
         {
@@ -858,6 +862,11 @@ namespace mathiu
             return std::make_shared<Expr const>(Relational{Less{{lhs, rhs}}});
         }
 
+        inline ExprPtr operator<=(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            return std::make_shared<Expr const>(Relational{LessEqual{{lhs, rhs}}});
+        }
+
         inline ExprPtr operator>=(ExprPtr const &lhs, ExprPtr const &rhs)
         {
             return std::make_shared<Expr const>(Relational{GreaterEqual{{lhs, rhs}}});
@@ -870,7 +879,38 @@ namespace mathiu
 
         inline ExprPtr max(ExprPtr const& lhs, ExprPtr const& rhs)
         {
-            return std::make_shared<Expr const>(PieceWise{{{lhs, lhs >= rhs}, {rhs, lhs < rhs}}});
+            auto constexpr isRational = or_(as<Integer>(_), as<Fraction>(_));
+            return match(*lhs, *rhs)
+            ( 
+                pattern | ds(isRational, isRational) = [&]
+                {
+                    auto const l = evald(lhs);
+                    auto const r = evald(rhs);
+                    return l < r ? rhs : lhs;
+                },
+                pattern | _ = [&]
+                {
+                    return std::make_shared<Expr const>(PieceWise{{{lhs, lhs >= rhs}, {rhs, lhs < rhs}}});
+                }
+             );
+        }
+
+        inline ExprPtr min(ExprPtr const& lhs, ExprPtr const& rhs)
+        {
+            auto constexpr isRational = or_(as<Integer>(_), as<Fraction>(_));
+            return match(*lhs, *rhs)
+            ( 
+                pattern | ds(isRational, isRational) = [&]
+                {
+                    auto const l = evald(lhs);
+                    auto const r = evald(rhs);
+                    return l < r ? lhs : rhs;
+                },
+                pattern | _ = [&]
+                {
+                return std::make_shared<Expr const>(PieceWise{{{lhs, lhs <= rhs}, {rhs, lhs > rhs}}});
+                }
+            );
         }
 
         inline double evald(ExprPtr const &ex)
