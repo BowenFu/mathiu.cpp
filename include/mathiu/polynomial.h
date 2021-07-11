@@ -23,8 +23,12 @@ namespace mathiu
                 {
                     return std::accumulate(varSet.begin(), varSet.end(), 0, [&](Integer sum, auto&& e) 
                     {
-                        // FIXME, iP does not contain e. instead a sum of e.
-                        auto const exp = baseAndExp(*(*iP).at(e)).second;
+                        auto const iter = (*iP).find(e);
+                        if (iter == (*iP).end())
+                        {
+                            return sum;
+                        }
+                        auto const exp = baseAndExp(*(*iter).second).second;
                         return sum + std::get<Integer>(*exp);
                     });
                 },
@@ -160,7 +164,7 @@ namespace mathiu
                 {
                     return std::accumulate((*iSum).begin(), (*iSum).end(), 0_i, [&](auto&& sum, auto&& e)
                         {
-                            return sum + e.second *rhs;
+                            return sum + expandProduct(e.second, rhs);
                         }
                     );
                 },
