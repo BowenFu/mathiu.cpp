@@ -191,3 +191,9 @@ TEST(coefficientList, 1)
     auto const u = a * (x ^ 2_i) + b * x + c;
     EXPECT_EQ(toString(coefficientList(u, x)), "[c b a]");
 }
+
+TEST(expand, 1)
+{
+    auto const e = "a"_s - ("c"_s + "a"_s);
+    EXPECT_EQ(toString(expand(e)), "(* -1 c)");
+}
