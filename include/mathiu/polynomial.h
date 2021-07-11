@@ -145,6 +145,65 @@ namespace mathiu
             return std::make_shared<Expr const>(std::move(result));
         }
 
+        // algebraic expand
+        inline ExprPtr expandProduct(ExprPtr const& lhs, ExprPtr const& rhs)
+        {
+#if DEBUG
+            std::cout << "expandProduct: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
+#endif // DEBUG
+
+            Id<Sum> iSum;
+            return match(*lhs, *rhs)
+            (
+                // clang-format off
+                pattern | ds(as<Sum>(iSum), _) = [&]
+                {
+                    return std::accumulate((*iSum).begin(), (*iSum).end(), 0_i, [&](auto&& sum, auto&& e)
+                        {
+                            return sum + e.second *rhs;
+                        }
+                    );
+                },
+                pattern | ds(_, as<Sum>(_)) = [&]
+                {
+                    return expandProduct(rhs, lhs);
+                },
+                pattern | _ = [&] {return lhs*rhs; }
+                // clang-format on
+            );
+        }
+
+        inline ExprPtr expand(ExprPtr const& ex)
+        {
+#if DEBUG
+            std::cout << "expand: " << toString(ex) << std::endl;
+#endif // DEBUG
+
+            Id<Sum> iSum;
+            Id<Product> iProduct;
+            return match(*ex)
+            (
+                pattern | as<Sum>(iSum) = [&]
+                {
+                    return std::accumulate((*iSum).begin(), (*iSum).end(), 0_i, [&](auto&& sum, auto&& e)
+                    {
+                        // Use Sum{} + merge for better perf
+                        return sum + expand(e.second);
+                    }
+                    );
+                },
+                pattern | as<Product>(iProduct) = [&]
+                {
+                    return std::accumulate((*iProduct).begin(), (*iProduct).end(), 1_i, [&](auto&& product, auto&& e)
+                    {
+                        return expandProduct(product, expand(e.second));
+                    }
+                    );
+                },
+                // todo power
+                pattern | _ = expr(ex)
+            );
+        }
 
     } // namespace impl
 } // namespace mathiu
