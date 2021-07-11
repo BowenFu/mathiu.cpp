@@ -29,7 +29,6 @@ TEST(solvePoly, deg2)
               "(* 1/2 (^ a -1) (+ (* -1 b) (* -1 (^ (+ (^ b 2) (* -1 4 a c)) 1/2))))}");
 }
 
-#if 0
 TEST(solvePoly, freeOf)
 {
     auto const x = symbol("x");
@@ -37,7 +36,6 @@ TEST(solvePoly, freeOf)
     EXPECT_EQ(toString(solvePoly(e - x, x)), "{(^ 2 a)}");
     EXPECT_EQ(toString(solvePoly(x - e, x)), "{(^ 2 a)}");
 }
-#endif // 0
 
 TEST(solve, alwaysHold)
 {
