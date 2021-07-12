@@ -11,7 +11,7 @@ namespace mathiu
     {
         // implement limit
 
-        inline CCInterval functionRange(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+        inline CCInterval functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
         {
             auto const domain_ = std::get<CCInterval>(*domain);
             auto const subs = [&] (ExprPtr const& dst) { return substitute(function, symbol >> dst); };
@@ -29,6 +29,30 @@ namespace mathiu
                 max_ = max(max_, v);
             }
             return CCInterval{{min_, max_}};
+        }
+
+        inline CCInterval union_(CCInterval const& lhs, CCInterval const& rhs)
+        {
+            if (lhs.first == nullptr && lhs.second == nullptr)
+            {
+                return rhs;
+            }
+            assert(lhs.second >= rhs.first);
+            return CCInterval{{lhs.first, rhs.second}};
+        }
+
+        inline CCInterval functionRange(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+        {
+            Id<PieceWise> iPieceWise;
+            return match(*function)(
+                pattern | as<PieceWise>(iPieceWise)   = [&] {
+                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), CCInterval{}, [&] (auto&& result, auto&& e)
+                    {
+                        return union_(result, functionRangeImpl(e.first, symbol, intersect(domain, e.second)));
+                    });
+                },
+                pattern | _ = [&]
+                { return functionRangeImpl(function, symbol, domain); });
         }
     } // namespace impl
 } // namespace mathiu
