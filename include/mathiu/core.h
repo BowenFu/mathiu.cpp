@@ -172,32 +172,16 @@ namespace mathiu
         {
         };
 
-        // relational
-        struct Equal : ExprPtrArray<2>
+        enum class RelationalKind
         {
+            kEQUAL,
+            kLESS,
+            kLESS_EQUAL,
+            kGREATER,
+            kGREATER_EQUAL
         };
 
-        struct Less : ExprPtrArray<2>
-        {
-        };
-
-        struct LessEqual : ExprPtrArray<2>
-        {
-        };
-
-        struct Greater : ExprPtrArray<2>
-        {
-        };
-
-        struct GreaterEqual : ExprPtrArray<2>
-        {
-        };
-
-        using RelationalVariant = std::variant<Equal, Less, LessEqual, Greater, GreaterEqual>;
-
-        struct Relational : RelationalVariant
-        {
-        };
+        using Relational = std::tuple<RelationalKind, ExprPtr, ExprPtr>;
 
         // logical
 
@@ -866,27 +850,27 @@ namespace mathiu
 
         inline ExprPtr operator==(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{Equal{{lhs, rhs}}});
+            return std::make_shared<Expr const>(Relational{RelationalKind::kEQUAL, lhs, rhs});
         }
 
         inline ExprPtr operator<(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{Less{{lhs, rhs}}});
+            return std::make_shared<Expr const>(Relational{RelationalKind::kLESS, lhs, rhs});
         }
 
         inline ExprPtr operator<=(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{LessEqual{{lhs, rhs}}});
+            return std::make_shared<Expr const>(Relational{RelationalKind::kLESS_EQUAL, lhs, rhs});
         }
 
         inline ExprPtr operator>=(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{GreaterEqual{{lhs, rhs}}});
+            return std::make_shared<Expr const>(Relational{RelationalKind::kGREATER_EQUAL, lhs, rhs});
         }
 
         inline ExprPtr operator>(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{Greater{{lhs, rhs}}});
+            return std::make_shared<Expr const>(Relational{RelationalKind::kGREATER, lhs, rhs});
         }
 
         inline ExprPtr max(ExprPtr const& lhs, ExprPtr const& rhs)
@@ -993,7 +977,7 @@ namespace mathiu
             Id<Set> iSet;
             Id<List> iList;
             Id<PieceWise> iPieceWise;
-            Id<Relational> iRel;
+            Id<RelationalKind> iRelKind;
             return match(*ex)(
                 // clang-format off
                 pattern | as<Integer>(ii)                            = [&]{ return std::to_string(*ii); },
@@ -1057,24 +1041,24 @@ namespace mathiu
                     }
                     return result.substr(0, result.size()-1) + ")"; 
                 },
-                pattern | as<Relational>(iRel)                      = [&]{
-                    return match(*iRel)(
-                        pattern | as<Equal>(ds(il, ir)) = [&] {
-                            return "(== " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<Less>(ds(il, ir)) = [&] {
-                            return "(< " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<LessEqual>(ds(il, ir)) = [&] {
-                            return "(<= " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<Greater>(ds(il, ir)) = [&] {
-                            return "(> " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<GreaterEqual>(ds(il, ir)) = [&] {
-                            return "(>= " + toString(*il) + " " + toString(*ir) + ")";
+                pattern | as<Relational>(ds(iRelKind, il, ir))                      = [&]{
+                    auto const kindStr = [&] ()-> std::string
+                    {
+                        switch (*iRelKind)
+                        {
+                        case RelationalKind::kEQUAL:
+                            return "==";
+                        case RelationalKind::kLESS:
+                            return "<";
+                        case RelationalKind::kLESS_EQUAL:
+                            return "<=";
+                        case RelationalKind::kGREATER_EQUAL:
+                            return ">=";
+                        case RelationalKind::kGREATER:
+                            return ">";
                         }
-                    );
+                    }();
+                    return "(" + kindStr + " " + toString(*il) + " " + toString(*ir) + ")";
                 },
                 pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
                     return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";

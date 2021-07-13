@@ -60,7 +60,7 @@ namespace mathiu
             Id<Product> iP;
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
-                pattern | some(as<Relational>(as<Equal>(ds(iE1, iE2)))) = [&] { return solve(expand(*iE1 - *iE2), var, domain); },
+                pattern | some(as<Relational>(ds(RelationalKind::kEQUAL, iE1, iE2))) = [&] { return solve(expand(*iE1 - *iE2), var, domain); },
                 pattern | some(as<Integer>(0)) = expr(set(var)),
                 pattern | freeOfVar = expr(set()),
                 pattern | var = expr(set(0_i)), // todo -> solve poly
