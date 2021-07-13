@@ -55,7 +55,6 @@ namespace mathiu
 
             auto const var_ = std::get<Symbol>(*var);
             using namespace matchit;
-            const auto freeOf = [](auto&& e, auto&& v) { return equal(diff(e, v), 0_i); };
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
             Id<Product> iP;
             Id<ExprPtr> iE1, iE2;
