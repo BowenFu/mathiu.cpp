@@ -172,32 +172,16 @@ namespace mathiu
         {
         };
 
-        // relational
-        struct Equal : ExprPtrArray<2>
+        enum class RelationalKind
         {
+            kEQUAL,
+            kLESS,
+            kLESS_EQUAL,
+            kGREATER,
+            kGREATER_EQUAL
         };
 
-        struct Less : ExprPtrArray<2>
-        {
-        };
-
-        struct LessEqual : ExprPtrArray<2>
-        {
-        };
-
-        struct Greater : ExprPtrArray<2>
-        {
-        };
-
-        struct GreaterEqual : ExprPtrArray<2>
-        {
-        };
-
-        using RelationalVariant = std::variant<Equal, Less, LessEqual, Greater, GreaterEqual>;
-
-        struct Relational : RelationalVariant
-        {
-        };
+        using Relational = std::tuple<RelationalKind, ExprPtr, ExprPtr>;
 
         // logical
 
@@ -255,7 +239,10 @@ namespace mathiu
         {
         };
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval, Complexes>;
+        struct True{};
+        struct False{};
+
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval, Complexes, True, False>;
 
         struct Expr : ExprVariant
         {
@@ -263,6 +250,8 @@ namespace mathiu
         };
 
         inline const auto complexes = std::make_shared<Expr const>(Complexes{});
+        inline const auto true_ = std::make_shared<Expr const>(True{});
+        inline const auto false_ = std::make_shared<Expr const>(False{});
 
         inline bool operator==(ExprPtrPair const &l, ExprPtrPair const &r)
         {
@@ -417,6 +406,8 @@ namespace mathiu
 
         using namespace matchit;
 
+        inline constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
+
         // The <| order relation
         // for basic commutative transformation
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -431,7 +422,6 @@ namespace mathiu
             Id<Sum> iS1, iS2;
             Id<SubstitutePair> iPair1, iPair2;
             Id<PieceWise> iPieceWise1, iPieceWise2;
-            constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
             constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
             constexpr auto canBeLog = or_(as<Sum>(_), as<Symbol>(_));
@@ -520,7 +510,6 @@ namespace mathiu
             Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
             Id<Product> iP1, iP2;
             Id<Sum> iS1, iS2;
-            constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
             return match(*lhs, *rhs)
             ( 
                 // clang-format off
@@ -557,12 +546,11 @@ namespace mathiu
                 return merge(c2, c1, op, identity);
             }
             C result = c1;
-            auto const isRational = some(or_(as<Integer>(_), as<Fraction>(_)));
             // We assume rational is at the beginning.
-            auto const firstIsRational = matched(result.begin()->second, isRational);
+            auto const firstIsRational = matched(result.begin()->second, some(isRational));
             for (auto const& e : c2)
             {
-                auto const bothRational = firstIsRational && matched(e.second, isRational);
+                auto const bothRational = firstIsRational && matched(e.second, some(isRational));
                 auto const it = bothRational? result.begin(): result.find(e.first);
                 if (it == result.end())
                 {
@@ -866,32 +854,92 @@ namespace mathiu
 
         inline ExprPtr operator==(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{Equal{{lhs, rhs}}});
+            if (equal(lhs, rhs))
+            {
+                return true_;
+            }
+            return std::make_shared<Expr const>(Relational{RelationalKind::kEQUAL, lhs, rhs});
         }
 
         inline ExprPtr operator<(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{Less{{lhs, rhs}}});
+            if (equal(lhs, rhs))
+            {
+                return false_;
+            }
+            return match(*lhs, *rhs)
+            (
+                pattern | ds(isRational, isRational) = [&] { return evald(lhs) < evald(rhs) ? true_ : false_; },
+                pattern | _ = [&] {
+                    return std::make_shared<Expr const>(Relational{RelationalKind::kLESS, lhs, rhs});
+                }
+            );
         }
 
         inline ExprPtr operator<=(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{LessEqual{{lhs, rhs}}});
+            if (equal(lhs, rhs))
+            {
+                return true_;
+            }
+            return match(*lhs, *rhs)
+            (
+                pattern | ds(isRational, isRational) = [&] { return evald(lhs) <= evald(rhs) ? true_ : false_; },
+                pattern | _ = [&] {
+                    return std::make_shared<Expr const>(Relational{RelationalKind::kLESS_EQUAL, lhs, rhs});
+                }
+            );
         }
 
         inline ExprPtr operator>=(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{GreaterEqual{{lhs, rhs}}});
+            if (equal(lhs, rhs))
+            {
+                return true_;
+            }
+            return match(*lhs, *rhs)
+            (
+                pattern | ds(isRational, isRational) = [&] { return evald(lhs) >= evald(rhs) ? true_ : false_; },
+                pattern | _ = [&] {
+                    return std::make_shared<Expr const>(Relational{RelationalKind::kGREATER_EQUAL, lhs, rhs});
+                }
+            );
         }
 
         inline ExprPtr operator>(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Relational{Greater{{lhs, rhs}}});
+            if (equal(lhs, rhs))
+            {
+                return false_;
+            }
+            return match(*lhs, *rhs)
+            (
+                pattern | ds(isRational, isRational) = [&] { return evald(lhs) > evald(rhs) ? true_ : false_; },
+                pattern | _ = [&] {
+                    return std::make_shared<Expr const>(Relational{RelationalKind::kGREATER, lhs, rhs});
+                }
+            );
+        }
+
+        inline ExprPtr relational(RelationalKind relKind, ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            switch (relKind)
+            {
+            case RelationalKind::kEQUAL:
+                return lhs == rhs;
+            case RelationalKind::kLESS_EQUAL:
+                return lhs <= rhs;
+            case RelationalKind::kGREATER_EQUAL:
+                return lhs >= rhs;
+            case RelationalKind::kLESS:
+                return lhs < rhs;
+            case RelationalKind::kGREATER:
+                return lhs > rhs;
+            }
         }
 
         inline ExprPtr max(ExprPtr const& lhs, ExprPtr const& rhs)
         {
-            auto constexpr isRational = or_(as<Integer>(_), as<Fraction>(_));
             return match(*lhs, *rhs)
             ( 
                 pattern | ds(isRational, isRational) = [&]
@@ -909,7 +957,6 @@ namespace mathiu
 
         inline ExprPtr min(ExprPtr const& lhs, ExprPtr const& rhs)
         {
-            auto constexpr isRational = or_(as<Integer>(_), as<Fraction>(_));
             return match(*lhs, *rhs)
             ( 
                 pattern | ds(isRational, isRational) = [&]
@@ -982,6 +1029,25 @@ namespace mathiu
             );
         }
 
+        inline auto toString(RelationalKind relKind) -> std::string
+        {
+            switch (relKind)
+            {
+            case RelationalKind::kEQUAL:
+                return "==";
+            case RelationalKind::kLESS:
+                return "<";
+            case RelationalKind::kLESS_EQUAL:
+                return "<=";
+            case RelationalKind::kGREATER_EQUAL:
+                return ">=";
+            case RelationalKind::kGREATER:
+                return ">";
+            }
+            throw std::runtime_error("Missing case!");
+            return "==";
+        }
+
         inline std::string toString(ExprPtr const &ex)
         {
             assert(ex);
@@ -993,7 +1059,7 @@ namespace mathiu
             Id<Set> iSet;
             Id<List> iList;
             Id<PieceWise> iPieceWise;
-            Id<Relational> iRel;
+            Id<RelationalKind> iRelKind;
             return match(*ex)(
                 // clang-format off
                 pattern | as<Integer>(ii)                            = [&]{ return std::to_string(*ii); },
@@ -1057,24 +1123,8 @@ namespace mathiu
                     }
                     return result.substr(0, result.size()-1) + ")"; 
                 },
-                pattern | as<Relational>(iRel)                      = [&]{
-                    return match(*iRel)(
-                        pattern | as<Equal>(ds(il, ir)) = [&] {
-                            return "(== " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<Less>(ds(il, ir)) = [&] {
-                            return "(< " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<LessEqual>(ds(il, ir)) = [&] {
-                            return "(<= " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<Greater>(ds(il, ir)) = [&] {
-                            return "(> " + toString(*il) + " " + toString(*ir) + ")";
-                        },
-                        pattern | as<GreaterEqual>(ds(il, ir)) = [&] {
-                            return "(>= " + toString(*il) + " " + toString(*ir) + ")";
-                        }
-                    );
+                pattern | as<Relational>(ds(iRelKind, il, ir))                      = [&]{
+                    return "(" + toString(*iRelKind) + " " + toString(*il) + " " + toString(*ir) + ")";
                 },
                 pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
                     return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";
@@ -1084,6 +1134,12 @@ namespace mathiu
                 },
                 pattern | as<Complexes>(_) = [&] {
                     return "complexes";
+                },
+                pattern | as<True>(_) = [&] {
+                    return "true";
+                },
+                pattern | as<False>(_) = [&] {
+                    return "false";
                 }
                 // clang-format on
             );

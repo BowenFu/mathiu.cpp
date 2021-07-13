@@ -11,5 +11,6 @@
 #include "mathiu/function_range.h"
 #include "mathiu/polynomial.h"
 #include "mathiu/solve.h"
+#include "mathiu/inequation.h"
 
 #endif // MATHIU_H
