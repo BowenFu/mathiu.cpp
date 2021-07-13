@@ -921,6 +921,23 @@ namespace mathiu
             );
         }
 
+        inline ExprPtr relational(RelationalKind relKind, ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            switch (relKind)
+            {
+            case RelationalKind::kEQUAL:
+                return lhs == rhs;
+            case RelationalKind::kLESS_EQUAL:
+                return lhs <= rhs;
+            case RelationalKind::kGREATER_EQUAL:
+                return lhs >= rhs;
+            case RelationalKind::kLESS:
+                return lhs < rhs;
+            case RelationalKind::kGREATER:
+                return lhs > rhs;
+            }
+        }
+
         inline ExprPtr max(ExprPtr const& lhs, ExprPtr const& rhs)
         {
             return match(*lhs, *rhs)
@@ -1115,6 +1132,12 @@ namespace mathiu
                 },
                 pattern | as<Complexes>(_) = [&] {
                     return "complexes";
+                },
+                pattern | as<True>(_) = [&] {
+                    return "true";
+                },
+                pattern | as<False>(_) = [&] {
+                    return "false";
                 }
                 // clang-format on
             );
