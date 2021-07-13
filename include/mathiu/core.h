@@ -1044,6 +1044,8 @@ namespace mathiu
             case RelationalKind::kGREATER:
                 return ">";
             }
+            throw std::runtime_error("Missing case!");
+            return "==";
         }
 
         inline std::string toString(ExprPtr const &ex)
