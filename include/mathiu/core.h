@@ -242,7 +242,7 @@ namespace mathiu
         struct True{};
         struct False{};
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval, Complexes, True, False>;
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval, Complexes, True, False, Logical>;
 
         struct Expr : ExprVariant
         {
@@ -936,6 +936,35 @@ namespace mathiu
             case RelationalKind::kGREATER:
                 return lhs > rhs;
             }
+            throw std::logic_error{"Unreachable"};
+        }
+
+        inline ExprPtr operator&&(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            if (equal(lhs, rhs))
+            {
+                return lhs;
+            }
+            return match(lhs, rhs)
+            (
+                pattern | _ = [&] {
+                    return std::make_shared<Expr const>(Logical{And{{{lhs, rhs}}}});
+                }
+            );
+        }
+
+        inline ExprPtr operator||(ExprPtr const &lhs, ExprPtr const &rhs)
+        {
+            if (equal(lhs, rhs))
+            {
+                return lhs;
+            }
+            return match(lhs, rhs)
+            (
+                pattern | _ = [&] {
+                    return std::make_shared<Expr const>(Logical{Or{{{lhs, rhs}}}});
+                }
+            );
         }
 
         inline ExprPtr max(ExprPtr const& lhs, ExprPtr const& rhs)
@@ -1075,6 +1104,8 @@ namespace mathiu
             Id<Product> iP;
             Id<Set> iSet;
             Id<List> iList;
+            Id<And> iAnd;
+            Id<Or> iOr;
             Id<PieceWise> iPieceWise;
             Id<RelationalKind> iRelKind;
             return match(*ex)(
@@ -1157,6 +1188,22 @@ namespace mathiu
                 },
                 pattern | as<False>(_) = [&] {
                     return "false";
+                },
+                pattern | as<Logical>(as<And>(iAnd))                                = [&]{
+                    std::string result = "(And ";
+                    for (auto e : *iAnd)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
+                },
+                pattern | as<Logical>(as<Or>(iOr))                                = [&]{
+                    std::string result = "(Or ";
+                    for (auto e : *iOr)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
                 }
                 // clang-format on
             );
