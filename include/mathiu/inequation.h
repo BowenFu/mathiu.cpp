@@ -1,5 +1,5 @@
-#ifndef SOLVE_H
-#define SOLVE_H
+#ifndef INEQUATION_H
+#define INEQUATION_H
 
 #include "matchit.h"
 #include "core.h"
@@ -16,12 +16,8 @@ namespace mathiu
             std::cout << "solveInequationImpl: " << toString(ex) << ",\t" << toString(relKind)  << ",\t" << toString(var) << ",\t" << toString(domain) << std::endl;
 #endif // DEBUG
 
-            auto const var_ = std::get<Symbol>(*var);
             using namespace matchit;
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
-            Id<Product> iP;
-            Id<RelationalKind> iRelKind;
-            Id<ExprPtr> iE1, iE2;
             return match(ex)(
                 pattern | freeOfVar = [&]{
                     return relational(relKind, ex, 0_i);
@@ -42,18 +38,15 @@ namespace mathiu
 
             auto const var_ = std::get<Symbol>(*var);
             using namespace matchit;
-            const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
-            Id<Product> iP;
             Id<RelationalKind> iRelKind;
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
-                pattern | or_(true_, false_) = (ex),
+                pattern | or_(true_, false_) = expr(ex),
                 pattern | some(as<Relational>(ds(iRelKind, iE1, iE2))) = [&]
                 { return solveInequationImpl(expand(*iE1 - *iE2), *iRelKind, var, domain); });
         }
 
     } // namespace impl
-    using impl::solve;
 } // namespace mathiu
 
-#endif // SOLVE_H
+#endif // INEQUATION_H
