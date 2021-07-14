@@ -936,6 +936,7 @@ namespace mathiu
             case RelationalKind::kGREATER:
                 return lhs > rhs;
             }
+            throw std::logic_error{"Unreachable"};
         }
 
         inline ExprPtr operator&&(ExprPtr const &lhs, ExprPtr const &rhs)
