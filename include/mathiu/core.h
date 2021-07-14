@@ -1045,7 +1045,24 @@ namespace mathiu
                 return ">";
             }
             throw std::runtime_error("Missing case!");
-            return "==";
+        }
+
+        inline auto invertRelational(RelationalKind relKind) -> RelationalKind
+        {
+            switch (relKind)
+            {
+            case RelationalKind::kLESS:
+                return RelationalKind::kGREATER;
+            case RelationalKind::kLESS_EQUAL:
+                return RelationalKind::kGREATER_EQUAL;
+            case RelationalKind::kGREATER_EQUAL:
+                return RelationalKind::kLESS_EQUAL;
+            case RelationalKind::kGREATER:
+                return RelationalKind::kLESS;
+            case RelationalKind::kEQUAL:
+                throw std::logic_error{"Unsupported relational : == in invertRelational!"};
+            }
+            throw std::runtime_error("Missing case!");
         }
 
         inline std::string toString(ExprPtr const &ex)
