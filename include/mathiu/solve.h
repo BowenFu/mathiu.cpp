@@ -37,14 +37,58 @@ namespace mathiu
                 });
         }
 
+        inline Interval intersectInterval(Interval const& lhs, Interval const& rhs)
+        {
+            auto const asDouble = meet([](auto&& e)
+            {
+                try{
+                    evald(e);
+                    return true;
+                }
+                catch (...)
+                {
+                    return false;
+                }
+            });
+            auto const rationalInterval = [&](auto &&left, auto &&right)
+            { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
+            Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
+            return match(lhs, rhs)
+            (
+                pattern | ds(rationalInterval(iIEL1, iIER1), rationalInterval(iIEL2, iIER2)) = [&]
+                {
+                    auto const left = evald((*iIEL1).first) > evald((*iIEL2).first) ? *iIEL1 : *iIEL2;
+                    auto const right = evald((*iIER1).first) < evald((*iIER2).first) ? *iIER1 : *iIER2;
+                    return Interval{left, right};
+                },
+                pattern | _ = [&]
+                {
+                    throw std::logic_error{"Mismatch!"};
+                    return lhs;
+                }
+            );
+        }
+
         inline ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs)
         {
-            (void)rhs;
-            return lhs;
-            // Id<CCInterval> iCCInterval;
-            // return match(*lhs, *rhs)
-            // (
-            // );
+#if DEBUG
+            std::cout << "intersect: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
+#endif // DEBUG
+
+            Id<Interval> iInterval1, iInterval2;
+            return match(*lhs, *rhs)
+            (
+                pattern | ds(as<Interval>(iInterval1), as<Interval>(iInterval2)) = [&] {
+                    return std::make_shared<Expr const>(intersectInterval(*iInterval1, *iInterval2));
+                },
+                pattern | ds(as<Set>(_), _) = [&] {
+                    return lhs; // FIXME
+                },
+                pattern | _ = [&] {
+                    throw std::logic_error{"Mismatch in intersect!"};
+                    return false_;
+                }
+            );
         }
 
         inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain = complexes)
