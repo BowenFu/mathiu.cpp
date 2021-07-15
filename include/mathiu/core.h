@@ -114,6 +114,14 @@ namespace mathiu
         inline const auto i = std::make_shared<Expr const>(I{});
         inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
 
+        struct Infinity
+        {
+        };
+
+        inline const auto posInfinity = std::make_shared<Expr const>(Infinity{});
+
+        inline const auto negInfinity = -posInfinity;
+
         // Compound expressions
 
         inline bool less(ExprPtr const &lhs, ExprPtr const &rhs);
@@ -231,9 +239,9 @@ namespace mathiu
         {
         };
 
-        struct CCInterval : ExprPtrPair
-        {
-        };
+        using IntervalEnd = std::pair<ExprPtr, bool>; // true for close, false for open
+
+        using Interval = std::pair<IntervalEnd, IntervalEnd>;
 
         struct Complexes
         {
@@ -242,7 +250,7 @@ namespace mathiu
         struct True{};
         struct False{};
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, CCInterval, Complexes, True, False, Logical>;
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Infinity, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, Interval, Complexes, True, False, Logical, SetOp>;
 
         struct Expr : ExprVariant
         {
@@ -485,6 +493,9 @@ namespace mathiu
                 pattern | ds(as<E>(_), as<E>(_)) = expr(false),
                 pattern | ds(_, as<E>(_)) = expr(true),
                 pattern | ds(as<E>(_), _) = expr(false),
+                pattern | ds(as<Infinity>(_), as<Infinity>(_)) = expr(false),
+                pattern | ds(_, as<Infinity>(_)) = expr(true),
+                pattern | ds(as<Infinity>(_), _) = expr(false),
                 pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEl2))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEr1, iEr2))))   = [&] {
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
@@ -530,6 +541,7 @@ namespace mathiu
                 pattern | ds(as<I>(_), as<I>(_)) = expr(true),
                 pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(true),
                 pattern | ds(as<E>(_), as<E>(_)) = expr(true),
+                pattern | ds(as<Infinity>(_), as<Infinity>(_)) = expr(true),
                 pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEr1))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEl2, iEr2)))) = [&] {
                     return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
@@ -1024,6 +1036,7 @@ namespace mathiu
                 pattern | as<Log>(ds(l, r))                         = [&]{ return std::log2(evald(*r)) / std::log2(evald(*l)); },
                 pattern | as<Pi>(_)                                 = expr(pi_),
                 pattern | as<E>(_)                                  = expr(e_),
+                pattern | as<Infinity>(_)                           = expr(std::numeric_limits<double>::infinity()),
                 pattern | _                                         = [&] { throw std::runtime_error{"No match in evald!"}; return 0;}
                 // clang-format on
             );
@@ -1052,6 +1065,7 @@ namespace mathiu
                 pattern | as<Log>(ds(l, r))                         = [&]{ return std::log(evalc(*r)) / std::log(evalc(*l)); },
                 pattern | as<Pi>(_)                                 = expr(pi_),
                 pattern | as<E>(_)                                  = expr(e_),
+                pattern | as<Infinity>(_)                           = expr(std::numeric_limits<double>::infinity()),
                 pattern | as<I>(_)                                  = expr(i_),
                 pattern | _                                         = [&] { throw std::runtime_error{"No match in evalc!"}; return 0;}
                 // clang-format on
@@ -1108,6 +1122,10 @@ namespace mathiu
             Id<Or> iOr;
             Id<PieceWise> iPieceWise;
             Id<RelationalKind> iRelKind;
+            Id<bool> iB1, iB2;
+            Id<Union> iUnion;
+            Id<Intersection> iIntersection;
+            Id<Difference> iDifference;
             return match(*ex)(
                 // clang-format off
                 pattern | as<Integer>(ii)                            = [&]{ return std::to_string(*ii); },
@@ -1135,6 +1153,7 @@ namespace mathiu
                 pattern | as<Pi>(_)                                  = expr("pi"),
                 pattern | as<E>(_)                                   = expr("e"),
                 pattern | as<I>(_)                                   = expr("i"),
+                pattern | as<Infinity>(_)                            = expr("inf"),
                 pattern | as<Set>(iSet)                              = [&]{
                     if ((*iSet).empty())
                     {
@@ -1177,8 +1196,9 @@ namespace mathiu
                 pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
                     return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";
                 },
-                pattern | as<CCInterval>(as<ExprPtrPair>(ds(il, ir))) = [&] {
-                    return "(CCInterval " + toString(*il) + " " + toString(*ir) + ")";
+                pattern | as<Interval>(ds(ds(il, iB1), ds(ir, iB2))) = [&] {
+                    return std::string("(") + (*iB1? "C" : "O") + (*iB2? "C" : "O") + "Interval " +
+                    toString(*il) + " " + toString(*ir) + ")";
                 },
                 pattern | as<Complexes>(_) = [&] {
                     return "complexes";
@@ -1204,6 +1224,35 @@ namespace mathiu
                         result += toString(e) + " ";
                     }
                     return result.substr(0, result.size()-1) + ")"; 
+                },
+                pattern | as<SetOp>(as<Union>(iUnion))                                = [&]{
+                    std::string result = "(Union ";
+                    for (auto e : *iUnion)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
+                },
+                pattern | as<SetOp>(as<Intersection>(iIntersection))                                = [&]{
+                    std::string result = "(Intersection ";
+                    for (auto e : *iUnion)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
+                },
+                pattern | as<SetOp>(as<Difference>(iDifference))                                = [&]{
+                    std::string result = "(Difference ";
+                    for (auto e : *iDifference)
+                    {
+                        result += toString(e) + " ";
+                    }
+                    return result.substr(0, result.size()-1) + ")"; 
+                },
+                pattern | _ = [&]
+                {
+                    throw std::logic_error{"Mismatch in toString!"};
+                    return "";
                 }
                 // clang-format on
             );

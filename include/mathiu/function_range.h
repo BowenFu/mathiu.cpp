@@ -11,12 +11,12 @@ namespace mathiu
     {
         // implement limit
 
-        inline CCInterval functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+        inline Interval functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
         {
-            auto const domain_ = std::get<CCInterval>(*domain);
+            auto const domain_ = std::get<Interval>(*domain);
             auto const subs = [&] (ExprPtr const& dst) { return substitute(function, symbol >> dst); };
-            auto const firstP = subs(domain_.first);
-            auto const secondP = subs(domain_.second);
+            auto const firstP = subs(domain_.first.first);
+            auto const secondP = subs(domain_.second.first);
             // TODO solve diff = 0 within the domain.
             auto const derivative = diff(function, symbol);
             auto const criticalPoints = solve(derivative, symbol, domain);
@@ -28,31 +28,32 @@ namespace mathiu
                 min_ = min(min_, v);
                 max_ = max(max_, v);
             }
-            return CCInterval{{min_, max_}};
+            return Interval{IntervalEnd{min_, true}, IntervalEnd{max_, true}};
         }
 
-        inline CCInterval union_(CCInterval const& lhs, CCInterval const& rhs)
+        inline Interval union_(Interval const& lhs, Interval const& rhs)
         {
-            if (lhs.first == nullptr && lhs.second == nullptr)
+            if (lhs.first.first == nullptr && lhs.second.first == nullptr)
             {
                 return rhs;
             }
-            assert(lhs.second >= rhs.first);
-            return CCInterval{{lhs.first, rhs.second}};
+            assert(evald(lhs.second.first) >= evald(rhs.first.first));
+            return Interval{lhs.first, rhs.second};
         }
 
-        inline CCInterval functionRange(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+        inline ExprPtr functionRange(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
         {
             Id<PieceWise> iPieceWise;
-            return match(*function)(
+            auto result = match(*function)(
                 pattern | as<PieceWise>(iPieceWise)   = [&] {
-                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), CCInterval{}, [&] (auto&& result, auto&& e)
+                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), Interval{}, [&] (auto&& result, auto&& e)
                     {
-                        return union_(result, functionRangeImpl(e.first, symbol, intersect(domain, e.second)));
+                        return union_(result, functionRangeImpl(e.first, symbol, intersect(solveInequation(e.second, symbol), domain)));
                     });
                 },
                 pattern | _ = [&]
                 { return functionRangeImpl(function, symbol, domain); });
+            return std::make_shared<Expr const>(std::move(result));
         }
     } // namespace impl
 } // namespace mathiu

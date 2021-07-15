@@ -20,6 +20,7 @@ namespace mathiu
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
             return match(ex)(
                 pattern | freeOfVar = [&]{
+                    throw std::logic_error("Cannot solve inequation!");
                     return relational(relKind, ex, 0_i);
                 },
                 pattern | _ = [&]
@@ -38,21 +39,28 @@ namespace mathiu
                             auto a_ = evald(*a);
                             auto const rKind = a_ > 0 ? relKind : invertRelational(relKind);
                             switch (rKind)
-                            {
+                            { 
                             case RelationalKind::kLESS:
-                                return (var > left) && (var < right);
+                                return std::make_shared<Expr const>(Interval({left, false}, {right, false}));
                             
                             case RelationalKind::kLESS_EQUAL:
-                                return (var >= left) && (var <= right);
+                                return std::make_shared<Expr const>(Interval({left, true}, {right, true}));
                             
                             case RelationalKind::kGREATER:
-                                return (var < left) || (var > right);
+                                return std::make_shared<Expr const>(SetOp{Union{{ 
+                                    std::make_shared<Expr const>(Interval({negInfinity, false}, {left, false})),
+                                    std::make_shared<Expr const>(Interval({right, false}, {posInfinity, false}))
+                                }}});
                             
                             case RelationalKind::kGREATER_EQUAL:
-                                return (var <= left) || (var >= right);
+                                return std::make_shared<Expr const>(SetOp{Union{{
+                                    std::make_shared<Expr const>(Interval({negInfinity, false}, {left, true})),
+                                    std::make_shared<Expr const>(Interval({right, true}, {posInfinity, false}))
+                                }}});
+
                             case RelationalKind::kEQUAL:
                                 throw std::logic_error{"Unreachable!"};
-                            }
+                             }
                             throw std::logic_error{"Unreachable!"};
                             return false_;
                         },
@@ -61,12 +69,30 @@ namespace mathiu
 
                             auto b_ = evald(*b);
                             auto const rKind = b_ > 0 ? relKind : invertRelational(relKind);
-                            return relational(rKind, var, root);
+                            switch (rKind)
+                            {
+                            case RelationalKind::kLESS:
+                                return std::make_shared<Expr const>(Interval({negInfinity, false}, {root, false}));
+                            
+                            case RelationalKind::kLESS_EQUAL:
+                                return std::make_shared<Expr const>(Interval({negInfinity, false}, {root, true}));
+                            
+                            case RelationalKind::kGREATER:
+                                return std::make_shared<Expr const>(Interval({root, false}, {posInfinity, false}));
+                            
+                            case RelationalKind::kGREATER_EQUAL:
+                                return std::make_shared<Expr const>(Interval({root, true}, {posInfinity, false}));
+
+                            case RelationalKind::kEQUAL:
+                                throw std::logic_error{"Unreachable!"};
+                            }
+                            throw std::logic_error{"Unreachable!"};
+                            return false_;
                         },
                         pattern | _ = [&]
                         {
                             throw std::runtime_error{"No match in solve!"};
-                            return set();
+                            return false_;
                         });
 
                     throw std::runtime_error{"Not implemented yet!"};
@@ -85,7 +111,7 @@ namespace mathiu
             Id<RelationalKind> iRelKind;
             Id<ExprPtr> iE1, iE2;
             return match(ex)(
-                pattern | or_(true_, false_) = expr(ex),
+                pattern | or_(true_, false_) = expr(domain),
                 pattern | some(as<Relational>(ds(iRelKind, iE1, iE2))) = [&]
                 { return solveInequationImpl(expand(*iE1 - *iE2), *iRelKind, var, domain); });
         }
