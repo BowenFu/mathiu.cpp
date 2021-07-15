@@ -64,7 +64,7 @@ namespace mathiu
                 pattern | _ = [&]
                 {
                     throw std::logic_error{"Mismatch!"};
-                    return Interval{};
+                    return lhs;
                 }
             );
         }
@@ -86,7 +86,7 @@ namespace mathiu
                 },
                 pattern | _ = [&] {
                     throw std::logic_error{"Mismatch in intersect!"};
-                    return ExprPtr{};
+                    return false_;
                 }
             );
         }
