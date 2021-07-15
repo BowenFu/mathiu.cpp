@@ -118,9 +118,7 @@ namespace mathiu
         {
         };
 
-        inline const auto posInfinity = std::make_shared<Expr const>(Infinity{});
-
-        inline const auto negInfinity = -posInfinity;
+        inline const auto infinity = std::make_shared<Expr const>(Infinity{});
 
         // Compound expressions
 

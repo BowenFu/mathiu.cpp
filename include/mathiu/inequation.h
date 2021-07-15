@@ -48,14 +48,14 @@ namespace mathiu
                             
                             case RelationalKind::kGREATER:
                                 return std::make_shared<Expr const>(SetOp{Union{{ 
-                                    std::make_shared<Expr const>(Interval({negInfinity, false}, {left, false})),
-                                    std::make_shared<Expr const>(Interval({right, false}, {posInfinity, false}))
+                                    std::make_shared<Expr const>(Interval({-infinity, false}, {left, false})),
+                                    std::make_shared<Expr const>(Interval({right, false}, {infinity, false}))
                                 }}});
                             
                             case RelationalKind::kGREATER_EQUAL:
                                 return std::make_shared<Expr const>(SetOp{Union{{
-                                    std::make_shared<Expr const>(Interval({negInfinity, false}, {left, true})),
-                                    std::make_shared<Expr const>(Interval({right, true}, {posInfinity, false}))
+                                    std::make_shared<Expr const>(Interval({-infinity, false}, {left, true})),
+                                    std::make_shared<Expr const>(Interval({right, true}, {infinity, false}))
                                 }}});
 
                             case RelationalKind::kEQUAL:
@@ -72,16 +72,16 @@ namespace mathiu
                             switch (rKind)
                             {
                             case RelationalKind::kLESS:
-                                return std::make_shared<Expr const>(Interval({negInfinity, false}, {root, false}));
+                                return std::make_shared<Expr const>(Interval({-infinity, false}, {root, false}));
                             
                             case RelationalKind::kLESS_EQUAL:
-                                return std::make_shared<Expr const>(Interval({negInfinity, false}, {root, true}));
+                                return std::make_shared<Expr const>(Interval({-infinity, false}, {root, true}));
                             
                             case RelationalKind::kGREATER:
-                                return std::make_shared<Expr const>(Interval({root, false}, {posInfinity, false}));
+                                return std::make_shared<Expr const>(Interval({root, false}, {infinity, false}));
                             
                             case RelationalKind::kGREATER_EQUAL:
-                                return std::make_shared<Expr const>(Interval({root, true}, {posInfinity, false}));
+                                return std::make_shared<Expr const>(Interval({root, true}, {infinity, false}));
 
                             case RelationalKind::kEQUAL:
                                 throw std::logic_error{"Unreachable!"};
