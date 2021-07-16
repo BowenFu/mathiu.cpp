@@ -13,7 +13,7 @@
 #include <set>
 #include <list>
 
-#define VERBOSE_DEBUG 0
+#define VERBOSE_DEBUG 1
 #define DEBUG 1
 
 #if DEBUG
