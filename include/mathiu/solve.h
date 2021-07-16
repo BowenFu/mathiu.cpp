@@ -37,28 +37,29 @@ namespace mathiu
                 });
         }
 
+        inline auto const asDouble = meet([](auto&& e)
+        {
+            try{
+                evald(e);
+                return true;
+            }
+            catch (...)
+            {
+                return false;
+            }
+        });
+        inline auto const realInterval = [](auto &&left, auto &&right)
+        { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
         inline Interval intersectInterval(Interval const& lhs, Interval const& rhs)
         {
-            auto const asDouble = meet([](auto&& e)
-            {
-                try{
-                    evald(e);
-                    return true;
-                }
-                catch (...)
-                {
-                    return false;
-                }
-            });
-            auto const rationalInterval = [&](auto &&left, auto &&right)
-            { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
             Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
             return match(lhs, rhs)
             (
-                pattern | ds(rationalInterval(iIEL1, iIER1), rationalInterval(iIEL2, iIER2)) = [&]
+                pattern | ds(realInterval(iIEL1, iIER1), realInterval(iIEL2, iIER2)) = [&]
                 {
                     auto const left = evald((*iIEL1).first) > evald((*iIEL2).first) ? *iIEL1 : *iIEL2;
                     auto const right = evald((*iIER1).first) < evald((*iIER2).first) ? *iIER1 : *iIER2;
+                    assert(evald((*iIEL1).first) <= evald((*iIER2).first) && evald((*iIEL2).first) <= evald((*iIER1).first));
                     return Interval{left, right};
                 },
                 pattern | _ = [&]
@@ -69,6 +70,40 @@ namespace mathiu
             );
         }
 
+        inline bool inInterval(ExprPtr const& e, Interval const& interval)
+        {
+            Id<IntervalEnd> iIE1, iIE2;
+            return match(interval)(
+                pattern | ds(ds(e, _), _) = [&]
+                { return interval.first.second == true; },
+                pattern | ds(_, ds(e, _)) = [&]
+                { return interval.second.second == true; },
+                pattern | realInterval(iIE1, iIE2) = [&]
+                {
+                    auto const v = evald(e);
+                    auto const left = evald((*iIE1).first);
+                    auto const right = evald((*iIE2).first);
+                    if (left < v && v < right)
+                    {
+                        return true;
+                    }
+                    if (left == v && (*iIE1).second)
+                    {
+                        return true;
+                    }
+                    if (right == v && (*iIE2).second)
+                    {
+                        return true;
+                    }
+                    return false;
+                },
+                pattern | _ = [&]
+                {
+                    throw std::logic_error{"Mismatch in inInterval!"};
+                    return false;
+                });
+        }
+
         inline ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs)
         {
 #if DEBUG
@@ -76,10 +111,23 @@ namespace mathiu
 #endif // DEBUG
 
             Id<Interval> iInterval1, iInterval2;
+            Id<IntervalEnd> iIE1, iIE2;
+            Id<Set> iSet;
             return match(*lhs, *rhs)
             (
                 pattern | ds(as<Interval>(iInterval1), as<Interval>(iInterval2)) = [&] {
                     return std::make_shared<Expr const>(intersectInterval(*iInterval1, *iInterval2));
+                },
+                pattern | ds(as<Set>(iSet), as<Interval>(iInterval2)) = [&] {
+                    Set result;
+                    for (auto&& e: *iSet)
+                    {
+                        if (inInterval(e, *iInterval2))
+                        {
+                            result.insert(e);
+                        }
+                    }
+                    return std::make_shared<Expr const>(std::move(result));
                 },
                 pattern | ds(as<Set>(_), _) = [&] {
                     return lhs; // FIXME
