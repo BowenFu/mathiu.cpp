@@ -15,20 +15,20 @@ namespace mathiu
         {
             auto const domain_ = std::get<Interval>(*domain);
             auto const subs = [&] (ExprPtr const& dst) { return substitute(function, symbol >> dst); };
-            auto const firstP = subs(domain_.first.first);
-            auto const secondP = subs(domain_.second.first);
-            // TODO solve diff = 0 within the domain.
+            auto const firstP = IntervalEnd{subs(domain_.first.first), domain_.first.second};
+            auto const secondP = IntervalEnd{subs(domain_.second.first), domain_.second.second};
             auto const derivative = diff(function, symbol);
             auto const criticalPoints = solve(derivative, symbol, domain);
-            auto min_ = min(firstP, secondP);
-            auto max_ = max(firstP, secondP);
+            auto min_ = evald(firstP.first) < evald(secondP.first) ? firstP : secondP;
+            auto max_ = evald(firstP.first) < evald(secondP.first) ? secondP : firstP;
+            // optimize me
             for (auto const& e : std::get<Set>(*criticalPoints))
             {
-                auto const v = subs(e);
-                min_ = min(min_, v);
-                max_ = max(max_, v);
+                auto const v = IntervalEnd{subs(e), true};
+                min_ = evald(min_.first) < evald(v.first) ? min_ : v;
+                max_ = evald(max_.first) > evald(v.first) ? max_ : v;
             }
-            return Interval{IntervalEnd{min_, true}, IntervalEnd{max_, true}};
+            return Interval{min_, max_};
         }
 
         inline Interval union_(Interval const& lhs, Interval const& rhs)
