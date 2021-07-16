@@ -671,9 +671,9 @@ namespace mathiu
 
         inline ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "operator+: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
             Id<Sum> iSl, iSr;
             Id<Integer> iil, iir;
             Id<Integer> ii1, ii2, ii3, ii4;
@@ -734,9 +734,9 @@ namespace mathiu
 
         inline ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "operator*: " << toString(lhs) << "\t" << toString(rhs) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<Product> iSl, iSr;
             Id<Integer> iil, iir;
@@ -1275,9 +1275,9 @@ namespace mathiu
 
         inline ExprPtr substituteImpl(ExprPtr const &ex, ExprPtrMap const &srcDstMap)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "substituteImpl: " << toString(ex) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
             auto const iter = srcDstMap.find(ex);
             if (iter != srcDstMap.end())
             {
@@ -1324,9 +1324,9 @@ namespace mathiu
 
         inline ExprPtr substitute(ExprPtr const &ex, ExprPtr const &srcDstPairs)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "substitute: " << toString(ex) << " " << toString(srcDstPairs) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
             Id<Set> iSet;
             Id<SubstitutePair> iPair;
             auto const subMap = match(*srcDstPairs)(
@@ -1353,6 +1353,17 @@ namespace mathiu
             return substitute(substitute(ex, srcDstPairs), seqPairs...);
         }
 
+        inline auto const asDouble = meet([](auto&& e)
+        {
+            try{
+                evald(e);
+                return true;
+            }
+            catch (...)
+            {
+                return false;
+            }
+        });
     } // namespace impl
     using impl::Integer;
     using impl::symbol;

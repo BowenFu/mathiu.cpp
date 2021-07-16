@@ -11,8 +11,12 @@ namespace mathiu
     {
         // implement limit
 
-        inline Interval functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+        inline Interval functionRangeImplIntervalDomain(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
         {
+#if DEBUG
+            std::cout << "functionRangeImplIntervalDomain: " << toString(function) << ",\t" << toString(symbol)  << ",\t" << toString(domain) << std::endl;
+#endif // DEBUG
+
             auto const domain_ = std::get<Interval>(*domain);
             auto const subs = [&] (ExprPtr const& dst) { return substitute(function, symbol >> dst); };
             auto const firstP = IntervalEnd{subs(domain_.first.first), domain_.first.second};
@@ -31,28 +35,121 @@ namespace mathiu
             return Interval{min_, max_};
         }
 
-        inline Interval union_(Interval const& lhs, Interval const& rhs)
+        inline ExprPtr unionInterval(Interval const& lhs, Interval const& rhs)
         {
             if (lhs.first.first == nullptr && lhs.second.first == nullptr)
             {
-                return rhs;
+                return std::make_shared<Expr const>(rhs);
             }
-            assert(evald(lhs.second.first) >= evald(rhs.first.first));
-            return Interval{lhs.first, rhs.second};
+
+#if DEBUG
+            std::cout << "unionInterval: " << toString(std::make_shared<Expr const>(lhs)) << ",\t" << toString(std::make_shared<Expr const>(rhs)) << std::endl;
+#endif // DEBUG
+
+            auto const realInterval = [](auto &&left, auto &&right)
+            { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
+
+            Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
+            return match(lhs, rhs)
+            (
+                pattern | ds(realInterval(iIEL1, iIER1), realInterval(iIEL2, iIER2)) = [&]
+                {
+                    auto const left = evald((*iIEL1).first) <= evald((*iIEL2).first) ? *iIEL1 : *iIEL2;
+                    auto const right = evald((*iIER1).first) >= evald((*iIER2).first) ? *iIER1 : *iIER2;
+                    if (evald((*iIEL1).first) <= evald((*iIER2).first) && evald((*iIEL2).first) <= evald((*iIER1).first))
+                    {
+                        return std::make_shared<Expr const>(Interval{left, right});
+                    }
+                    return false_;
+                },
+                pattern | _ = [&]
+                {
+                    throw std::logic_error{"Mismatch!"};
+                    return std::make_shared<Expr const>(lhs);
+                }
+            );
+        }
+
+
+        inline Interval functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+        {
+#if DEBUG
+            std::cout << "functionRangeImpl: " << toString(function) << ",\t" << toString(symbol)  << ",\t" << toString(domain) << std::endl;
+#endif // DEBUG
+
+            Id<Union> iUnion;
+            return match(*domain)
+            (
+                pattern | as<Interval>(_) = [&]
+                {
+                    return functionRangeImplIntervalDomain(function, symbol, domain);
+                },
+                pattern | as<SetOp>(as<Union>(iUnion)) = [&]
+                {
+                    Interval result;
+                    for (auto&& e: *iUnion)
+                    {
+                        auto ret = unionInterval(result, functionRangeImpl(function, symbol, e));
+                        Id<Interval> iInterval;
+                        result = match(ret)
+                        (
+                            pattern | false_ = expr(result),
+                            pattern | some(as<Interval>(iInterval)) = [&] {
+                                return *iInterval;
+                            },
+                            pattern | _ = [&] {
+                                throw std::runtime_error{"Mismatch in as<SetOp>(as<Union>(iUnion))!"};
+                                return result;
+                            }
+                        );
+                    }
+                    return result;
+                },
+                pattern | _ = [&]
+                {
+                    throw std::logic_error{"Mismatch in functionRangeImpl!"};
+                    return Interval{};
+                }
+            );
         }
 
         inline ExprPtr functionRange(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
         {
+#if DEBUG
+            std::cout << "functionRange: " << toString(function) << ",\t" << toString(symbol)  << ",\t" << toString(domain) << std::endl;
+#endif // DEBUG
+
             Id<PieceWise> iPieceWise;
             auto result = match(*function)(
                 pattern | as<PieceWise>(iPieceWise)   = [&] {
                     return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), Interval{}, [&] (auto&& result, auto&& e)
                     {
-                        return union_(result, functionRangeImpl(e.first, symbol, intersect(solveInequation(e.second, symbol), domain)));
+                        auto const newDomain = intersect(solveInequation(e.second, symbol), domain);
+                        if (equal(newDomain, false_))
+                        {
+                            return result;
+                        }
+                        auto ret = unionInterval(result, functionRangeImpl(e.first, symbol, newDomain));
+                        Id<Interval> iInterval;
+                        return match(ret)
+                        (
+                            pattern | false_ = expr(result),
+                            pattern | some(as<Interval>(iInterval)) = [&] {
+                                return *iInterval;
+                            },
+                            pattern | _ = [&] {
+                                throw std::runtime_error{"Mismatch in as<SetOp>(as<Union>(iUnion))!"};
+                                return result;
+                            }
+                        );
                     });
                 },
                 pattern | _ = [&]
                 { return functionRangeImpl(function, symbol, domain); });
+            if (result == Interval{})
+            {
+                return false_;
+            }
             return std::make_shared<Expr const>(std::move(result));
         }
     } // namespace impl

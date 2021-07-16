@@ -12,9 +12,9 @@ namespace mathiu
     {
         inline Integer degreeMonomial(ExprPtr const& monomial, Set const& varSet)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "degreeMonomial: " << toString(monomial) << ",\t" << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<Product> iP;
             Id<ExprPtr> base, exp;
@@ -78,9 +78,9 @@ namespace mathiu
         // Fix me, check monomial first
         inline std::pair<ExprPtr, Integer> coefficientMonomial(ExprPtr const& monomial, ExprPtr const& x)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "coefficientMonomial: " << toString(monomial) << ",\t" << toString(x) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, x); });
 
@@ -153,9 +153,9 @@ namespace mathiu
         // algebraic expand
         inline ExprPtr expandProduct(ExprPtr const& lhs, ExprPtr const& rhs)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "expandProduct: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<Sum> iSum;
             return match(*lhs, *rhs)
@@ -186,9 +186,9 @@ namespace mathiu
 
         inline ExprPtr expandPower(ExprPtr const& base, int32_t const n)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "expandPower: " << toString(base) << ",\t" << n << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<ExprPtr> iFirst;
             return match(*base)
@@ -212,9 +212,9 @@ namespace mathiu
 
         inline ExprPtr expand(ExprPtr const& ex)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout << "expand: " << toString(ex) << std::endl;
-#endif // DEBUG
+#endif // VERBOSE_DEBUG
 
             Id<Sum> iSum;
             Id<Product> iProduct;

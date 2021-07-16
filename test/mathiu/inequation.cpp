@@ -78,7 +78,7 @@ TEST(inequation, Square1)
 TEST(inequation, Square2)
 {
     auto const e = 2_i > -("x"_s ^ 2_i) ;
-    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "(Union (OOInterval (* -1 inf) (* (^ -8 1/2) -1 1/2)) (OOInterval (* (^ -8 1/2) 1/2) inf))"); // simplify me
+    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "true");
 }
 
 TEST(inequation, Square3)
@@ -86,3 +86,36 @@ TEST(inequation, Square3)
     auto const e = 2_i <= ("x"_s ^ 2_i) ;
     EXPECT_EQ(toString(solveInequation(e, "x"_s)), "(Union (OCInterval (* -1 inf) (* 1/2 (^ 8 1/2))) (COInterval (* 1/-2 (^ 8 1/2)) inf))"); // simplify me
 }
+
+TEST(inequation, Square4)
+{
+    auto const e1 = ("x"_s ^ 2_i) - 1_i;
+    auto const e2 = -e1;
+    auto const e = e1 <= e2;
+    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "(CCInterval (* -1/4 (^ 16 1/2)) (* 1/4 (^ 16 1/2)))");
+}
+
+TEST(inequation, Square5)
+{
+    auto const e1 = ("x"_s ^ 2_i) - 1_i;
+    auto const e2 = -e1;
+    auto const e = e1 > e2;
+    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "(Union (OOInterval (* -1 inf) (* -1/4 (^ 16 1/2))) (OOInterval (* 1/4 (^ 16 1/2)) inf))");
+}
+
+TEST(inequation, Square6)
+{
+    auto const e1 = ("x"_s ^ 2_i) - 1_i;
+    auto const e2 = (("x"_s - 3_i) ^ 2_i) - 3_i;;
+    auto const e = e1 > e2;
+    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "(OOInterval 7/6 inf)");
+}
+
+TEST(inequation, Square7)
+{
+    auto const e1 = ("x"_s ^ 2_i) - 1_i;
+    auto const e2 = (2_i*("x"_s - 3_i) ^ 2_i) - 3_i;;
+    auto const e = e1 > e2;
+    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "(OOInterval (* 1/-6 (+ -24 (* -1 (^ 168 1/2)))) (* 1/-6 (+ -24 (^ 168 1/2))))");
+}
+
