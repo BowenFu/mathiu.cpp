@@ -56,11 +56,9 @@ TEST(functionRange, 8)
     EXPECT_EQ(toString(range), "(COInterval 9/16 8)");
 }
 
-#if 0
 TEST(functionRange, 9)
 {
-    auto const e = max(("x"_s - 1_i)^2_i, -(("x"_s + 1_i)^2_i) - 1_i);
+    auto const e = max(("x"_s - 1_i)^2_i, -(("x"_s + 1_i)^2_i) + 1_i);
     auto const range = functionRange(e, "x"_s, std::make_shared<impl::Expr const>(impl::Interval{{-2_i, false}, {2_i, false}}));
     EXPECT_EQ(toString(range), "(COInterval 9/16 8)");
 }
-#endif
