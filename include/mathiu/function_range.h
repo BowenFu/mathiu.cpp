@@ -103,8 +103,7 @@ namespace mathiu
                 pattern | ds(_, false_) = expr(lhs),
                 pattern | _ = [&]
                 {
-                    throw std::logic_error{"Mismatch!"};
-                    return lhs;
+                    return std::make_shared<Expr const>(SetOp{Union{{lhs, rhs}}});
                 }
             );
         }
