@@ -74,11 +74,11 @@ namespace mathiu
                                         return interval(left, true, right, true);
 
                                     case RelationalKind::kGREATER:
-                                        return std::make_shared<Expr const>(SetOp{Union{{interval(-infinity, false, left, false),
+                                        return makeSharedExprPtr(SetOp{Union{{interval(-infinity, false, left, false),
                                                                                          interval(right, false, infinity, false)}}});
 
                                     case RelationalKind::kGREATER_EQUAL:
-                                        return std::make_shared<Expr const>(SetOp{Union{{interval(-infinity, false, left, true),
+                                        return makeSharedExprPtr(SetOp{Union{{interval(-infinity, false, left, true),
                                                                                          interval(right, true, infinity, false)}}});
 
                                     case RelationalKind::kEQUAL:

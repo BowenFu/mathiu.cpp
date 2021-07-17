@@ -33,7 +33,7 @@ namespace mathiu::impl
         assert(evald(min_.first) <= evald(max_.first));
         auto result = Interval{min_, max_};
 #if DEBUG
-        std::cout << "functionRangeImplIntervalDomain: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\t resutl: " << toString(std::make_shared<Expr const>(result)) << std::endl;
+        std::cout << "functionRangeImplIntervalDomain: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\t resutl: " << toString(makeSharedExprPtr(result)) << std::endl;
 #endif // DEBUG
 
         return result;
@@ -45,7 +45,7 @@ namespace mathiu::impl
             assert(rhs.second.first != nullptr);
 
 #if DEBUG
-            std::cout << "unionInterval: " << toString(std::make_shared<Expr const>(lhs)) << ",\t" << toString(std::make_shared<Expr const>(rhs)) << std::endl;
+            std::cout << "unionInterval: " << toString(makeSharedExprPtr(lhs)) << ",\t" << toString(makeSharedExprPtr(rhs)) << std::endl;
 #endif // DEBUG
 
             Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
@@ -60,14 +60,14 @@ namespace mathiu::impl
                     auto const right = dR1 >= dR2 ? *iIER1 : *iIER2;
                     if (dL1 <= dR2 && dL2 <= dR1)
                     {
-                        return std::make_shared<Expr const>(Interval{left, right});
+                        return makeSharedExprPtr(Interval{left, right});
                     }
-                    return std::make_shared<Expr const>(SetOp{Union{{std::make_shared<Expr const>(lhs), std::make_shared<Expr const>(rhs)}}});
+                    return makeSharedExprPtr(SetOp{Union{{makeSharedExprPtr(lhs), makeSharedExprPtr(rhs)}}});
                 },
                 pattern | _ = [&]
                 {
                     throw std::logic_error{"Mismatch!"};
-                    return std::make_shared<Expr const>(lhs);
+                    return makeSharedExprPtr(lhs);
                 });
     }
 
@@ -93,7 +93,7 @@ namespace mathiu::impl
         {
             return (*result.begin());
         }
-        return std::make_shared<Expr const>(SetOp{std::move(result)});
+        return makeSharedExprPtr(SetOp{std::move(result)});
     }
 
     ExprPtr union_(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -133,7 +133,7 @@ namespace mathiu::impl
             },
             pattern | _ = [&]
             {
-                return std::make_shared<Expr const>(SetOp{Union{{lhs, rhs}}});
+                return makeSharedExprPtr(SetOp{Union{{lhs, rhs}}});
             });
     }
 
@@ -146,7 +146,7 @@ namespace mathiu::impl
         Id<Union> iUnion;
         return match(*domain)(
             pattern | as<Interval>(_) = [&]
-            { return std::make_shared<Expr const>(functionRangeImplIntervalDomain(function, symbol, domain)); },
+            { return makeSharedExprPtr(functionRangeImplIntervalDomain(function, symbol, domain)); },
             pattern | as<SetOp>(as<Union>(iUnion)) = [&]
             {
                 ExprPtr result = false_;

@@ -10,7 +10,7 @@ namespace mathiu::impl
             pattern | pi = expr(0_i),
             pattern | (pi / 2_i) = expr(1_i),
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Sin{{ex}}); });
+            { return makeSharedExprPtr(Sin{{ex}}); });
     }
 
     ExprPtr arctan(ExprPtr const &ex)
@@ -18,7 +18,7 @@ namespace mathiu::impl
         using namespace matchit;
         return match(ex)(
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Arctan{{ex}}); });
+            { return makeSharedExprPtr(Arctan{{ex}}); });
     }
 
     // The <| order relation
@@ -202,14 +202,14 @@ namespace mathiu::impl
                 {
                     auto pCopy = *ip;
                     pCopy.erase(pCopy.begin());
-                    return std::make_pair(*icoeff, std::make_shared<Expr const>(Product{pCopy}));
+                    return std::make_pair(*icoeff, makeSharedExprPtr(Product{pCopy}));
                 }
                 // single value left.
                 // the basic unary transformation.
                 return std::make_pair(*icoeff, (*(*ip).rbegin()).second);
             },
             pattern | _ = [&]
-            { return std::make_pair(1_i, std::make_shared<Expr const>(e)); });
+            { return std::make_pair(1_i, makeSharedExprPtr(e)); });
     }
 
     ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -250,7 +250,7 @@ namespace mathiu::impl
                 {
                     return ((*coeff1) + (*coeff2)) * (*rest);
                 },
-                pattern | _                            = [&] { return std::make_shared<Expr const>(Sum{{{coeffAndTerm(*lhs).second, lhs}, {coeffAndTerm(*rhs).second, rhs}}}); }
+                pattern | _                            = [&] { return makeSharedExprPtr(Sum{{{coeffAndTerm(*lhs).second, lhs}, {coeffAndTerm(*rhs).second, rhs}}}); }
             // clang-format on
         );
     }
@@ -263,7 +263,7 @@ namespace mathiu::impl
             pattern | as<Power>(ds(iBase, iExp)) = [&]
             { return std::make_pair(*iBase, *iExp); },
             pattern | _ = [&]
-            { return std::make_pair(std::make_shared<Expr const>(e), 1_i); });
+            { return std::make_pair(makeSharedExprPtr(e), 1_i); });
     }
 
     ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -310,7 +310,7 @@ namespace mathiu::impl
                 {
                     return (*base)^((*exp1) + (*exp2));
                 },
-                pattern | _                            = [&] { return std::make_shared<Expr const>(Product{{{baseAndExp(*lhs).first, lhs}, {baseAndExp(*rhs).first, rhs}}}); }
+                pattern | _                            = [&] { return makeSharedExprPtr(Product{{{baseAndExp(*lhs).first, lhs}, {baseAndExp(*rhs).first, rhs}}}); }
             // clang-format on
         );
     }
@@ -340,7 +340,7 @@ namespace mathiu::impl
                 pattern | ds(as<Integer>(ii1), as<Integer>(ii2.at(_<0))) = [&] {return fraction(1, static_cast<Integer>(std::pow(*ii1, -(*ii2)))); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Integer>(ii3)) = [&] {return simplifyRational(fraction(static_cast<Integer>(std::pow(*ii1, *ii3)), static_cast<Integer>(std::pow(*ii2, *ii3)))); },
                 pattern | _ = [&] {
-                    return std::make_shared<Expr const>(Power{{lhs, rhs}});
+                    return makeSharedExprPtr(Power{{lhs, rhs}});
                 }
             );
         }
@@ -380,7 +380,7 @@ namespace mathiu::impl
         {
             return true_;
         }
-        return std::make_shared<Expr const>(Relational{RelationalKind::kEQUAL, lhs, rhs});
+        return makeSharedExprPtr(Relational{RelationalKind::kEQUAL, lhs, rhs});
     }
 
     ExprPtr operator<(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -393,7 +393,7 @@ namespace mathiu::impl
             pattern | ds(isRational, isRational) = [&]
             { return evald(lhs) < evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Relational{RelationalKind::kLESS, lhs, rhs}); });
+            { return makeSharedExprPtr(Relational{RelationalKind::kLESS, lhs, rhs}); });
     }
 
     ExprPtr operator<=(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -406,7 +406,7 @@ namespace mathiu::impl
             pattern | ds(isRational, isRational) = [&]
             { return evald(lhs) <= evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Relational{RelationalKind::kLESS_EQUAL, lhs, rhs}); });
+            { return makeSharedExprPtr(Relational{RelationalKind::kLESS_EQUAL, lhs, rhs}); });
     }
 
     ExprPtr operator>=(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -419,7 +419,7 @@ namespace mathiu::impl
             pattern | ds(isRational, isRational) = [&]
             { return evald(lhs) >= evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Relational{RelationalKind::kGREATER_EQUAL, lhs, rhs}); });
+            { return makeSharedExprPtr(Relational{RelationalKind::kGREATER_EQUAL, lhs, rhs}); });
     }
 
     ExprPtr operator>(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -432,7 +432,7 @@ namespace mathiu::impl
             pattern | ds(isRational, isRational) = [&]
             { return evald(lhs) > evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Relational{RelationalKind::kGREATER, lhs, rhs}); });
+            { return makeSharedExprPtr(Relational{RelationalKind::kGREATER, lhs, rhs}); });
     }
 
     ExprPtr relational(RelationalKind relKind, ExprPtr const &lhs, ExprPtr const &rhs)
@@ -461,7 +461,7 @@ namespace mathiu::impl
         }
         return match(lhs, rhs)(
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Logical{And{{{lhs, rhs}}}}); });
+            { return makeSharedExprPtr(Logical{And{{{lhs, rhs}}}}); });
     }
 
     ExprPtr operator||(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -472,7 +472,7 @@ namespace mathiu::impl
         }
         return match(lhs, rhs)(
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(Logical{Or{{{lhs, rhs}}}}); });
+            { return makeSharedExprPtr(Logical{Or{{{lhs, rhs}}}}); });
     }
 
     ExprPtr max(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -485,7 +485,7 @@ namespace mathiu::impl
                 return l < r ? rhs : lhs;
             },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(PieceWise{{{lhs, lhs >= rhs}, {rhs, lhs < rhs}}}); });
+            { return makeSharedExprPtr(PieceWise{{{lhs, lhs >= rhs}, {rhs, lhs < rhs}}}); });
     }
 
     ExprPtr min(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -498,7 +498,7 @@ namespace mathiu::impl
                 return l < r ? lhs : rhs;
             },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(PieceWise{{{lhs, lhs <= rhs}, {rhs, lhs > rhs}}}); });
+            { return makeSharedExprPtr(PieceWise{{{lhs, lhs <= rhs}, {rhs, lhs > rhs}}}); });
     }
 
     double evald(ExprPtr const &ex)

@@ -69,14 +69,14 @@ namespace mathiu
                     auto const right = evald((*iIER1).first) < evald((*iIER2).first) ? *iIER1 : *iIER2;
                     if (evald((*iIEL1).first) <= evald((*iIER2).first) && evald((*iIEL2).first) <= evald((*iIER1).first))
                     {
-                        return std::make_shared<Expr const>(Interval{left, right});
+                        return makeSharedExprPtr(Interval{left, right});
                     }
                     return false_;
                 },
                 pattern | _ = [&]
                 {
                     throw std::logic_error{"Mismatch!"};
-                    return std::make_shared<Expr const>(lhs);
+                    return makeSharedExprPtr(lhs);
                 }
             );
         }
@@ -84,7 +84,7 @@ namespace mathiu
         bool inInterval(ExprPtr const& e, Interval const& interval)
         {
 #if DEBUG
-            std::cout << "inInterval: " << toString(e) << ",\t" << toString(std::make_shared<Expr const>(interval)) << std::endl;
+            std::cout << "inInterval: " << toString(e) << ",\t" << toString(makeSharedExprPtr(interval)) << std::endl;
 #endif // DEBUG
 
             Id<IntervalEnd> iIE1, iIE2;
@@ -118,7 +118,7 @@ namespace mathiu
                     return false;
                 });
 #if DEBUG
-            std::cout << "inInterval: " << toString(e) << ",\t" << toString(std::make_shared<Expr const>(interval)) << ", result: " << result << std::endl;
+            std::cout << "inInterval: " << toString(e) << ",\t" << toString(makeSharedExprPtr(interval)) << ", result: " << result << std::endl;
 #endif // DEBUG
             return result;
         }
@@ -147,7 +147,7 @@ namespace mathiu
                             result.insert(e);
                         }
                     }
-                    return std::make_shared<Expr const>(std::move(result));
+                    return makeSharedExprPtr(std::move(result));
                 },
                 pattern | ds(some(as<Set>(_)), some(as<Complexes>(_))) = [&] {
                     return lhs;
@@ -166,7 +166,7 @@ namespace mathiu
                             result.insert(ret);
                         }
                     }
-                    return std::make_shared<Expr const>(SetOp{std::move(result)});
+                    return makeSharedExprPtr(SetOp{std::move(result)});
                 },
                 pattern | ds(false_, _) = expr(false_),
                 pattern | ds(_, false_) = expr(false_),
@@ -201,7 +201,7 @@ namespace mathiu
                         solutions.merge(const_cast<Set&>(std::get<Set>(*solve(e.second, var, domain)))); // it is safe to const_cast a temp.
                         return solutions;
                     });
-                    return std::make_shared<Expr const>(std::move(solutionSet));
+                    return makeSharedExprPtr(std::move(solutionSet));
                 },
                 // assume is poly
                 pattern | _ = [&]

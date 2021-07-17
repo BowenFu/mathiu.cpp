@@ -88,6 +88,12 @@ namespace mathiu
         ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
         ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs);
 
+        template <typename T>
+        inline ExprPtr makeSharedExprPtr(T&& t)
+        {
+            return std::make_shared<Expr const>(std::forward<T>(t));
+        }
+
         // Atomic expressions
 
         using Integer = int32_t;
@@ -99,26 +105,26 @@ namespace mathiu
         struct Pi
         {
         };
-        inline const auto pi = std::make_shared<Expr const>(Pi{});
+        inline const auto pi = makeSharedExprPtr(Pi{});
         inline constexpr double pi_ = 3.1415926;
 
         struct E
         {
         };
-        inline const auto e = std::make_shared<Expr const>(E{});
+        inline const auto e = makeSharedExprPtr(E{});
         inline const double e_ = std::exp(1);
 
         struct I
         {
         };
-        inline const auto i = std::make_shared<Expr const>(I{});
+        inline const auto i = makeSharedExprPtr(I{});
         inline constexpr std::complex<double> i_ = std::complex<double>(0, 1);
 
         struct Infinity
         {
         };
 
-        inline const auto infinity = std::make_shared<Expr const>(Infinity{});
+        inline const auto infinity = makeSharedExprPtr(Infinity{});
 
         // Compound expressions
 
@@ -255,9 +261,9 @@ namespace mathiu
             using variant::variant;
         };
 
-        inline const auto complexes = std::make_shared<Expr const>(Complexes{});
-        inline const auto true_ = std::make_shared<Expr const>(True{});
-        inline const auto false_ = std::make_shared<Expr const>(False{});
+        inline const auto complexes = makeSharedExprPtr(Complexes{});
+        inline const auto true_ = makeSharedExprPtr(True{});
+        inline const auto false_ = makeSharedExprPtr(False{});
 
         inline bool operator==(ExprPtrPair const &l, ExprPtrPair const &r)
         {
@@ -290,7 +296,7 @@ namespace mathiu
 
         inline ExprPtr integer(Integer v)
         {
-            return std::make_shared<Expr const>(v);
+            return makeSharedExprPtr(v);
         }
 
         inline ExprPtr operator ""_i(unsigned long long v)
@@ -300,7 +306,7 @@ namespace mathiu
 
         inline ExprPtr fraction(Integer l, Integer r)
         {
-            return std::make_shared<Expr const>(Fraction{{l, r}});
+            return makeSharedExprPtr(Fraction{{l, r}});
         }
 
         bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
@@ -311,7 +317,7 @@ namespace mathiu
 
         inline ExprPtr symbol(std::string const &name)
         {
-            return std::make_shared<Expr const>(Symbol{{name}});
+            return makeSharedExprPtr(Symbol{{name}});
         }
 
         inline ExprPtr operator ""_s(const char* str, std::size_t)
@@ -322,12 +328,12 @@ namespace mathiu
         template <typename... Ts>
         inline ExprPtr set(Ts &&... lst)
         {
-            return std::make_shared<Expr const>(Set{{lst...}});
+            return makeSharedExprPtr(Set{{lst...}});
         }
 
         inline ExprPtr operator>>(ExprPtr const& src, ExprPtr const& dst)
         {
-            return std::make_shared<Expr const>(SubstitutePair{{src, dst}});
+            return makeSharedExprPtr(SubstitutePair{{src, dst}});
         }
 
         std::string toString(ExprPtr const &ex);
@@ -465,7 +471,7 @@ namespace mathiu
             {
                 return (*result.begin()).second;
             }
-            return std::make_shared<Expr const>(std::move(result));
+            return makeSharedExprPtr(std::move(result));
         }
 
         template <typename C>
@@ -477,7 +483,7 @@ namespace mathiu
             {
                 return (*result.begin()).second;
             }
-            return std::make_shared<Expr const>(std::move(result));
+            return makeSharedExprPtr(std::move(result));
         }
 
         ExprPtr simplifyRational(ExprPtr const &r);
@@ -536,7 +542,7 @@ namespace mathiu
 
         inline ExprPtr log(ExprPtr const &lhs, ExprPtr const &rhs)
         {
-            return std::make_shared<Expr const>(Log{{lhs, rhs}});
+            return makeSharedExprPtr(Log{{lhs, rhs}});
         }
 
         ExprPtr operator==(ExprPtr const &lhs, ExprPtr const &rhs);
