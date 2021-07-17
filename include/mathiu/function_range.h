@@ -32,7 +32,13 @@ namespace mathiu
                 min_ = evald(min_.first) < evald(v.first) ? min_ : v;
                 max_ = evald(max_.first) > evald(v.first) ? max_ : v;
             }
-            return Interval{min_, max_};
+            assert(evald(min_.first) <= evald(max_.first));
+            auto result = Interval{min_, max_};
+#if DEBUG
+            std::cout << "functionRangeImplIntervalDomain: " << toString(function) << ",\t" << toString(symbol)  << ",\t" << toString(domain) << ",\t resutl: " << toString(std::make_shared<Expr const>(result)) << std::endl;
+#endif // DEBUG
+
+            return result;
         }
 
         inline bool isNullInterval(Interval const& i)
@@ -70,8 +76,7 @@ namespace mathiu
                     {
                         return std::make_shared<Expr const>(Interval{left, right});
                     }
-                    // throw std::logic_error{"Not implemented!"}; // FIXME
-                    return false_;
+                    return std::make_shared<Expr const>(SetOp{Union{{std::make_shared<Expr const>(lhs), std::make_shared<Expr const>(rhs)}}});
                 },
                 pattern | _ = [&]
                 {
@@ -133,6 +138,7 @@ namespace mathiu
             Id<PieceWise> iPieceWise;
             auto result = match(*function)(
                 pattern | as<PieceWise>(iPieceWise)   = [&] {
+                    // FIXME union expr instead of interval
                     return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), Interval{}, [&] (auto&& result, auto&& e)
                     {
                         auto const newDomain = intersect(solveInequation(e.second, symbol), domain);
@@ -147,6 +153,9 @@ namespace mathiu
                             pattern | false_ = expr(result),
                             pattern | some(as<Interval>(iInterval)) = [&] {
                                 return *iInterval;
+                            },
+                            pattern | some(as<SetOp>(_)) = [&] {
+                                return ret;
                             },
                             pattern | _ = [&] {
                                 throw std::runtime_error{"Mismatch in as<SetOp>(as<Union>(iUnion))!"};
