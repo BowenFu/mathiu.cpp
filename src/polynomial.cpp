@@ -133,7 +133,7 @@ namespace mathiu::impl
         {
             result.emplace_back(coefficient(u, x, i));
         }
-        return std::make_shared<Expr const>(std::move(result));
+        return makeSharedExprPtr(std::move(result));
     }
 
     // algebraic expand

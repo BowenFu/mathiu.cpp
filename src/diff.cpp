@@ -42,7 +42,7 @@ namespace mathiu::impl
                 {
                     result.push_back({diff(e.first, var), e.second});
                 }
-                return std::make_shared<Expr const>(std::move(result));
+                return makeSharedExprPtr(std::move(result));
             },
             pattern | _ = [&]
             {
