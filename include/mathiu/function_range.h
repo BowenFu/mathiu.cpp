@@ -86,8 +86,31 @@ namespace mathiu
             );
         }
 
+        inline ExprPtr union_(ExprPtr const& lhs, ExprPtr const& rhs)
+        {
+#if DEBUG
+            std::cout << "union_: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
+#endif // DEBUG
 
-        inline Interval functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
+            Id<Interval> iInterval1, iInterval2;
+            return match(lhs, rhs)
+            (
+                pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&]
+                {
+                    return unionInterval(*iInterval1, *iInterval2);
+                },
+                pattern | ds(false_, _) = expr(rhs),
+                pattern | ds(_, false_) = expr(lhs),
+                pattern | _ = [&]
+                {
+                    throw std::logic_error{"Mismatch!"};
+                    return lhs;
+                }
+            );
+        }
+
+
+        inline ExprPtr functionRangeImpl(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain)
         {
 #if DEBUG
             std::cout << "functionRangeImpl: " << toString(function) << ",\t" << toString(symbol)  << ",\t" << toString(domain) << std::endl;
@@ -98,33 +121,21 @@ namespace mathiu
             (
                 pattern | as<Interval>(_) = [&]
                 {
-                    return functionRangeImplIntervalDomain(function, symbol, domain);
+                    return std::make_shared<Expr const>(functionRangeImplIntervalDomain(function, symbol, domain));
                 },
                 pattern | as<SetOp>(as<Union>(iUnion)) = [&]
                 {
-                    Interval result;
+                    ExprPtr result = false_;
                     for (auto&& e: *iUnion)
                     {
-                        auto ret = unionInterval(result, functionRangeImpl(function, symbol, e));
-                        Id<Interval> iInterval;
-                        result = match(ret)
-                        (
-                            pattern | false_ = expr(result),
-                            pattern | some(as<Interval>(iInterval)) = [&] {
-                                return *iInterval;
-                            },
-                            pattern | _ = [&] {
-                                throw std::runtime_error{"Mismatch in as<SetOp>(as<Union>(iUnion))!"};
-                                return result;
-                            }
-                        );
+                        result = union_(result, functionRangeImpl(function, symbol, e));
                     }
                     return result;
                 },
                 pattern | _ = [&]
                 {
                     throw std::logic_error{"Mismatch in functionRangeImpl!"};
-                    return Interval{};
+                    return false_;
                 }
             );
         }
@@ -136,41 +147,22 @@ namespace mathiu
 #endif // DEBUG
 
             Id<PieceWise> iPieceWise;
-            auto result = match(*function)(
-                pattern | as<PieceWise>(iPieceWise)   = [&] {
+            return match(*function)(
+                pattern | as<PieceWise>(iPieceWise) = [&]
+                {
                     // FIXME union expr instead of interval
-                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), Interval{}, [&] (auto&& result, auto&& e)
+                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), false_, [&] (auto&& result, auto&& e)
                     {
                         auto const newDomain = intersect(solveInequation(e.second, symbol), domain);
                         if (equal(newDomain, false_))
                         {
                             return result;
                         }
-                        auto ret = unionInterval(result, functionRangeImpl(e.first, symbol, newDomain));
-                        Id<Interval> iInterval;
-                        return match(ret)
-                        (
-                            pattern | false_ = expr(result),
-                            pattern | some(as<Interval>(iInterval)) = [&] {
-                                return *iInterval;
-                            },
-                            pattern | some(as<SetOp>(_)) = [&] {
-                                return ret;
-                            },
-                            pattern | _ = [&] {
-                                throw std::runtime_error{"Mismatch in as<SetOp>(as<Union>(iUnion))!"};
-                                return result;
-                            }
-                        );
+                        return union_(result, functionRangeImpl(e.first, symbol, newDomain));
                     });
                 },
                 pattern | _ = [&]
                 { return functionRangeImpl(function, symbol, domain); });
-            if (isNullInterval(result))
-            {
-                return false_;
-            }
-            return std::make_shared<Expr const>(std::move(result));
         }
     } // namespace impl
 } // namespace mathiu
