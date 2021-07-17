@@ -88,8 +88,12 @@ namespace mathiu
 
         inline bool inInterval(ExprPtr const& e, Interval const& interval)
         {
+#if DEBUG
+            std::cout << "inInterval: " << toString(e) << ",\t" << toString(std::make_shared<Expr const>(interval)) << std::endl;
+#endif // DEBUG
+
             Id<IntervalEnd> iIE1, iIE2;
-            return match(interval)(
+            auto result = match(interval)(
                 pattern | ds(ds(e, _), _) = [&]
                 { return interval.first.second == true; },
                 pattern | ds(_, ds(e, _)) = [&]
@@ -118,6 +122,10 @@ namespace mathiu
                     throw std::logic_error{"Mismatch in inInterval!"};
                     return false;
                 });
+#if DEBUG
+            std::cout << "inInterval: " << toString(e) << ",\t" << toString(std::make_shared<Expr const>(interval)) << ", result: " << result << std::endl;
+#endif // DEBUG
+            return result;
         }
 
         inline ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs)
