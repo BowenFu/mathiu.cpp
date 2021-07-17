@@ -46,7 +46,7 @@ jobs:
 
     - name: Compute Coverage
       working-directory: ${{github.workspace}}/build
-      run: gcovr -r ../{include,src} -x coverage.xml .
+      run: gcovr -r .. --exclude-directories ../test --exclude-directories ../sample  -x coverage.xml .
 
     - name: Upload Coverage
       working-directory: ${{github.workspace}}/build
