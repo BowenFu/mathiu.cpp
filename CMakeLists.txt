@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15...3.19)
 
 project(
-    mathiu
+    Mathiu
     VERSION 0.0.1
     LANGUAGES CXX)
 
@@ -31,13 +31,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "MSAN")
     add_link_options("-L${PROJECT_SOURCE_DIR}/libcxx_msan/lib;-lc++abi")
 endif() #CMAKE_BUILD_TYPE STREQUAL "MSAN"
 
-# Target.
-add_library(mathiu INTERFACE)
-
 include(FetchMatchit)
 
-target_include_directories(mathiu INTERFACE
-  ${PROJECT_SOURCE_DIR}/include matchit)
+# Target.
+add_library(mathiu)
+
+add_subdirectory(src)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
