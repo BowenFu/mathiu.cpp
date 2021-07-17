@@ -21,10 +21,10 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         std: [17, 20]
-        exclude: # Fix me
-          - os: [windows-latest]
+        # exclude: # Fix me
+          # - os: [windows-latest]
         #     std: [20]
 
     steps:
