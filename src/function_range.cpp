@@ -152,7 +152,7 @@ namespace mathiu::impl
 #endif // DEBUG
 
         Id<Union> iUnion;
-        return match(*domain)(
+        auto result = match(*domain)(
             pattern | as<Interval>(_) = [&]
             { return makeSharedExprPtr(functionRangeImplIntervalDomain(function, symbol, domain)); },
             pattern | as<SetOp>(as<Union>(iUnion)) = [&]
@@ -169,6 +169,11 @@ namespace mathiu::impl
                 throw std::logic_error{"Mismatch in functionRangeImpl!"};
                 return false_;
             });
+#if DEBUG
+        std::cout << "functionRangeImpl: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\tresult: " << toString(result) << std::endl;
+#endif // DEBUG
+
+    return result;
     }
 
     ExprPtr functionRange(ExprPtr const &function, ExprPtr const &symbol, ExprPtr const &domain)
@@ -178,10 +183,9 @@ namespace mathiu::impl
 #endif // DEBUG
 
         Id<PieceWise> iPieceWise;
-        return match(*function)(
+        auto result = match(*function)(
             pattern | as<PieceWise>(iPieceWise) = [&]
             {
-                // FIXME union expr instead of interval
                 return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), false_, [&](auto &&result, auto &&e)
                                        {
                                            auto const newDomain = intersect(solveInequation(e.second, symbol), domain);
@@ -189,10 +193,15 @@ namespace mathiu::impl
                                            {
                                                return result;
                                            }
-                                           return union_(result, functionRangeImpl(e.first, symbol, newDomain));
+                                           return union_(result, functionRange(e.first, symbol, newDomain));
                                        });
             },
             pattern | _ = [&]
             { return functionRangeImpl(function, symbol, domain); });
+#if DEBUG
+        std::cout << "functionRange: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\tresult: " << toString(result) << std::endl;
+#endif // DEBUG
+
+    return result;
     }
 } // namespace mathiu::impl

@@ -134,7 +134,7 @@ namespace mathiu
             Id<IntervalEnd> iIE1, iIE2;
             Id<Set> iSet1, iSet2;
             Id<Union> iUnion;
-            return match(lhs, rhs)
+            auto result = match(lhs, rhs)
             (
                 pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&] {
                     return intersectInterval(*iInterval1, *iInterval2);
@@ -164,6 +164,9 @@ namespace mathiu
                     throw std::logic_error{"Mismatch in intersect!"};
                     return lhs; // FIXME
                 },
+                pattern | ds(_, some(as<SetOp>(as<Union>(iUnion)))) = [&] {
+                    return intersect(rhs, lhs);
+                },
                 pattern | ds(some(as<SetOp>(as<Union>(iUnion))), _) = [&] {
                     Union result;
                     for (auto&& e: *iUnion)
@@ -187,6 +190,11 @@ namespace mathiu
                     return false_;
                 }
             );
+#if DEBUG
+            std::cout << "intersect: " << toString(lhs) << ",\t" << toString(rhs) << ",\tresult: " << toString(result) << std::endl;
+#endif // DEBUG
+
+            return result;
         }
 
         ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain)

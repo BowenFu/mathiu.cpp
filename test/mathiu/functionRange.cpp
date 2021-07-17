@@ -126,5 +126,13 @@ TEST(functionRange, 16)
     auto e = max(max(-"x"_s, "x"_s), 2_i);
     auto const domain = interval(-3_i, true, 3_i, true);
     auto const range = functionRange(e, "x"_s, domain);
-    EXPECT_EQ(toString(range), "(CCInterval (+ -1 (* 1/4 (^ (+ -1 (^ 17 1/2)) 2))) 8)");
+    EXPECT_EQ(toString(range), "(CCInterval 2 3)");
+}
+
+TEST(functionRange, 17)
+{
+    auto e = min(max(-"x"_s, "x"_s), 2_i);
+    auto const domain = interval(-3_i, true, 3_i, true);
+    auto const range = functionRange(e, "x"_s, domain);
+    EXPECT_EQ(toString(range), "(CCInterval 0 2)");
 }
