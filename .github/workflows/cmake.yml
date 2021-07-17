@@ -23,8 +23,8 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
         std: [17, 20]
-        # exclude: # Fix me
-        #   - os: [ubuntu-latest]
+        exclude: # Fix me
+          - os: [windows-latest]
         #     std: [20]
 
     steps:

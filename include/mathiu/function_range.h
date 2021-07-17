@@ -60,6 +60,7 @@ namespace mathiu
                     {
                         return std::make_shared<Expr const>(Interval{left, right});
                     }
+                    throw std::logic_error{"Not implemented!"};
                     return false_;
                 },
                 pattern | _ = [&]
