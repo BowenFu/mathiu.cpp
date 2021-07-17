@@ -1,3 +1,4 @@
+#include <iterator>
 #include "matchit.h"
 #include "mathiu/core.h"
 #include "mathiu/diff.h"
@@ -131,16 +132,16 @@ namespace mathiu
 
             Id<Interval> iInterval1, iInterval2;
             Id<IntervalEnd> iIE1, iIE2;
-            Id<Set> iSet;
+            Id<Set> iSet1, iSet2;
             Id<Union> iUnion;
             return match(lhs, rhs)
             (
                 pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&] {
                     return intersectInterval(*iInterval1, *iInterval2);
                 },
-                pattern | ds(some(as<Set>(iSet)), some(as<Interval>(iInterval2))) = [&] {
+                pattern | ds(some(as<Set>(iSet1)), some(as<Interval>(iInterval2))) = [&] {
                     Set result;
-                    for (auto&& e: *iSet)
+                    for (auto&& e: *iSet1)
                     {
                         if (inInterval(e, *iInterval2))
                         {
@@ -151,6 +152,13 @@ namespace mathiu
                 },
                 pattern | ds(some(as<Set>(_)), some(as<Complexes>(_))) = [&] {
                     return lhs;
+                },
+                pattern | ds(some(as<Set>(iSet1)), some(as<Set>(iSet2))) = [&] {
+                    Set result;
+                    auto const lessLambda = [](auto&& e1, auto&& e2) { return less(e1, e2); };
+                    std::set_intersection((*iSet1).begin(), (*iSet1).end(), 
+                            (*iSet2).begin(), (*iSet2).end(), std::inserter(result, result.end()), lessLambda);
+                    return makeSharedExprPtr(std::move(result));
                 },
                 pattern | ds(some(as<Set>(_)), _) = [&] {
                     throw std::logic_error{"Mismatch in intersect!"};
@@ -172,6 +180,8 @@ namespace mathiu
                 pattern | ds(_, false_) = expr(false_),
                 pattern | ds(true_, _) = expr(rhs),
                 pattern | ds(_, true_) = expr(lhs),
+                pattern | ds(complexes, _) = expr(rhs),
+                pattern | ds(_, complexes) = expr(lhs),
                 pattern | _ = [&] {
                     throw std::logic_error{"Mismatch in intersect!"};
                     return false_;
@@ -190,6 +200,7 @@ namespace mathiu
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
             Id<Product> iP;
             Id<ExprPtr> iE1, iE2;
+            Id<PieceWise> iPieceWise;
             return match(ex)(
                 pattern | some(as<Relational>(ds(RelationalKind::kEQUAL, iE1, iE2))) = [&] { return solve(expand(*iE1 - *iE2), var, domain); },
                 pattern | some(as<Integer>(0)) = expr(set(var)),
@@ -202,6 +213,13 @@ namespace mathiu
                         return solutions;
                     });
                     return makeSharedExprPtr(std::move(solutionSet));
+                },
+                pattern | some(as<PieceWise>(iPieceWise)) = [&]
+                {
+                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), false_, [&](auto&& result, auto&& e)
+                    {
+                        return union_(result, solve(e.first, var, solveInequation(e.second, var, domain)));
+                    });
                 },
                 // assume is poly
                 pattern | _ = [&]

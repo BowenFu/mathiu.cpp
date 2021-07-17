@@ -2,6 +2,7 @@
 #include "mathiu/core.h"
 #include "mathiu/inequation.h"
 #include "mathiu/diff.h"
+#include "mathiu/solve.h"
 #include "mathiu/polynomial.h"
 
 namespace mathiu
@@ -16,10 +17,18 @@ namespace mathiu
 
             using namespace matchit;
             const auto freeOfVar = meet([&](auto&& e) { return freeOf(e, var); });
+            Id<PieceWise> iPieceWise;
             return match(ex)(
                 pattern | freeOfVar = [&]{
                     throw std::logic_error("Cannot solve inequation!");
                     return relational(relKind, ex, 0_i);
+                },
+                pattern | some(as<PieceWise>(iPieceWise)) = [&]
+                {
+                    return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), false_, [&](auto&& result, auto&& e)
+                    {
+                        return union_(result, solveInequationImpl(e.first, relKind, var, intersect(domain, e.second)));
+                    });
                 },
                 pattern | _ = [&]
                 {

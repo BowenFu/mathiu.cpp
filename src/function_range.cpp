@@ -102,9 +102,17 @@ namespace mathiu::impl
         std::cout << "union_: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
 #endif // DEBUG
 
+        Id<Set> iSet1, iSet2;
         Id<Interval> iInterval1, iInterval2, iInterval3;
         Id<Union> iUnion1, iUnion2;
         return match(lhs, rhs)(
+            pattern | ds(some(as<Set>(iSet1)), some(as<Set>(iSet2))) = [&]
+            {
+                Set solutions1 = *iSet1;
+                Set solutions2 = *iSet2;
+                solutions1.merge(solutions2);
+                return makeSharedExprPtr(std::move(solutions1));
+            },
             pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&]
             {
                 return unionInterval(*iInterval1, *iInterval2);
