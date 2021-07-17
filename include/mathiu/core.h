@@ -211,11 +211,11 @@ namespace mathiu
 
         // set
 
-        struct Union : ExprPtrList
+        struct Union : ExprPtrSet
         {
         };
 
-        struct Intersection : ExprPtrList
+        struct Intersection : ExprPtrSet
         {
         };
 
@@ -369,6 +369,15 @@ namespace mathiu
             return lhs < rhs;
         }
 
+        inline bool less(IntervalEnd const& lhs, IntervalEnd const& rhs)
+        {
+            if (equal(lhs.first, rhs.first))
+            {
+                return lhs.second < rhs.second;
+            }
+            return less(lhs.first, rhs.first);
+        }
+
         template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
         bool lessC(C1 const& v1, C2 const& v2)
         {
@@ -386,6 +395,11 @@ namespace mathiu
                 }
             }
             return v1.size() < v2.size();
+        }
+
+        inline bool equal(IntervalEnd const& lhs, IntervalEnd const& rhs)
+        {
+            return equal(lhs.first, rhs.first) && lhs.second == rhs.second;
         }
 
         template <typename T, typename C = std::initializer_list<T>>

@@ -163,7 +163,7 @@ namespace mathiu
                         auto ret = intersect(e, rhs);
                         if (!equal(ret, false_))
                         {
-                            result.push_back(ret);
+                            result.insert(ret);
                         }
                     }
                     return std::make_shared<Expr const>(SetOp{std::move(result)});
