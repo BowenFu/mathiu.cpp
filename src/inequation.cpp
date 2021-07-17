@@ -123,6 +123,8 @@ namespace mathiu
                                 case RelationalKind::kEQUAL:
                                     throw std::logic_error{"Unreachable!"};
                                 }
+                                throw std::logic_error{"Unreachable!"};
+                                return false_;
                             }();
                             return intersect(result, domain);
                         },
