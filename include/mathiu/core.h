@@ -491,8 +491,6 @@ namespace mathiu
 
         inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
 
-        ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs);
-
         std::pair<ExprPtr, ExprPtr> baseAndExp(Expr const &e);
 
         template <typename C, typename T>
@@ -502,8 +500,6 @@ namespace mathiu
         }
 
         inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
-
-        ExprPtr operator*(ExprPtr const &lhs, ExprPtr const &rhs);
 
         ExprPtr pow(ExprPtr const &lhs, ExprPtr const &rhs);
 
@@ -523,12 +519,6 @@ namespace mathiu
         {
             return integer(-1) * rhs;
         }
-
-        // the basic difference transformation
-        ExprPtr operator-(ExprPtr const &lhs, ExprPtr const &rhs);
-
-        // the basic quotient transformation
-        ExprPtr operator/(ExprPtr const &lhs, ExprPtr const &rhs);
 
         inline ExprPtr log(ExprPtr const &lhs, ExprPtr const &rhs)
         {
