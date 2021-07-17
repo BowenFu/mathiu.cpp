@@ -35,9 +35,15 @@ namespace mathiu
             return Interval{min_, max_};
         }
 
+        inline bool isNullInterval(Interval const& i)
+        {
+            assert((i.first.first == nullptr) == (i.second.first == nullptr));
+            return i.first.first == nullptr;
+        }
+
         inline ExprPtr unionInterval(Interval const& lhs, Interval const& rhs)
         {
-            if (lhs.first.first == nullptr && lhs.second.first == nullptr)
+            if (isNullInterval(lhs))
             {
                 return std::make_shared<Expr const>(rhs);
             }
@@ -151,7 +157,7 @@ namespace mathiu
                 },
                 pattern | _ = [&]
                 { return functionRangeImpl(function, symbol, domain); });
-            if (result == Interval{})
+            if (isNullInterval(result))
             {
                 return false_;
             }
