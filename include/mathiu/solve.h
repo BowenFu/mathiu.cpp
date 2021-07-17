@@ -25,8 +25,31 @@ namespace mathiu
                 pattern | ds(c, b, a) = [&]
                 {
                     auto _2a = 2_i * (*a);
-                    auto sqrtB2_4ac = sqrt(((*b)^2_i) - 4_i * (*a) * (*c));
-                    return set((-(*b) + sqrtB2_4ac) / _2a, (-(*b) - sqrtB2_4ac) / _2a);
+                    auto b2_4ac = ((*b)^2_i) - 4_i * (*a) * (*c);
+                    auto sqrtB2_4ac = sqrt(b2_4ac);
+                    return match(b2_4ac)
+                    (
+                        pattern | asDouble = [&]
+                        {
+                            auto d = evald(b2_4ac);
+                            if (d > 0)
+                            {
+                                return set((-(*b) + sqrtB2_4ac) / _2a, (-(*b) - sqrtB2_4ac) / _2a);
+                            }
+                            else if (d == 0)
+                            {
+                                return set((-(*b) + sqrtB2_4ac) / _2a);
+                            }
+                            else
+                            {
+                                return false_;
+                            }
+                        },
+                        pattern | _ = [&]
+                        {
+                            return set((-(*b) + sqrtB2_4ac) / _2a, (-(*b) - sqrtB2_4ac) / _2a);
+                        }
+                    );
                 },
                 pattern | ds(c, b) = [&] { return set(-(*c) / (*b)); },
                 pattern | ds(c) = [&] { return equal(*c, 0_i) ? set(var) : set(); },
@@ -37,20 +60,10 @@ namespace mathiu
                 });
         }
 
-        inline auto const asDouble = meet([](auto&& e)
-        {
-            try{
-                evald(e);
-                return true;
-            }
-            catch (...)
-            {
-                return false;
-            }
-        });
         inline auto const realInterval = [](auto &&left, auto &&right)
         { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
-        inline Interval intersectInterval(Interval const& lhs, Interval const& rhs)
+
+        inline ExprPtr intersectInterval(Interval const& lhs, Interval const& rhs)
         {
             Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
             return match(lhs, rhs)
@@ -59,13 +72,16 @@ namespace mathiu
                 {
                     auto const left = evald((*iIEL1).first) > evald((*iIEL2).first) ? *iIEL1 : *iIEL2;
                     auto const right = evald((*iIER1).first) < evald((*iIER2).first) ? *iIER1 : *iIER2;
-                    assert(evald((*iIEL1).first) <= evald((*iIER2).first) && evald((*iIEL2).first) <= evald((*iIER1).first));
-                    return Interval{left, right};
+                    if (evald((*iIEL1).first) <= evald((*iIER2).first) && evald((*iIEL2).first) <= evald((*iIER1).first))
+                    {
+                        return std::make_shared<Expr const>(Interval{left, right});
+                    }
+                    return false_;
                 },
                 pattern | _ = [&]
                 {
                     throw std::logic_error{"Mismatch!"};
-                    return lhs;
+                    return std::make_shared<Expr const>(lhs);
                 }
             );
         }
@@ -113,12 +129,13 @@ namespace mathiu
             Id<Interval> iInterval1, iInterval2;
             Id<IntervalEnd> iIE1, iIE2;
             Id<Set> iSet;
-            return match(*lhs, *rhs)
+            Id<Union> iUnion;
+            return match(lhs, rhs)
             (
-                pattern | ds(as<Interval>(iInterval1), as<Interval>(iInterval2)) = [&] {
-                    return std::make_shared<Expr const>(intersectInterval(*iInterval1, *iInterval2));
+                pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&] {
+                    return intersectInterval(*iInterval1, *iInterval2);
                 },
-                pattern | ds(as<Set>(iSet), as<Interval>(iInterval2)) = [&] {
+                pattern | ds(some(as<Set>(iSet)), some(as<Interval>(iInterval2))) = [&] {
                     Set result;
                     for (auto&& e: *iSet)
                     {
@@ -129,9 +146,29 @@ namespace mathiu
                     }
                     return std::make_shared<Expr const>(std::move(result));
                 },
-                pattern | ds(as<Set>(_), _) = [&] {
+                pattern | ds(some(as<Set>(_)), some(as<Complexes>(_))) = [&] {
+                    return lhs;
+                },
+                pattern | ds(some(as<Set>(_)), _) = [&] {
+                    throw std::logic_error{"Mismatch in intersect!"};
                     return lhs; // FIXME
                 },
+                pattern | ds(some(as<SetOp>(as<Union>(iUnion))), _) = [&] {
+                    Union result;
+                    for (auto&& e: *iUnion)
+                    {
+                        auto ret = intersect(e, rhs);
+                        if (!equal(ret, false_))
+                        {
+                            result.push_back(ret);
+                        }
+                    }
+                    return std::make_shared<Expr const>(SetOp{std::move(result)});
+                },
+                pattern | ds(false_, _) = expr(false_),
+                pattern | ds(_, false_) = expr(false_),
+                pattern | ds(true_, _) = expr(rhs),
+                pattern | ds(_, true_) = expr(lhs),
                 pattern | _ = [&] {
                     throw std::logic_error{"Mismatch in intersect!"};
                     return false_;
@@ -154,7 +191,6 @@ namespace mathiu
                 pattern | some(as<Relational>(ds(RelationalKind::kEQUAL, iE1, iE2))) = [&] { return solve(expand(*iE1 - *iE2), var, domain); },
                 pattern | some(as<Integer>(0)) = expr(set(var)),
                 pattern | freeOfVar = expr(set()),
-                pattern | var = expr(set(0_i)), // todo -> solve poly
                 pattern | some(as<Product>(iP)) = [&]
                 {
                     auto solutionSet = std::accumulate((*iP).begin(), (*iP).end(), Set{}, [&](Set solutions, auto&& e) 
