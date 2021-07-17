@@ -54,13 +54,17 @@ namespace mathiu
             (
                 pattern | ds(realInterval(iIEL1, iIER1), realInterval(iIEL2, iIER2)) = [&]
                 {
-                    auto const left = evald((*iIEL1).first) <= evald((*iIEL2).first) ? *iIEL1 : *iIEL2;
-                    auto const right = evald((*iIER1).first) >= evald((*iIER2).first) ? *iIER1 : *iIER2;
-                    if (evald((*iIEL1).first) <= evald((*iIER2).first) && evald((*iIEL2).first) <= evald((*iIER1).first))
+                    auto dL1 = evald((*iIEL1).first);
+                    auto dL2 = evald((*iIEL2).first);
+                    auto dR1 = evald((*iIER1).first);
+                    auto dR2 = evald((*iIER2).first);
+                    auto const left =  dL1 <= dL2 ? *iIEL1 : *iIEL2;
+                    auto const right = dR1 >= dR2 ? *iIER1 : *iIER2;
+                    if (dL1 <= dR2 && dL2 <= dR1)
                     {
                         return std::make_shared<Expr const>(Interval{left, right});
                     }
-                    throw std::logic_error{"Not implemented!"};
+                    // throw std::logic_error{"Not implemented!"}; // FIXME
                     return false_;
                 },
                 pattern | _ = [&]
