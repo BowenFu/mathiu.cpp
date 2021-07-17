@@ -48,33 +48,52 @@ namespace mathiu::impl
             std::cout << "unionInterval: " << toString(std::make_shared<Expr const>(lhs)) << ",\t" << toString(std::make_shared<Expr const>(rhs)) << std::endl;
 #endif // DEBUG
 
-            auto const realInterval = [](auto &&left, auto &&right)
-            {
-            return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
-
             Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
-            return match(lhs, rhs)
-            (
+            return match(lhs, rhs)(
                 pattern | ds(realInterval(iIEL1, iIER1), realInterval(iIEL2, iIER2)) = [&]
                 {
-            auto dL1 = evald((*iIEL1).first);
-            auto dL2 = evald((*iIEL2).first);
-            auto dR1 = evald((*iIER1).first);
-            auto dR2 = evald((*iIER2).first);
-            auto const left = dL1 <= dL2 ? *iIEL1 : *iIEL2;
-            auto const right = dR1 >= dR2 ? *iIER1 : *iIER2;
-            if (dL1 <= dR2 && dL2 <= dR1)
-            {
-                return std::make_shared<Expr const>(Interval{left, right});
-            }
-            return std::make_shared<Expr const>(SetOp{Union{{std::make_shared<Expr const>(lhs), std::make_shared<Expr const>(rhs)}}});
+                    auto dL1 = evald((*iIEL1).first);
+                    auto dL2 = evald((*iIEL2).first);
+                    auto dR1 = evald((*iIER1).first);
+                    auto dR2 = evald((*iIER2).first);
+                    auto const left = dL1 <= dL2 ? *iIEL1 : *iIEL2;
+                    auto const right = dR1 >= dR2 ? *iIER1 : *iIER2;
+                    if (dL1 <= dR2 && dL2 <= dR1)
+                    {
+                        return std::make_shared<Expr const>(Interval{left, right});
+                    }
+                    return std::make_shared<Expr const>(SetOp{Union{{std::make_shared<Expr const>(lhs), std::make_shared<Expr const>(rhs)}}});
                 },
                 pattern | _ = [&]
                 {
-            throw std::logic_error{"Mismatch!"};
-            return std::make_shared<Expr const>(lhs);
-                }
-            );
+                    throw std::logic_error{"Mismatch!"};
+                    return std::make_shared<Expr const>(lhs);
+                });
+    }
+
+        auto mergeU(Union const& c1, Union const& c2) -> Union
+        {
+            if (c1.size() < c2.size())
+            {
+                return mergeU(c2, c1);
+            }
+            Union result = c1;
+            for (auto const& e : c2)
+            {
+                result.insert(e);
+            }
+            return result;
+        }
+
+
+    auto mergeUnion(Union const& c1, Union const& c2)
+    {
+        auto result = mergeU(c1, c2);
+        if (result.size() == 1)
+        {
+            return (*result.begin());
+        }
+        return std::make_shared<Expr const>(SetOp{std::move(result)});
     }
 
     ExprPtr union_(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -83,12 +102,31 @@ namespace mathiu::impl
         std::cout << "union_: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
 #endif // DEBUG
 
-        Id<Interval> iInterval1, iInterval2;
+        Id<Interval> iInterval1, iInterval2, iInterval3;
+        Id<Union> iUnion1, iUnion2;
         return match(lhs, rhs)(
             pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&]
             { return unionInterval(*iInterval1, *iInterval2); },
             pattern | ds(false_, _) = expr(rhs),
             pattern | ds(_, false_) = expr(lhs),
+            pattern | ds(some(as<SetOp>(as<Union>(iUnion1))), some(as<SetOp>(as<Union>(iUnion2)))) = [&]
+            {
+                return mergeUnion(*iUnion1, *iUnion2);
+            },
+            pattern | ds(some(as<Interval>(iInterval1.at(realInterval(_, _)))), some(as<SetOp>(as<Union>(ds(some(as<Interval>(iInterval2.at(realInterval(_, _)))), some(as<Interval>(iInterval3.at(realInterval(_, _))))))))) = [&]
+            {
+                auto result = unionInterval(*iInterval1, *iInterval2);
+                auto newI = std::get<Interval>(*result);
+                return unionInterval(newI, *iInterval3);
+            }, 
+            pattern | ds(_, some(as<SetOp>(as<Union>(iUnion2)))) = [&]
+            {
+                return mergeUnion(Union{{lhs}}, *iUnion2);
+            },
+            pattern | ds(some(as<SetOp>(as<Union>(iUnion1))), _) = [&]
+            {
+                return mergeUnion(Union{{rhs}}, *iUnion2);
+            },
             pattern | _ = [&]
             { return std::make_shared<Expr const>(SetOp{Union{{lhs, rhs}}}); });
     }

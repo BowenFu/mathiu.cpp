@@ -35,6 +35,8 @@ namespace mathiu::impl
         Id<Sum> iS1, iS2;
         Id<SubstitutePair> iPair1, iPair2;
         Id<PieceWise> iPieceWise1, iPieceWise2;
+        Id<Union> iUnion1, iUnion2;
+        Id<IntervalEnd> iIntervalEnd1, iIntervalEnd2, iIntervalEnd3, iIntervalEnd4;
         constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
         constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
         constexpr auto canBeLog = or_(as<Sum>(_), as<Symbol>(_));
@@ -108,6 +110,14 @@ namespace mathiu::impl
                 },
                 pattern | ds(_, as<PieceWise>(_))   = expr(true),
                 pattern | ds(as<PieceWise>(_), _)   = expr(false),
+                pattern | ds(as<SetOp>(as<Union>(iUnion1)), as<SetOp>(as<Union>(iUnion2)))   = [&] {
+                    return lessC<ExprPtr>(*iUnion1, *iUnion2);
+                },
+                pattern | ds(as<Interval>(ds(iIntervalEnd1, iIntervalEnd2)), as<Interval>(ds(iIntervalEnd3, iIntervalEnd4)))   = [&] {
+                    return lessC<IntervalEnd>({*iIntervalEnd2, *iIntervalEnd1}, {*iIntervalEnd4, *iIntervalEnd3});
+                },
+                pattern | ds(as<Interval>(_), as<SetOp>(as<Union>(_))) = expr(true),
+                pattern | ds(as<SetOp>(as<Union>(_)), as<Interval>(_)) = expr(false),
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
             // clang-format on
         );
@@ -125,6 +135,8 @@ namespace mathiu::impl
         Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
         Id<Product> iP1, iP2;
         Id<Sum> iS1, iS2;
+        Id<Union> iUnion1, iUnion2;
+        Id<IntervalEnd> iIntervalEnd1, iIntervalEnd2, iIntervalEnd3, iIntervalEnd4;
         return match(*lhs, *rhs)(
             // clang-format off
                 pattern | ds(isRational, isRational)   = [&] { return evald(lhs) == evald(rhs); },
@@ -147,6 +159,12 @@ namespace mathiu::impl
                 pattern | ds(as<Infinity>(_), as<Infinity>(_)) = expr(true),
                 pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEr1))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEl2, iEr2)))) = [&] {
                     return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
+                },
+                pattern | ds(as<SetOp>(as<Union>(iUnion1)), as<SetOp>(as<Union>(iUnion2)))   = [&] {
+                    return equalC<ExprPtr>(*iUnion1, *iUnion2);
+                },
+                pattern | ds(as<Interval>(ds(iIntervalEnd1, iIntervalEnd2)), as<Interval>(ds(iIntervalEnd3, iIntervalEnd4)))   = [&] {
+                    return equalC<IntervalEnd>({*iIntervalEnd2, *iIntervalEnd1}, {*iIntervalEnd4, *iIntervalEnd3});
                 },
                 pattern | _ = [&] { return false; }
             // clang-format on

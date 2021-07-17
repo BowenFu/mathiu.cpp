@@ -12,8 +12,8 @@ namespace mathiu
     {
         ExprPtr solvePoly(ExprPtr const& ex, ExprPtr const& var);
 
-        inline auto const realInterval = [](auto &&left, auto &&right)
-        { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
+        auto const realInterval = [](auto &&left, auto &&right)
+        { return ds(and_(ds(asDouble, _), left), and_(ds(asDouble, _), right)); };
 
         ExprPtr intersectInterval(Interval const& lhs, Interval const& rhs);
 
