@@ -1,16 +1,14 @@
-#ifndef SOLVE_H
-#define SOLVE_H
-
 #include "matchit.h"
-#include "core.h"
-#include "diff.h"
-#include "polynomial.h"
+#include "mathiu/core.h"
+#include "mathiu/diff.h"
+#include "mathiu/polynomial.h"
+#include "mathiu/solve.h"
 
 namespace mathiu
 {
     namespace impl
     {
-        inline ExprPtr solvePoly(ExprPtr const& ex, ExprPtr const& var)
+        ExprPtr solvePoly(ExprPtr const& ex, ExprPtr const& var)
         {
 #if DEBUG
             std::cout << "solvePoly: " << toString(ex) << ",\t" << toString(var) << std::endl;
@@ -60,10 +58,7 @@ namespace mathiu
                 });
         }
 
-        inline auto const realInterval = [](auto &&left, auto &&right)
-        { return ds(left.at(ds(asDouble, _)), right.at(ds(asDouble, _))); };
-
-        inline ExprPtr intersectInterval(Interval const& lhs, Interval const& rhs)
+        ExprPtr intersectInterval(Interval const& lhs, Interval const& rhs)
         {
             Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;
             return match(lhs, rhs)
@@ -86,7 +81,7 @@ namespace mathiu
             );
         }
 
-        inline bool inInterval(ExprPtr const& e, Interval const& interval)
+        bool inInterval(ExprPtr const& e, Interval const& interval)
         {
 #if DEBUG
             std::cout << "inInterval: " << toString(e) << ",\t" << toString(std::make_shared<Expr const>(interval)) << std::endl;
@@ -128,7 +123,7 @@ namespace mathiu
             return result;
         }
 
-        inline ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs)
+        ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs)
         {
 #if DEBUG
             std::cout << "intersect: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
@@ -184,7 +179,7 @@ namespace mathiu
             );
         }
 
-        inline ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain = complexes)
+        ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain)
         {
 #if DEBUG
             std::cout << "solve: " << toString(ex) << ",\t" << toString(var) << ",\t" << toString(domain) << std::endl;
@@ -219,5 +214,3 @@ namespace mathiu
     } // namespace impl
     using impl::solve;
 } // namespace mathiu
-
-#endif // SOLVE_H
