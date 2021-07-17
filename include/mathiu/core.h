@@ -592,6 +592,11 @@ namespace mathiu
                 return false;
             }
         });
+
+        inline ExprPtr interval(ExprPtr const& l, bool const lClose, ExprPtr const& r, bool const rClose)
+        {
+            return std::make_shared<impl::Expr const>(impl::Interval{{l, lClose}, {r, rClose}});
+        }
     } // namespace impl
     using impl::Integer;
     using impl::symbol;

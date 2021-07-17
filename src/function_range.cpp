@@ -106,14 +106,18 @@ namespace mathiu::impl
         Id<Union> iUnion1, iUnion2;
         return match(lhs, rhs)(
             pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&]
-            { return unionInterval(*iInterval1, *iInterval2); },
+            {
+                return unionInterval(*iInterval1, *iInterval2);
+            },
             pattern | ds(false_, _) = expr(rhs),
             pattern | ds(_, false_) = expr(lhs),
             pattern | ds(some(as<SetOp>(as<Union>(iUnion1))), some(as<SetOp>(as<Union>(iUnion2)))) = [&]
             {
                 return mergeUnion(*iUnion1, *iUnion2);
             },
-            pattern | ds(some(as<Interval>(iInterval1.at(realInterval(_, _)))), some(as<SetOp>(as<Union>(ds(some(as<Interval>(iInterval2.at(realInterval(_, _)))), some(as<Interval>(iInterval3.at(realInterval(_, _))))))))) = [&]
+            pattern | ds(some(as<Interval>(iInterval1.at(realInterval(_, _)))),
+                        some(as<SetOp>(as<Union>(ds(some(as<Interval>(iInterval2.at(realInterval(_, _)))),
+                                                    some(as<Interval>(iInterval3.at(realInterval(_, _))))))))) = [&]
             {
                 auto result = unionInterval(*iInterval1, *iInterval2);
                 auto newI = std::get<Interval>(*result);
@@ -128,7 +132,9 @@ namespace mathiu::impl
                 return mergeUnion(Union{{rhs}}, *iUnion2);
             },
             pattern | _ = [&]
-            { return std::make_shared<Expr const>(SetOp{Union{{lhs, rhs}}}); });
+            {
+                return std::make_shared<Expr const>(SetOp{Union{{lhs, rhs}}});
+            });
     }
 
     ExprPtr functionRangeImpl(ExprPtr const &function, ExprPtr const &symbol, ExprPtr const &domain)
