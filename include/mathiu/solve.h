@@ -22,6 +22,10 @@ namespace mathiu
         ExprPtr intersect(ExprPtr const& lhs, ExprPtr const& rhs);
 
         ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain = complexes);
+        
+        ExprPtr solveInequation(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain);
+
+        ExprPtr union_(ExprPtr const &lhs, ExprPtr const &rhs);
 
     } // namespace impl
     using impl::solve;

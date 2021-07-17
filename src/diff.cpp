@@ -11,14 +11,13 @@ namespace mathiu::impl
 #endif // DEBUG
 
         using namespace matchit;
-        constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
         Id<Sum> iS;
         Id<Product> iP;
         Id<ExprPtr> iEBase, iEExp, iENat;
         Id<ExprPtr> iE;
         Id<PieceWise> iPieceWise;
         return match(exp)(
-            pattern | some(isRational) = expr(0_i),
+            pattern | asDouble = expr(0_i),
             pattern | var = expr(1_i),
             pattern | some(as<Symbol>(_)) = expr(0_i),
             pattern | some(as<Sum>(iS)) = [&]

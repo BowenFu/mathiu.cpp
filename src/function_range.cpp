@@ -102,9 +102,17 @@ namespace mathiu::impl
         std::cout << "union_: " << toString(lhs) << ",\t" << toString(rhs) << std::endl;
 #endif // DEBUG
 
+        Id<Set> iSet1, iSet2;
         Id<Interval> iInterval1, iInterval2, iInterval3;
         Id<Union> iUnion1, iUnion2;
         return match(lhs, rhs)(
+            pattern | ds(some(as<Set>(iSet1)), some(as<Set>(iSet2))) = [&]
+            {
+                Set solutions1 = *iSet1;
+                Set solutions2 = *iSet2;
+                solutions1.merge(solutions2);
+                return makeSharedExprPtr(std::move(solutions1));
+            },
             pattern | ds(some(as<Interval>(iInterval1)), some(as<Interval>(iInterval2))) = [&]
             {
                 return unionInterval(*iInterval1, *iInterval2);
@@ -144,7 +152,7 @@ namespace mathiu::impl
 #endif // DEBUG
 
         Id<Union> iUnion;
-        return match(*domain)(
+        auto result = match(*domain)(
             pattern | as<Interval>(_) = [&]
             { return makeSharedExprPtr(functionRangeImplIntervalDomain(function, symbol, domain)); },
             pattern | as<SetOp>(as<Union>(iUnion)) = [&]
@@ -161,6 +169,11 @@ namespace mathiu::impl
                 throw std::logic_error{"Mismatch in functionRangeImpl!"};
                 return false_;
             });
+#if DEBUG
+        std::cout << "functionRangeImpl: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\tresult: " << toString(result) << std::endl;
+#endif // DEBUG
+
+    return result;
     }
 
     ExprPtr functionRange(ExprPtr const &function, ExprPtr const &symbol, ExprPtr const &domain)
@@ -170,10 +183,9 @@ namespace mathiu::impl
 #endif // DEBUG
 
         Id<PieceWise> iPieceWise;
-        return match(*function)(
+        auto result = match(*function)(
             pattern | as<PieceWise>(iPieceWise) = [&]
             {
-                // FIXME union expr instead of interval
                 return std::accumulate((*iPieceWise).begin(), (*iPieceWise).end(), false_, [&](auto &&result, auto &&e)
                                        {
                                            auto const newDomain = intersect(solveInequation(e.second, symbol), domain);
@@ -181,10 +193,15 @@ namespace mathiu::impl
                                            {
                                                return result;
                                            }
-                                           return union_(result, functionRangeImpl(e.first, symbol, newDomain));
+                                           return union_(result, functionRange(e.first, symbol, newDomain));
                                        });
             },
             pattern | _ = [&]
             { return functionRangeImpl(function, symbol, domain); });
+#if DEBUG
+        std::cout << "functionRange: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\tresult: " << toString(result) << std::endl;
+#endif // DEBUG
+
+    return result;
     }
 } // namespace mathiu::impl

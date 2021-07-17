@@ -37,6 +37,7 @@ namespace mathiu::impl
         Id<PieceWise> iPieceWise1, iPieceWise2;
         Id<Union> iUnion1, iUnion2;
         Id<IntervalEnd> iIntervalEnd1, iIntervalEnd2, iIntervalEnd3, iIntervalEnd4;
+        Id<Set> iSet1, iSet2;
         constexpr auto canBeProduct = or_(as<Power>(_), as<Log>(_), as<Sum>(_), as<Symbol>(_));
         constexpr auto canBePower = or_(as<Sum>(_), as<Log>(_), as<Symbol>(_));
         constexpr auto canBeLog = or_(as<Sum>(_), as<Symbol>(_));
@@ -118,6 +119,10 @@ namespace mathiu::impl
                 },
                 pattern | ds(as<Interval>(_), as<SetOp>(as<Union>(_))) = expr(true),
                 pattern | ds(as<SetOp>(as<Union>(_)), as<Interval>(_)) = expr(false),
+                pattern | ds(as<Set>(iSet1), as<Set>(iSet2)) = [&]
+                {
+                    return lessC<ExprPtr>(*iSet1, *iSet2);
+                },
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
             // clang-format on
         );
@@ -212,6 +217,16 @@ namespace mathiu::impl
             { return std::make_pair(1_i, makeSharedExprPtr(e)); });
     }
 
+    template <typename Op>
+    ExprPtr transformPieceWise(PieceWise p, Op op)
+    {
+        for (auto &e : p)
+        {
+            e.first = op(e.first);
+        }
+        return makeSharedExprPtr(std::move(p));
+    }
+
     ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
     {
 #if VERBOSE_DEBUG
@@ -221,6 +236,7 @@ namespace mathiu::impl
         Id<Integer> iil, iir;
         Id<Integer> ii1, ii2, ii3, ii4;
         Id<ExprPtr> coeff1, coeff2, rest;
+        Id<PieceWise> iPieceWise;
         return match(*lhs, *rhs)(
             // clang-format off
                 // basic commutative transformation
@@ -245,6 +261,15 @@ namespace mathiu::impl
                 pattern | ds(as<Integer>(iil), as<Fraction>(ds(ii1, ii2)))   = [&] { return simplifyRational(fraction(*iil * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Integer>(iir))   = [&] { return simplifyRational(fraction(*iir * *ii2 + *ii1, *ii2)); },
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii4 + *ii2 * *ii3, *ii2 * *ii4)); },
+                // piecewise
+                pattern | ds(as<PieceWise>(iPieceWise), _) = [&]
+                {
+                    return transformPieceWise(*iPieceWise, [&](auto&& e) { return e + rhs; });
+                },
+                pattern | ds(_, as<PieceWise>(iPieceWise)) = [&]
+                {
+                    return transformPieceWise(*iPieceWise, [&](auto&& e) { return lhs + e; });
+                },
                 // basic distributive transformation
                 pattern | ds(asCoeffAndRest(coeff1, rest), asCoeffAndRest(coeff2, rest)) = [&]
                 {
@@ -277,6 +302,7 @@ namespace mathiu::impl
         Id<Integer> ii1, ii2, ii3, ii4;
         Id<ExprPtr> iu, iv, iw;
         Id<ExprPtr> exp1, exp2, base;
+        Id<PieceWise> iPieceWise;
         return match(*lhs, *rhs)(
             // clang-format off
                 // basic commutative transformation
@@ -305,6 +331,15 @@ namespace mathiu::impl
                 pattern | ds(as<Fraction>(ds(ii1, ii2)), as<Fraction>(ds(ii3, ii4)))   = [&] { return simplifyRational(fraction(*ii1 * *ii3, *ii2 * *ii4)); },
                 // basic power transformation 1
                 pattern | ds(as<Power>(ds(iu, iv)), as<Power>(ds(iu, iw))) = iu^(iv+iw),
+                // piecewise
+                pattern | ds(as<PieceWise>(iPieceWise), _) = [&]
+                {
+                    return transformPieceWise(*iPieceWise, [&](auto&& e) { return e * rhs; });
+                },
+                pattern | ds(_, as<PieceWise>(iPieceWise)) = [&]
+                {
+                    return transformPieceWise(*iPieceWise, [&](auto&& e) { return lhs * e; });
+                },
                 // basic distributive transformation
                 pattern | ds(asBaseAndExp(base, exp1), asBaseAndExp(base, exp2)) = [&]
                 {
@@ -389,8 +424,8 @@ namespace mathiu::impl
         {
             return false_;
         }
-        return match(*lhs, *rhs)(
-            pattern | ds(isRational, isRational) = [&]
+        return match(lhs, rhs)(
+            pattern | ds(asDouble, asDouble) = [&]
             { return evald(lhs) < evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
             { return makeSharedExprPtr(Relational{RelationalKind::kLESS, lhs, rhs}); });
@@ -402,8 +437,8 @@ namespace mathiu::impl
         {
             return true_;
         }
-        return match(*lhs, *rhs)(
-            pattern | ds(isRational, isRational) = [&]
+        return match(lhs, rhs)(
+            pattern | ds(asDouble, asDouble) = [&]
             { return evald(lhs) <= evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
             { return makeSharedExprPtr(Relational{RelationalKind::kLESS_EQUAL, lhs, rhs}); });
@@ -415,8 +450,8 @@ namespace mathiu::impl
         {
             return true_;
         }
-        return match(*lhs, *rhs)(
-            pattern | ds(isRational, isRational) = [&]
+        return match(lhs, rhs)(
+            pattern | ds(asDouble, asDouble) = [&]
             { return evald(lhs) >= evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
             { return makeSharedExprPtr(Relational{RelationalKind::kGREATER_EQUAL, lhs, rhs}); });
@@ -428,8 +463,8 @@ namespace mathiu::impl
         {
             return false_;
         }
-        return match(*lhs, *rhs)(
-            pattern | ds(isRational, isRational) = [&]
+        return match(lhs, rhs)(
+            pattern | ds(asDouble, asDouble) = [&]
             { return evald(lhs) > evald(rhs) ? true_ : false_; },
             pattern | _ = [&]
             { return makeSharedExprPtr(Relational{RelationalKind::kGREATER, lhs, rhs}); });
@@ -477,8 +512,8 @@ namespace mathiu::impl
 
     ExprPtr max(ExprPtr const &lhs, ExprPtr const &rhs)
     {
-        return match(*lhs, *rhs)(
-            pattern | ds(isRational, isRational) = [&]
+        return match(lhs, rhs)(
+            pattern | ds(asDouble, asDouble) = [&]
             {
                 auto const l = evald(lhs);
                 auto const r = evald(rhs);
@@ -490,8 +525,8 @@ namespace mathiu::impl
 
     ExprPtr min(ExprPtr const &lhs, ExprPtr const &rhs)
     {
-        return match(*lhs, *rhs)(
-            pattern | ds(isRational, isRational) = [&]
+        return match(lhs, rhs)(
+            pattern | ds(asDouble, asDouble) = [&]
             {
                 auto const l = evald(lhs);
                 auto const r = evald(rhs);
@@ -751,6 +786,7 @@ namespace mathiu::impl
         constexpr auto firstOrSecond = [](auto &&p)
         { return or_(ds(p, _), ds(_, p)); };
         Id<ExprPtrMap> iMap;
+        Id<PieceWise> iPieceWise;
         return match(ex)(
             pattern | var = expr(false),
             pattern | some(or_(as<Sum>(iMap), as<Product>(iMap))) = [&]
@@ -760,6 +796,17 @@ namespace mathiu::impl
             pattern | some(as<Log>(firstOrSecond(var))) = expr(false),
             pattern | some(as<Sin>(ds(var))) = expr(false),
             pattern | some(as<Arctan>(ds(var))) = expr(false),
+            pattern | some(as<PieceWise>(iPieceWise)) = [&]
+            {
+                for (auto const& e : *iPieceWise)
+                {
+                    if (!freeOf(e.first, var))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            },
             pattern | _ = expr(true));
     }
 

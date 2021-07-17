@@ -101,3 +101,24 @@ TEST(solveEq, 3)
     EXPECT_EQ(toString(solve(e, x)), "{5/3}");
 }
 #endif
+
+TEST(solveEq, 4)
+{
+    auto const e = makeSharedExprPtr(impl::PieceWise{{{-1_i, -"x"_s >= "x"_s}, {1_i, -"x"_s < "x"_s}}});
+    auto solution = solve(e, "x"_s, interval(-3_i, true, -2_i, true));
+    EXPECT_EQ(toString(solution), "{}");
+}
+
+TEST(solveEq, 5)
+{
+    auto const e = makeSharedExprPtr(impl::PieceWise{{{"x"_s + 2_i, -"x"_s >= "x"_s}, {1_i, -"x"_s < "x"_s}}});
+    auto solution = solve(e, "x"_s, interval(-3_i, true, -2_i, true));
+    EXPECT_EQ(toString(solution), "{-2}");
+}
+
+TEST(solveEq, 5_)
+{
+    auto const e = "x"_s + 2_i;
+    auto solution = solve(e, "x"_s, interval(-3_i, true, -2_i, true));
+    EXPECT_EQ(toString(solution), "{-2}");
+}
