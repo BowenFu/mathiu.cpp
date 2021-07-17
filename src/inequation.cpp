@@ -68,18 +68,18 @@ namespace mathiu
                                     switch (rKind)
                                     {
                                     case RelationalKind::kLESS:
-                                        return std::make_shared<Expr const>(Interval({left, false}, {right, false}));
+                                        return interval(left, false, right, false);
 
                                     case RelationalKind::kLESS_EQUAL:
-                                        return std::make_shared<Expr const>(Interval({left, true}, {right, true}));
+                                        return interval(left, true, right, true);
 
                                     case RelationalKind::kGREATER:
-                                        return std::make_shared<Expr const>(SetOp{Union{{std::make_shared<Expr const>(Interval({-infinity, false}, {left, false})),
-                                                                                         std::make_shared<Expr const>(Interval({right, false}, {infinity, false}))}}});
+                                        return std::make_shared<Expr const>(SetOp{Union{{interval(-infinity, false, left, false),
+                                                                                         interval(right, false, infinity, false)}}});
 
                                     case RelationalKind::kGREATER_EQUAL:
-                                        return std::make_shared<Expr const>(SetOp{Union{{std::make_shared<Expr const>(Interval({-infinity, false}, {left, true})),
-                                                                                         std::make_shared<Expr const>(Interval({right, true}, {infinity, false}))}}});
+                                        return std::make_shared<Expr const>(SetOp{Union{{interval(-infinity, false, left, true),
+                                                                                         interval(right, true, infinity, false)}}});
 
                                     case RelationalKind::kEQUAL:
                                         throw std::logic_error{"Unreachable!"};
@@ -97,16 +97,16 @@ namespace mathiu
                             switch (rKind)
                             {
                             case RelationalKind::kLESS:
-                                return std::make_shared<Expr const>(Interval({-infinity, false}, {root, false}));
+                                return interval(-infinity, false, root, false);
                             
                             case RelationalKind::kLESS_EQUAL:
-                                return std::make_shared<Expr const>(Interval({-infinity, false}, {root, true}));
+                                return interval(-infinity, false, root, true);
                             
                             case RelationalKind::kGREATER:
-                                return std::make_shared<Expr const>(Interval({root, false}, {infinity, false}));
+                                return interval(root, false, infinity, false);
                             
                             case RelationalKind::kGREATER_EQUAL:
-                                return std::make_shared<Expr const>(Interval({root, true}, {infinity, false}));
+                                return interval(root, true, infinity, false);
 
                             case RelationalKind::kEQUAL:
                                 throw std::logic_error{"Unreachable!"};
