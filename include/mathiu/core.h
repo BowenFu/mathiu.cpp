@@ -5,7 +5,6 @@
 #include <variant>
 #include <memory>
 #include <string>
-#include <cmath>
 #include <complex>
 #include <vector>
 #include <map>
@@ -383,25 +382,6 @@ namespace mathiu
             return less(lhs.first, rhs.first);
         }
 
-        template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
-        bool lessC(C1 const& v1, C2 const& v2)
-        {
-            auto i = std::rbegin(v1);
-            auto j = std::rbegin(v2);
-            for (; i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
-            {
-                if (equal((*i), (*j)))
-                {
-                    continue;
-                }
-                else
-                {
-                    return less((*i), (*j));
-                }
-            }
-            return v1.size() < v2.size();
-        }
-
         inline bool equal(IntervalEnd const& lhs, IntervalEnd const& rhs)
         {
             return equal(lhs.first, rhs.first) && lhs.second == rhs.second;
@@ -429,24 +409,7 @@ namespace mathiu
 
         std::complex<double> evalc(ExprPtr const &ex);
 
-        std::pair<ExprPtr, ExprPtr> coeffAndTerm(Expr const &e);
-
-        template <typename C, typename T>
-        auto insertSum(C const& c, T const& t)
-        {
-            return mergeSum(c, C{{{coeffAndTerm(*t).second, t}}});
-        }
-
-        inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
-
         std::pair<ExprPtr, ExprPtr> baseAndExp(Expr const &e);
-
-        template <typename C, typename T>
-        auto insertProduct(C const& c, T const& t)
-        {
-            return mergeProduct(c, C{{{baseAndExp(*t).first, t}}});
-        }
-
         inline auto constexpr asBaseAndExp = [](auto&& base, auto&& exp) { return app(baseAndExp, ds(base, exp)); };
 
         ExprPtr pow(ExprPtr const &lhs, ExprPtr const &rhs);

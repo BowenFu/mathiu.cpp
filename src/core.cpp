@@ -24,6 +24,25 @@ namespace mathiu::impl
             { return makeSharedExprPtr(Arctan{{ex}}); });
     }
 
+    template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
+    bool lessC(C1 const &v1, C2 const &v2)
+    {
+        auto i = std::rbegin(v1);
+        auto j = std::rbegin(v2);
+        for (; i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
+        {
+            if (equal((*i), (*j)))
+            {
+                continue;
+            }
+            else
+            {
+                return less((*i), (*j));
+            }
+        }
+        return v1.size() < v2.size();
+    }
+
     // The <| order relation
     // for basic commutative transformation
     bool less(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -204,7 +223,7 @@ namespace mathiu::impl
         constexpr auto firstIsCoeff = [](auto &&id, auto &&whole)
         {
             constexpr auto asCoeff = or_(as<Integer>(_), as<Fraction>(_));
-            constexpr auto second = [](auto&& p)
+            constexpr auto second = [](auto &&p)
             {
                 return p.second;
             };
@@ -301,6 +320,20 @@ namespace mathiu::impl
             return (*result.begin()).second;
         }
         return makeSharedExprPtr(std::move(result));
+    }
+
+    template <typename C, typename T>
+    auto insertSum(C const& c, T const& t)
+    {
+        return mergeSum(c, C{{{coeffAndTerm(*t).second, t}}});
+    }
+
+    inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
+
+    template <typename C, typename T>
+    auto insertProduct(C const& c, T const& t)
+    {
+        return mergeProduct(c, C{{{baseAndExp(*t).first, t}}});
     }
 
     ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
