@@ -21,23 +21,6 @@ TEST(Order, symbol)
     EXPECT_TRUE(less(symbol("x1"), symbol("xa")));
 }
 
-TEST(Order, less)
-{
-    EXPECT_TRUE(impl::lessC<double>({}, {1}));
-    EXPECT_TRUE(impl::lessC<double>({1}, {1, 2}));
-    EXPECT_TRUE(impl::lessC<Integer>({2}, {1, 2}));
-    EXPECT_TRUE(impl::lessC<float>({2.0}, {1.0, 2.0}));
-    EXPECT_TRUE(impl::lessC<double>({2.0}, {1.0, 2.0}));
-    EXPECT_TRUE(impl::lessC<double>({2}, {1, 2}));
-    EXPECT_TRUE(impl::lessC<double>({1, 2}, {1, 1, 2}));
-    EXPECT_TRUE(impl::lessC<double>({1, 2, 3}, {1, 1, 2, 3}));
-    EXPECT_TRUE(impl::lessC<std::string>({"c", "d"}, {"b", "c", "d"}));
-    auto const b = symbol("b");
-    auto const c = symbol("c");
-    auto const d = symbol("d");
-    EXPECT_TRUE(impl::lessC<impl::ExprPtr>({c, d}, {b, c, d}));
-}
-
 TEST(Order, product)
 {
     auto const a = symbol("a");
@@ -55,13 +38,11 @@ TEST(Order, product1)
     auto const d = symbol("d");
     EXPECT_EQ(toString(b * d), "(* b d)");
     EXPECT_EQ(toString(b * c * d), "(* b c d)");
-    EXPECT_TRUE(impl::lessC<impl::ExprPtr>({b, d}, {b, c, d}));
 
     auto const e1 = c * d;
     auto const e2 = b * c * d;
     EXPECT_EQ(toString(e1), "(* c d)");
     EXPECT_EQ(toString(e2), "(* b c d)");
-    EXPECT_TRUE(impl::lessC<impl::ExprPtr>({c, d}, {b, c, d}));
     EXPECT_TRUE(less(e1, e2));
 }
 

@@ -4,6 +4,8 @@
 #include "mathiu/diff.h"
 #include "mathiu/solve.h"
 #include "mathiu/polynomial.h"
+#include "mathiu/setOp.h"
+#include <numeric>
 
 namespace mathiu
 {

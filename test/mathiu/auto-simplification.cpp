@@ -35,68 +35,6 @@ TEST(Simplification, distributive)
     EXPECT_TRUE(mathiu::impl::equal(e1, e2));
 }
 
-TEST(asCoeffAndRest, 1)
-{
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> coeff;
-    auto result = match(*(symbol("x")))
-    (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), 1_i); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
-}
-
-TEST(asCoeffAndRest, 2)
-{
-    auto const e = symbol("x")^2_i;
-
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> coeff;
-    auto result = match(*e)
-    (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), 1_i); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
-}
-
-TEST(asCoeffAndRest, 3)
-{
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> coeff;
-    auto result = match(*(5_i * symbol("x")))
-    (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, _) = [&] { return mathiu::impl::equal((*coeff), 5_i); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
-}
-
-TEST(asCoeffAndRest, 4)
-{
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> rest;
-    auto result = match(*(5_i * symbol("x")))
-    (
-        pattern | mathiu::impl::asCoeffAndRest(_, rest) = [&] { return mathiu::impl::equal((*rest), symbol("x")); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
-}
-
-TEST(asCoeffAndRest, multiple)
-{
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> coeff1, coeff2, rest;
-    auto result = match(*(5_i * symbol("x")), *symbol("x"))
-    (
-        pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest)) = [&] { return mathiu::impl::equal((*rest), symbol("x")); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
-}
-
 TEST(asBaseAndExp, 1)
 {
     using namespace matchit;
@@ -158,13 +96,6 @@ TEST(simplifyRational, int)
     EXPECT_EQ(toString(n2 + n3), "5");
 }
 
-TEST(simplifyRational, rational_)
-{
-    auto const f7o2 = fraction(14, -4);
-
-    EXPECT_EQ(toString(mathiu::impl::simplifyRational(f7o2)), "-7/2");
-}
-
 TEST(simplifyRational, rational)
 {
     auto const n2 = 2_i;
@@ -180,27 +111,6 @@ TEST(simplifyRational, rational2)
     EXPECT_EQ(toString(f3o2 + f3o2), "3");
 }
 
-
-TEST(asCoeffAndRest, rational)
-{
-    auto const n2 = 2_i;
-    auto const x = symbol("x");
-    auto const f3o2 = fraction(3, 2);
-
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> coeff1, coeff2, rest;
-    auto result = match(*(n2 * x), *(f3o2 * x))
-    (
-        pattern | ds(mathiu::impl::asCoeffAndRest(coeff1, rest), mathiu::impl::asCoeffAndRest(coeff2, rest))= [&]
-        {
-            ((*coeff1) + (*coeff2)); // * (*rest);
-            return mathiu::impl::equal((*coeff1), n2) && mathiu::impl::equal((*coeff2), f3o2) && mathiu::impl::equal((*rest), symbol("x")); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
-}
-
-
 TEST(Simplification, distributive2)
 {
     auto const n2 = 2_i;
@@ -210,21 +120,6 @@ TEST(Simplification, distributive2)
     auto const e1 = n2 * x;
     auto const e = n2 * x + y + f3o2 * x;
     EXPECT_EQ(toString(e), "(+ (* 7/2 x) y)");
-}
-
-TEST(asCoeffAndRest, product)
-{
-    auto const x = symbol("x");
-    auto const f3o2 = fraction(3, 2);
-
-    using namespace matchit;
-    Id<mathiu::impl::ExprPtr> coeff, rest;
-    auto result = match(*(f3o2 * x))
-    (
-        pattern | mathiu::impl::asCoeffAndRest(coeff, rest) = [&] { return mathiu::impl::equal((*coeff), f3o2) && mathiu::impl::equal((*rest), symbol("x")); },
-        pattern | _ = expr(false)
-    );
-    EXPECT_TRUE(result);
 }
 
 TEST(asCoeffAndRest, product2)
@@ -349,10 +244,6 @@ TEST(autoSimplification, sumSin)
     auto const n2 = 2_i;
     auto const e1 = sinX;
     auto const e2 = n2 * sinX;
-    EXPECT_EQ(toString(coeffAndTerm(*e1).second), toString(sinX));
-    EXPECT_EQ(toString(coeffAndTerm(*e2).second), toString(sinX));
-    EXPECT_TRUE(mathiu::impl::equal(coeffAndTerm(*e1).second, sinX));
-    EXPECT_TRUE(mathiu::impl::equal(coeffAndTerm(*e2).second, sinX));
     auto const e = e1 + e2;
     EXPECT_EQ(toString(e), "(* 3 (Sin x))");
 }

@@ -1,8 +1,11 @@
 #include "mathiu/core.h"
 #include "matchit.h"
+#include <numeric>
 
 namespace mathiu::impl
 {
+    using namespace matchit;
+
     ExprPtr sin(ExprPtr const &ex)
     {
         using namespace matchit;
@@ -19,6 +22,54 @@ namespace mathiu::impl
         return match(ex)(
             pattern | _ = [&]
             { return makeSharedExprPtr(Arctan{{ex}}); });
+    }
+
+    inline bool less(double lhs, double rhs)
+    {
+        return lhs < rhs;
+    }
+
+    inline bool less(std::pair<ExprPtr const, ExprPtr> const &lhs, std::pair<ExprPtr const, ExprPtr> const &rhs)
+    {
+        return less(lhs.second, rhs.second);
+    }
+
+    inline bool less(std::string const &lhs, std::string const &rhs)
+    {
+        return lhs < rhs;
+    }
+
+    inline bool less(IntervalEnd const &lhs, IntervalEnd const &rhs)
+    {
+        if (equal(lhs.first, rhs.first))
+        {
+            return lhs.second < rhs.second;
+        }
+        return less(lhs.first, rhs.first);
+    }
+
+    inline bool equal(IntervalEnd const &lhs, IntervalEnd const &rhs)
+    {
+        return equal(lhs.first, rhs.first) && lhs.second == rhs.second;
+    }
+
+    template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
+    bool lessC(C1 const &v1, C2 const &v2)
+    {
+        auto i = std::rbegin(v1);
+        auto j = std::rbegin(v2);
+        for (; i != std::rend(v1) && j != std::rend(v2); ++i, ++j)
+        {
+            if (equal((*i), (*j)))
+            {
+                continue;
+            }
+            else
+            {
+                return less((*i), (*j));
+            }
+        }
+        return v1.size() < v2.size();
     }
 
     // The <| order relation
@@ -128,6 +179,12 @@ namespace mathiu::impl
         );
     }
 
+    template <typename T, typename C = std::initializer_list<T>>
+    bool equalC(C const &v1, C const &v2)
+    {
+        return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2), equalLambda);
+    }
+
     // The equality relation
     // for basic commutative transformation
     bool equal(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -198,6 +255,17 @@ namespace mathiu::impl
 
     std::pair<ExprPtr, ExprPtr> coeffAndTerm(Expr const &e)
     {
+        constexpr auto firstIsCoeff = [](auto &&id, auto &&whole)
+        {
+            constexpr auto asCoeff = or_(as<Integer>(_), as<Fraction>(_));
+            constexpr auto second = [](auto &&p)
+            {
+                return p.second;
+            };
+            // second part of the first pair
+            return as<Product>(whole.at(ds(app(second, id.at(some(asCoeff))), ooo)));
+        };
+
         Id<ExprPtr> icoeff;
         Id<Product> ip;
         return match(e)(
@@ -225,6 +293,83 @@ namespace mathiu::impl
             e.first = op(e.first);
         }
         return makeSharedExprPtr(std::move(p));
+    }
+
+    template <typename C, typename Op, typename Identity>
+    auto merge(C const &c1, C const &c2, Op op, Identity identity) -> C
+    {
+        if (c1.size() < c2.size())
+        {
+            return merge(c2, c1, op, identity);
+        }
+        C result = c1;
+        // We assume rational is at the beginning.
+        auto const firstIsRational = matched(result.begin()->second, some(isRational));
+        for (auto const &e : c2)
+        {
+            auto const bothRational = firstIsRational && matched(e.second, some(isRational));
+            auto const it = bothRational ? result.begin() : result.find(e.first);
+            if (it == result.end())
+            {
+                result.insert(e);
+            }
+            else
+            {
+                auto const opResult = op(it->second, e.second);
+                if (equal(opResult, identity))
+                {
+                    result.erase(it);
+                }
+                else
+                {
+                    it->second = opResult;
+                }
+            }
+        }
+        return result;
+    }
+
+    template <typename C>
+    auto mergeSum(C const &c1, C const &c2)
+    {
+        constexpr auto add = [](auto &&lhs, auto &&rhs)
+        { return lhs + rhs; };
+        auto result = merge(c1, c2, add, 0_i);
+        ;
+        if (result.size() == 1)
+        {
+            return (*result.begin()).second;
+        }
+        return makeSharedExprPtr(std::move(result));
+    }
+
+    template <typename C>
+    auto mergeProduct(C const &c1, C const &c2)
+    {
+        constexpr auto mul = [](auto &&lhs, auto &&rhs)
+        { return lhs * rhs; };
+        auto result = merge(c1, c2, mul, 1_i);
+        ;
+        if (result.size() == 1)
+        {
+            return (*result.begin()).second;
+        }
+        return makeSharedExprPtr(std::move(result));
+    }
+
+    template <typename C, typename T>
+    auto insertSum(C const &c, T const &t)
+    {
+        return mergeSum(c, C{{{coeffAndTerm(*t).second, t}}});
+    }
+
+    inline auto constexpr asCoeffAndRest = [](auto &&coeff, auto &&rest)
+    { return app(coeffAndTerm, ds(coeff, rest)); };
+
+    template <typename C, typename T>
+    auto insertProduct(C const &c, T const &t)
+    {
+        return mergeProduct(c, C{{{baseAndExp(*t).first, t}}});
     }
 
     ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -631,6 +776,27 @@ namespace mathiu::impl
         throw std::runtime_error("Missing case!");
     }
 
+    inline std::string toString(std::string const &s)
+    {
+        return s;
+    }
+
+    template <typename T>
+    inline std::string toString(T const &t)
+    {
+        return std::to_string(t);
+    }
+
+    inline bool equal(std::pair<ExprPtr const, ExprPtr> const &lhs, std::pair<ExprPtr const, ExprPtr> const &rhs)
+    {
+        return equal(lhs.second, rhs.second);
+    }
+
+    template <typename T>
+    inline bool equal(T const t1, T const t2)
+    {
+        return t1 == t2;
+    }
     std::string toString(ExprPtr const &ex)
     {
         assert(ex);
@@ -723,9 +889,6 @@ namespace mathiu::impl
                     return std::string("(") + (*iB1? "C" : "O") + (*iB2? "C" : "O") + "Interval " +
                     toString(*il) + " " + toString(*ir) + ")";
                 },
-                pattern | as<Complexes>(_) = [&] {
-                    return "complexes";
-                },
                 pattern | as<True>(_) = [&] {
                     return "true";
                 },
@@ -798,7 +961,7 @@ namespace mathiu::impl
             pattern | some(as<Arctan>(ds(var))) = expr(false),
             pattern | some(as<PieceWise>(iPieceWise)) = [&]
             {
-                for (auto const& e : *iPieceWise)
+                for (auto const &e : *iPieceWise)
                 {
                     if (!freeOf(e.first, var))
                     {

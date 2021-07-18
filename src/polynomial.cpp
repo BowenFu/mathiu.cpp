@@ -3,9 +3,12 @@
 #include "mathiu/diff.h"
 #include "mathiu/polynomial.h"
 #include <cmath>
+#include <numeric>
 
 namespace mathiu::impl
 {
+    using namespace matchit;
+
     Integer degreeMonomial(ExprPtr const &monomial, Set const &varSet)
     {
 #if VERBOSE_DEBUG

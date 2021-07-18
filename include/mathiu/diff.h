@@ -1,7 +1,6 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#include "matchit.h"
 #include "core.h"
 
 namespace mathiu
