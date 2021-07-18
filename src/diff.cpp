@@ -1,5 +1,5 @@
 #include "matchit.h"
-#include "mathiu/core.h"
+#include "internal.h"
 #include "mathiu/diff.h"
 #include <numeric>
 

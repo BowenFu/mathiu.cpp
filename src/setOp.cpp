@@ -1,6 +1,6 @@
 #include <iterator>
 #include "matchit.h"
-#include "mathiu/core.h"
+#include "internal.h"
 #include "mathiu/setOp.h"
 
 namespace mathiu::impl

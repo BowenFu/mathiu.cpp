@@ -4,6 +4,8 @@ solve.cpp polynomial.cpp relational.cpp freeOf.cpp
 substitute.cpp functionRange.cpp inequation.cpp
 interval-comp.cpp
 )
+target_include_directories(unittests PRIVATE
+  ${PROJECT_SOURCE_DIR}/src PRIVATE matchit)
 target_compile_options(unittests PRIVATE ${BASE_COMPILE_FLAGS})
 target_link_libraries(unittests PRIVATE mathiu gtest_main matchit)
 set_target_properties(unittests PROPERTIES CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS OFF)

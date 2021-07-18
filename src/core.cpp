@@ -1,5 +1,5 @@
-#include "mathiu/core.h"
 #include "matchit.h"
+#include "internal.h"
 #include <numeric>
 
 namespace mathiu::impl

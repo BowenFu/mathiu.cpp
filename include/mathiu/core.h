@@ -1,7 +1,6 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include "matchit.h"
 #include <variant>
 #include <memory>
 #include <string>
@@ -11,13 +10,6 @@
 #include <set>
 #include <list>
 
-#define VERBOSE_DEBUG 0
-#define DEBUG 1
-
-#if DEBUG
-#include <iostream>
-#endif // DEBUG
-
 namespace mathiu::impl
 {
     struct Expr;
@@ -26,48 +18,6 @@ namespace mathiu::impl
     bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
 
 } // namespace mathiu::impl
-
-namespace matchit::impl
-{
-    template <>
-    class PatternTraits<mathiu::impl::ExprPtr>
-    {
-        using Pattern = mathiu::impl::ExprPtr;
-    public:
-        template <typename Value>
-        using AppResultTuple = std::tuple<>;
-
-        constexpr static auto nbIdV = 0;
-
-        template <typename Value, typename ContextT>
-        constexpr static auto matchPatternImpl(Value &&value, Pattern const &pattern,
-                                               int32_t /* depth */,
-                                               ContextT & /*context*/)
-        {
-            return mathiu::impl::equal(pattern, std::forward<Value>(value));
-        }
-        constexpr static void processIdImpl(Pattern const &, int32_t /*depth*/,
-                                            IdProcess) {}
-    };
-
-    template <>
-    class IdTraits<mathiu::impl::ExprPtr>
-    {
-        using Type = mathiu::impl::ExprPtr;
-    public:
-        static auto
-#if defined(__has_feature)
-#if __has_feature(address_sanitizer)
-            __attribute__((no_sanitize_address))
-#endif
-#endif
-            equal(Type const &lhs, Type const &rhs)
-        {
-            return mathiu::impl::equal(lhs, rhs);
-        }
-    };
-
-} // namespace matchit::impl
 
 namespace mathiu
 {
@@ -333,8 +283,6 @@ namespace mathiu
 
         double evald(ExprPtr const &ex);
 
-        inline constexpr auto isRational = matchit::or_(matchit::as<int>(matchit::_), matchit::as<Fraction>(matchit::_));
-
         // The <| order relation
         // for basic commutative transformation
         bool less(ExprPtr const &lhs, ExprPtr const &rhs);
@@ -413,18 +361,6 @@ namespace mathiu
         {
             return substitute(substitute(ex, srcDstPairs), seqPairs...);
         }
-
-        inline auto const asDouble = matchit::meet([](auto&& e)
-        {
-            try{
-                evald(e);
-                return true;
-            }
-            catch (...)
-            {
-                return false;
-            }
-        });
 
         inline ExprPtr interval(ExprPtr const& l, bool const lClose, ExprPtr const& r, bool const rClose)
         {
