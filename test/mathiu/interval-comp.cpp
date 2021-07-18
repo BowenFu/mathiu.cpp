@@ -54,3 +54,12 @@ TEST(IntervalComp, plus4)
     auto const finalRange = functionRange(e, set("x"_s >> interval(1_i, true, 2_i, false), "y"_s >> interval(-2_i, false, -1_i, true)));
     EXPECT_EQ(toString(finalRange), "(OOInterval -1 1)");
 }
+
+#if 0 // fix this with multivar calculus
+TEST(IntervalComp, times)
+{
+    auto const e = "x"_s * "y"_s;
+    auto const finalRange = functionRange(e, set("x"_s >> interval(1_i, true, 2_i, false), "y"_s >> interval(-2_i, false, -1_i, true)));
+    EXPECT_EQ(toString(finalRange), "(OOInterval -4 -1)");
+}
+#endif
