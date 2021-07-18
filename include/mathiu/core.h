@@ -8,7 +8,6 @@
 #include <cmath>
 #include <complex>
 #include <vector>
-#include <numeric>
 #include <map>
 #include <set>
 #include <list>

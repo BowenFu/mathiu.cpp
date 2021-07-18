@@ -12,5 +12,6 @@
 #include "mathiu/polynomial.h"
 #include "mathiu/solve.h"
 #include "mathiu/inequation.h"
+#include "mathiu/setOp.h"
 
 #endif // MATHIU_H

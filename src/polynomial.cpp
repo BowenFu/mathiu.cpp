@@ -3,6 +3,7 @@
 #include "mathiu/diff.h"
 #include "mathiu/polynomial.h"
 #include <cmath>
+#include <numeric>
 
 namespace mathiu::impl
 {
