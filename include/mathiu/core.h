@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <list>
+#include <array>
 
 namespace mathiu::impl
 {
