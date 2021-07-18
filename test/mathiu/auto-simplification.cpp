@@ -686,3 +686,11 @@ TEST(autoSimplification, prodXprod)
     EXPECT_EQ(toString(e), "(* -2 a b)");
 }
 
+TEST(autoSimplification, minus)
+{
+    auto const e1 = "x"_s + 1_i;
+    auto const e2 = "x"_s + 2_i;
+    auto const e = e1 - e2;
+    EXPECT_EQ(toString(e), "(+ 1 x (* -1 (+ 2 x)))");
+    EXPECT_EQ(toString(expand(e)), "-1");
+}

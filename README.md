@@ -20,7 +20,9 @@ The library originated as a demo library showing the usage of the C++ pattern ma
 
 But now it is developed independently.
 
-Sample 1 for differentiation.
+## Features
+
+### Differentiation
 
 ```C++
 auto const x = "x"_s;
@@ -30,7 +32,7 @@ auto const d = diff(e, x);
 std::cout << toString(d) << std::endl;
 ```
 
-Sample 2 for equation solving.
+### Equation Solving
 
 ```C++
 auto const x = "x"_s;
@@ -38,4 +40,25 @@ auto const eq = 2_i * x * x - 3_i * x + 1_i == 0_i;
 auto const solutions = solve(eq, x);
 // prints {1/2 1}
 std::cout << toString(solutions) << std::endl;
+```
+
+### Inequation Solving
+
+```C++
+auto const e1 = ("x"_s ^ 2_i) - 1_i;
+auto const e2 = (("x"_s - 3_i) ^ 2_i) - 3_i;;
+auto const ineq = e1 > e2;
+auto const suolutions = solveInequation(ineq, "x"_s);
+// prints (OOInterval 7/6 inf)
+std::cout << toString(solutions) << std::endl;
+```
+
+### Get Function Range
+
+```C++
+auto e = min(max(-"x"_s, "x"_s), 2_i);
+auto const domain = interval(-3_i, true, 3_i, true);
+auto const range = functionRange(e, "x"_s, domain);
+// prints (CCInterval 0 2)
+std::cout << toString(range) << std::endl;
 ```

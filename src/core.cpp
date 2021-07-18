@@ -84,7 +84,7 @@ namespace mathiu::impl
         Id<ExprPtr> iEl1, iEl2, iEr1, iEr2;
         Id<Product> iP1, iP2;
         Id<Sum> iS1, iS2;
-        Id<SubstitutePair> iPair1, iPair2;
+        Id<Pair> iPair1, iPair2;
         Id<PieceWise> iPieceWise1, iPieceWise2;
         Id<Union> iUnion1, iUnion2;
         Id<IntervalEnd> iIntervalEnd1, iIntervalEnd2, iIntervalEnd3, iIntervalEnd4;
@@ -154,7 +154,7 @@ namespace mathiu::impl
                 pattern | ds(as<Infinity>(_), as<Infinity>(_)) = expr(false),
                 pattern | ds(_, as<Infinity>(_)) = expr(true),
                 pattern | ds(as<Infinity>(_), _) = expr(false),
-                pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEl2))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEr1, iEr2))))   = [&] {
+                pattern | ds(as<Pair>(as<ExprPtrPair>(ds(iEl1, iEl2))), as<Pair>(as<ExprPtrPair>(ds(iEr1, iEr2))))   = [&] {
                     return lessC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<PieceWise>(iPieceWise1), as<PieceWise>(iPieceWise2))   = [&] {
@@ -219,7 +219,7 @@ namespace mathiu::impl
                 pattern | ds(as<Pi>(_), as<Pi>(_)) = expr(true),
                 pattern | ds(as<E>(_), as<E>(_)) = expr(true),
                 pattern | ds(as<Infinity>(_), as<Infinity>(_)) = expr(true),
-                pattern | ds(as<SubstitutePair>(as<ExprPtrPair>(ds(iEl1, iEr1))), as<SubstitutePair>(as<ExprPtrPair>(ds(iEl2, iEr2)))) = [&] {
+                pattern | ds(as<Pair>(as<ExprPtrPair>(ds(iEl1, iEr1))), as<Pair>(as<ExprPtrPair>(ds(iEl2, iEr2)))) = [&] {
                     return equalC<ExprPtr>({*iEl2, *iEl1}, {*iEr2, *iEr1});
                 },
                 pattern | ds(as<SetOp>(as<Union>(iUnion1)), as<SetOp>(as<Union>(iUnion2)))   = [&] {
@@ -683,6 +683,10 @@ namespace mathiu::impl
 
     double evald(ExprPtr const &ex)
     {
+#if DEBUG
+        std::cout << "evald: " << toString(ex) << std::endl;
+#endif // VERBOSE_DEBUG
+
         assert(ex);
         Id<Integer> i, il, ir;
         Id<Sum> iS;
@@ -882,8 +886,8 @@ namespace mathiu::impl
                 pattern | as<Relational>(ds(iRelKind, il, ir))                      = [&]{
                     return "(" + toString(*iRelKind) + " " + toString(*il) + " " + toString(*ir) + ")";
                 },
-                pattern | as<SubstitutePair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
-                    return "(SubstitutePair " + toString(*il) + " " + toString(*ir) + ")";
+                pattern | as<Pair>(as<ExprPtrPair>(ds(il, ir))) = [&] {
+                    return "(Pair " + toString(*il) + " " + toString(*ir) + ")";
                 },
                 pattern | as<Interval>(ds(ds(il, iB1), ds(ir, iB2))) = [&] {
                     return std::string("(") + (*iB1? "C" : "O") + (*iB2? "C" : "O") + "Interval " +
@@ -1024,19 +1028,19 @@ namespace mathiu::impl
         std::cout << "substitute: " << toString(ex) << " " << toString(srcDstPairs) << std::endl;
 #endif // VERBOSE_DEBUG
         Id<Set> iSet;
-        Id<SubstitutePair> iPair;
+        Id<Pair> iPair;
         auto const subMap = match(*srcDstPairs)(
             pattern | as<Set>(iSet) = [&]
             {
                 ExprPtrMap result;
                 std::transform((*iSet).begin(), (*iSet).end(), std::inserter(result, result.end()), [&](auto &&e)
                                {
-                                   auto pair = std::get<SubstitutePair>(*e);
+                                   auto pair = std::get<Pair>(*e);
                                    return pair;
                                });
                 return result;
             },
-            pattern | as<SubstitutePair>(iPair) = [&]
+            pattern | as<Pair>(iPair) = [&]
             { return ExprPtrMap{{{(*iPair).first, (*iPair).second}}}; },
             pattern | _ = [&]
             {

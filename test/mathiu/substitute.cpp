@@ -73,7 +73,7 @@ TEST(conSubstitute, 5_)
 {
     EXPECT_EQ(toString(set("a"_s , "b"_s, "c"_s)), "{a b c}");
     EXPECT_EQ(toString(set("a"_s + "b"_s , "b"_s + "c"_s, "c"_s + "a"_s)), "{(+ a b) (+ a c) (+ b c)}");
-    EXPECT_EQ(toString(set("x"_s >> "y"_s, "y"_s >> "z"_s, "z"_s >> "x"_s)), "{(SubstitutePair x y) (SubstitutePair y z) (SubstitutePair z x)}");
+    EXPECT_EQ(toString(set("x"_s >> "y"_s, "y"_s >> "z"_s, "z"_s >> "x"_s)), "{(Pair x y) (Pair y z) (Pair z x)}");
 }
 
 TEST(conSubstitute, 5)

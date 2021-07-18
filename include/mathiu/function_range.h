@@ -10,6 +10,8 @@ namespace mathiu
         // implement limit
 
         ExprPtr functionRange(ExprPtr const& function, ExprPtr const& symbol, ExprPtr const& domain);
+
+        ExprPtr functionRange(ExprPtr const& function, ExprPtr const& domainSet);
         
     } // namespace impl
 } // namespace mathiu

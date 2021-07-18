@@ -237,7 +237,7 @@ namespace mathiu
         {
         };
 
-        struct SubstitutePair : ExprPtrPair
+        struct Pair : ExprPtrPair
         {
         };
 
@@ -248,7 +248,7 @@ namespace mathiu
         struct True{};
         struct False{};
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Infinity, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, Interval, True, False, Logical, SetOp>;
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Infinity, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, Pair, Interval, True, False, Logical, SetOp>;
 
         struct Expr : ExprVariant
         {
@@ -326,7 +326,7 @@ namespace mathiu
 
         inline ExprPtr operator>>(ExprPtr const& src, ExprPtr const& dst)
         {
-            return makeSharedExprPtr(SubstitutePair{{src, dst}});
+            return makeSharedExprPtr(Pair{{src, dst}});
         }
 
         std::string toString(ExprPtr const &ex);
