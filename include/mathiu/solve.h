@@ -12,7 +12,7 @@ namespace mathiu
     {
         ExprPtr solvePoly(ExprPtr const& ex, ExprPtr const& var);
 
-        ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain = complexes);
+        ExprPtr solve(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain = true_);
 
         ExprPtr solveInequation(ExprPtr const& ex, ExprPtr const& var, ExprPtr const& domain);
 

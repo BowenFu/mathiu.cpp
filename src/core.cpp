@@ -24,6 +24,35 @@ namespace mathiu::impl
             { return makeSharedExprPtr(Arctan{{ex}}); });
     }
 
+    inline bool less(double lhs, double rhs)
+    {
+        return lhs < rhs;
+    }
+
+    inline bool less(std::pair<ExprPtr const, ExprPtr> const &lhs, std::pair<ExprPtr const, ExprPtr> const &rhs)
+    {
+        return less(lhs.second, rhs.second);
+    }
+
+    inline bool less(std::string const &lhs, std::string const &rhs)
+    {
+        return lhs < rhs;
+    }
+
+    inline bool less(IntervalEnd const &lhs, IntervalEnd const &rhs)
+    {
+        if (equal(lhs.first, rhs.first))
+        {
+            return lhs.second < rhs.second;
+        }
+        return less(lhs.first, rhs.first);
+    }
+
+    inline bool equal(IntervalEnd const &lhs, IntervalEnd const &rhs)
+    {
+        return equal(lhs.first, rhs.first) && lhs.second == rhs.second;
+    }
+
     template <typename T, typename C1 = std::initializer_list<T>, typename C2 = std::initializer_list<T>>
     bool lessC(C1 const &v1, C2 const &v2)
     {
@@ -148,6 +177,12 @@ namespace mathiu::impl
                 pattern | _ = [&] { throw std::runtime_error{std::string("No match in less: ") + toString(lhs) + " ? " + toString(rhs)}; return false; }
             // clang-format on
         );
+    }
+
+    template <typename T, typename C = std::initializer_list<T>>
+    bool equalC(C const &v1, C const &v2)
+    {
+        return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2), equalLambda);
     }
 
     // The equality relation
@@ -323,15 +358,16 @@ namespace mathiu::impl
     }
 
     template <typename C, typename T>
-    auto insertSum(C const& c, T const& t)
+    auto insertSum(C const &c, T const &t)
     {
         return mergeSum(c, C{{{coeffAndTerm(*t).second, t}}});
     }
 
-    inline auto constexpr asCoeffAndRest = [](auto&& coeff, auto&& rest) { return app(coeffAndTerm, ds(coeff, rest)); };
+    inline auto constexpr asCoeffAndRest = [](auto &&coeff, auto &&rest)
+    { return app(coeffAndTerm, ds(coeff, rest)); };
 
     template <typename C, typename T>
-    auto insertProduct(C const& c, T const& t)
+    auto insertProduct(C const &c, T const &t)
     {
         return mergeProduct(c, C{{{baseAndExp(*t).first, t}}});
     }
@@ -740,6 +776,27 @@ namespace mathiu::impl
         throw std::runtime_error("Missing case!");
     }
 
+    inline std::string toString(std::string const &s)
+    {
+        return s;
+    }
+
+    template <typename T>
+    inline std::string toString(T const &t)
+    {
+        return std::to_string(t);
+    }
+
+    inline bool equal(std::pair<ExprPtr const, ExprPtr> const &lhs, std::pair<ExprPtr const, ExprPtr> const &rhs)
+    {
+        return equal(lhs.second, rhs.second);
+    }
+
+    template <typename T>
+    inline bool equal(T const t1, T const t2)
+    {
+        return t1 == t2;
+    }
     std::string toString(ExprPtr const &ex)
     {
         assert(ex);
@@ -831,9 +888,6 @@ namespace mathiu::impl
                 pattern | as<Interval>(ds(ds(il, iB1), ds(ir, iB2))) = [&] {
                     return std::string("(") + (*iB1? "C" : "O") + (*iB2? "C" : "O") + "Interval " +
                     toString(*il) + " " + toString(*ir) + ")";
-                },
-                pattern | as<Complexes>(_) = [&] {
-                    return "complexes";
                 },
                 pattern | as<True>(_) = [&] {
                     return "true";

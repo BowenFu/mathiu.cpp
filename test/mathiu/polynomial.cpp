@@ -7,27 +7,27 @@ TEST(degree, product)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    EXPECT_EQ(toString(degree(y * x, x)), "1");
+    EXPECT_EQ(degree(y * x, x), 1);
 }
 
 TEST(degree, power)
 {
     auto const x = symbol("x");
-    EXPECT_EQ(toString(degree(x * x, x)), "2");
+    EXPECT_EQ(degree(x * x, x), 2);
 }
 
 TEST(degree, sum)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    EXPECT_EQ(toString(degree(x + y, x)), "1");
+    EXPECT_EQ(degree(x + y, x), 1);
 }
 
 TEST(degree, multivar)
 {
     auto const x = symbol("x");
     auto const y = symbol("y");
-    EXPECT_EQ(toString(degree(x * y, set(x, y))), "2");
+    EXPECT_EQ(degree(x * y, set(x, y)), 2);
 }
 
 TEST(degree, multivar2)
@@ -39,7 +39,7 @@ TEST(degree, multivar2)
     auto const x = "x"_s;
     auto const y = "y"_s;
     auto const z = "z"_s;
-    EXPECT_EQ(toString(degree(i3 * w * (x^i2) * (y^i3) * (z^i4), set(x, z))), "6");
+    EXPECT_EQ(degree(i3 * w * (x^i2) * (y^i3) * (z^i4), set(x, z)), 6);
 }
 
 TEST(degree, multivar3)
@@ -49,7 +49,7 @@ TEST(degree, multivar3)
     auto const b = "b"_s;
     auto const c = "c"_s;
     auto const x = "x"_s;
-    EXPECT_EQ(toString(degree(a * (x^i2) + (b^i2) + c, x)), "2");
+    EXPECT_EQ(degree(a * (x^i2) + (b^i2) + c, x), 2);
 }
 
 TEST(degree, multivar4)
@@ -60,7 +60,7 @@ TEST(degree, multivar4)
     auto const c = "c"_s;
     auto const x = "x"_s;
     auto const sinx = sin(x);
-    EXPECT_EQ(toString(degree(a * (sinx^i2) + (b*sinx) + c, sinx)), "2");
+    EXPECT_EQ(degree(a * (sinx^i2) + (b*sinx) + c, sinx), 2);
 }
 
 TEST(degree, multivarr)
@@ -72,7 +72,7 @@ TEST(degree, multivarr)
     auto const x = "x"_s;
     auto const y = "y"_s;
     auto const z = "z"_s;
-    EXPECT_EQ(toString(degree(i2 * (x^i2) * y * (z^i3) + w * x * (z^i6), set(x, z))), "7");
+    EXPECT_EQ(degree(i2 * (x^i2) * y * (z^i3) + w * x * (z^i6), set(x, z)), 7);
 }
 
 TEST(coefficient, 1)

@@ -78,7 +78,7 @@ TEST(inequation, Square1)
 TEST(inequation, Square2)
 {
     auto const e = 2_i > -("x"_s ^ 2_i) ;
-    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "complexes");
+    EXPECT_EQ(toString(solveInequation(e, "x"_s)), "true");
 }
 
 TEST(inequation, Square3)

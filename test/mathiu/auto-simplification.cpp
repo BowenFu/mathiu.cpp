@@ -96,13 +96,6 @@ TEST(simplifyRational, int)
     EXPECT_EQ(toString(n2 + n3), "5");
 }
 
-TEST(simplifyRational, rational_)
-{
-    auto const f7o2 = fraction(14, -4);
-
-    EXPECT_EQ(toString(mathiu::impl::simplifyRational(f7o2)), "-7/2");
-}
-
 TEST(simplifyRational, rational)
 {
     auto const n2 = 2_i;

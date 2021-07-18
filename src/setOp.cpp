@@ -98,7 +98,7 @@ namespace mathiu::impl
                 }
                 return makeSharedExprPtr(std::move(result));
             },
-            pattern | ds(some(as<Set>(_)), some(as<Complexes>(_))) = [&]
+            pattern | ds(some(as<Set>(_)), some(as<True>(_))) = [&]
             { return lhs; },
             pattern | ds(some(as<Set>(iSet1)), some(as<Set>(iSet2))) = [&]
             {
@@ -129,7 +129,7 @@ namespace mathiu::impl
                 }
                 return makeSharedExprPtr(SetOp{std::move(result)});
             },
-            pattern | ds(false_, _) = expr(false_), pattern | ds(_, false_) = expr(false_), pattern | ds(true_, _) = expr(rhs), pattern | ds(_, true_) = expr(lhs), pattern | ds(complexes, _) = expr(rhs), pattern | ds(_, complexes) = expr(lhs), pattern | _ = [&]
+            pattern | ds(false_, _) = expr(false_), pattern | ds(_, false_) = expr(false_), pattern | ds(true_, _) = expr(rhs), pattern | ds(_, true_) = expr(lhs), pattern | ds(true_, _) = expr(rhs), pattern | ds(_, true_) = expr(lhs), pattern | _ = [&]
                                                                                                                                                                                                                                                     {
                                                                                                                                                                                                                                                         throw std::logic_error{"Mismatch in intersect!"};
                                                                                                                                                                                                                                                         return false_;

@@ -245,21 +245,16 @@ namespace mathiu
 
         using Interval = std::pair<IntervalEnd, IntervalEnd>;
 
-        struct Complexes
-        {
-        };
-
         struct True{};
         struct False{};
 
-        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Infinity, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, Interval, Complexes, True, False, Logical, SetOp>;
+        using ExprVariant = std::variant<Integer, Fraction, Symbol, Pi, E, I, Infinity, Sum, Product, Power, Log, Sin, Arctan, Set, List, Relational, PieceWise, SubstitutePair, Interval, True, False, Logical, SetOp>;
 
         struct Expr : ExprVariant
         {
             using variant::variant;
         };
 
-        inline const auto complexes = makeSharedExprPtr(Complexes{});
         inline const auto true_ = makeSharedExprPtr(True{});
         inline const auto false_ = makeSharedExprPtr(False{});
 
@@ -336,63 +331,6 @@ namespace mathiu
 
         std::string toString(ExprPtr const &ex);
 
-        inline std::string toString(std::string const& s)
-        {
-            return s;
-        }
-
-        template <typename T>
-        inline std::string toString(T const& t)
-        {
-            return std::to_string(t);
-        }
-
-        inline bool equal(std::pair<ExprPtr const, ExprPtr > const &lhs, std::pair<ExprPtr const, ExprPtr > const &rhs)
-        {
-            return equal(lhs.second, rhs.second);
-        }
-
-        template <typename T>
-        inline bool equal(T const t1, T const t2)
-        {
-            return t1 == t2;
-        }
-
-        inline bool less(double lhs, double rhs)
-        {
-            return lhs < rhs;
-        }
-
-        inline bool less(std::pair<ExprPtr const, ExprPtr>const& lhs, std::pair<ExprPtr const, ExprPtr>const& rhs)
-        {
-            return less(lhs.second, rhs.second);
-        }
-
-        inline bool less(std::string const& lhs, std::string const& rhs)
-        {
-            return lhs < rhs;
-        }
-
-        inline bool less(IntervalEnd const& lhs, IntervalEnd const& rhs)
-        {
-            if (equal(lhs.first, rhs.first))
-            {
-                return lhs.second < rhs.second;
-            }
-            return less(lhs.first, rhs.first);
-        }
-
-        inline bool equal(IntervalEnd const& lhs, IntervalEnd const& rhs)
-        {
-            return equal(lhs.first, rhs.first) && lhs.second == rhs.second;
-        }
-
-        template <typename T, typename C = std::initializer_list<T>>
-        bool equalC(C const& v1, C const& v2)
-        {
-            return v1.size() == v2.size() && std::equal(std::begin(v1), std::end(v1), std::begin(v2), equalLambda);
-        }
-
         double evald(ExprPtr const &ex);
 
         inline constexpr auto isRational = matchit::or_(matchit::as<int>(matchit::_), matchit::as<Fraction>(matchit::_));
@@ -404,8 +342,6 @@ namespace mathiu
         // The equality relation
         // for basic commutative transformation
         bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
-
-        ExprPtr simplifyRational(ExprPtr const &r);
 
         std::complex<double> evalc(ExprPtr const &ex);
 
@@ -495,7 +431,7 @@ namespace mathiu
             return std::make_shared<impl::Expr const>(impl::Interval{{l, lClose}, {r, rClose}});
         }
     } // namespace impl
-    using impl::Integer;
+    using impl::integer;
     using impl::symbol;
     using impl::operator+;
     using impl::operator-;
