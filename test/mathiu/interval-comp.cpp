@@ -47,3 +47,10 @@ TEST(IntervalComp, plus3)
     auto const finalRange = interval(left, leftClose, right, rightClose);
     EXPECT_EQ(toString(finalRange), "(OOInterval -1 1)");
 }
+
+TEST(IntervalComp, plus4)
+{
+    auto const e = "x"_s + "y"_s;
+    auto const finalRange = functionRange(e, set("x"_s >> interval(1_i, true, 2_i, false), "y"_s >> interval(-2_i, false, -1_i, true)));
+    EXPECT_EQ(toString(finalRange), "(OOInterval -1 1)");
+}
