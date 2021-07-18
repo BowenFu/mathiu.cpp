@@ -109,4 +109,39 @@ namespace mathiu::impl
 
         return result;
     }
+
+    ExprPtr functionRange(ExprPtr const &function, ExprPtr const &domainSet)
+    {
+#if DEBUG
+        std::cout << "functionRange: " << toString(function) << ",\t" << toString(domainSet) << std::endl;
+#endif // DEBUG
+
+        auto const& dSet = std::get<Set>(*domainSet);
+
+        auto iter = dSet.begin();
+        auto pair = std::get<Pair>(**iter);
+        auto range = functionRange(function, pair.first, pair.second);
+
+        auto rangeInterval = std::get<impl::Interval>(*range);
+
+        ++iter;
+        for (; iter != dSet.end(); ++iter)
+        {
+            auto pair = std::get<Pair>(**iter);
+
+            auto const leftRange = functionRange(rangeInterval.first.first, pair.first, pair.second);
+            auto const leftRangeInterval = std::get<impl::Interval>(*leftRange);
+
+            auto const rightRange = functionRange(rangeInterval.second.first, pair.first, pair.second);
+            auto const rightRangeInterval = std::get<impl::Interval>(*rightRange);
+
+            auto const left = leftRangeInterval.first.first;
+            auto const leftClose = leftRangeInterval.first.second && rangeInterval.first.second;
+
+            auto const right = rightRangeInterval.second.first;
+            auto const rightClose = rightRangeInterval.second.second && rangeInterval.second.second;
+            rangeInterval = Interval{{left, leftClose}, {right, rightClose}};
+        }
+        return makeSharedExprPtr(std::move(rangeInterval));
+    }
 } // namespace mathiu::impl
