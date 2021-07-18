@@ -1,4 +1,6 @@
+#include "internal.h"
 #include "mathiu.h"
+#include "matchit.h"
 #include "gtest/gtest.h"
 #include <iostream>
 using namespace mathiu;

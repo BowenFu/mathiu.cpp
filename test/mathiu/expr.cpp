@@ -1,4 +1,5 @@
 #include "mathiu.h"
+#include "matchit.h"
 #include "gtest/gtest.h"
 #include <string>
 using namespace mathiu;
