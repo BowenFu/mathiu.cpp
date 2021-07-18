@@ -7,6 +7,8 @@
 
 namespace mathiu::impl
 {
+    using namespace matchit;
+
     Integer degreeMonomial(ExprPtr const &monomial, Set const &varSet)
     {
 #if VERBOSE_DEBUG

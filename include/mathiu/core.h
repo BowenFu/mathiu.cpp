@@ -415,9 +415,7 @@ namespace mathiu
 
         double evald(ExprPtr const &ex);
 
-        using namespace matchit;
-
-        inline constexpr auto isRational = or_(as<int>(_), as<Fraction>(_));
+        inline constexpr auto isRational = matchit::or_(matchit::as<int>(matchit::_), matchit::as<Fraction>(matchit::_));
 
         // The <| order relation
         // for basic commutative transformation
@@ -427,78 +425,9 @@ namespace mathiu
         // for basic commutative transformation
         bool equal(ExprPtr const &lhs, ExprPtr const &rhs);
 
-        template <typename C, typename Op, typename Identity>
-        auto merge(C const& c1, C const& c2, Op op, Identity identity) -> C
-        {
-            if (c1.size() < c2.size())
-            {
-                return merge(c2, c1, op, identity);
-            }
-            C result = c1;
-            // We assume rational is at the beginning.
-            auto const firstIsRational = matched(result.begin()->second, some(isRational));
-            for (auto const& e : c2)
-            {
-                auto const bothRational = firstIsRational && matched(e.second, some(isRational));
-                auto const it = bothRational? result.begin(): result.find(e.first);
-                if (it == result.end())
-                {
-                    result.insert(e);
-                }
-                else
-                {
-                    auto const opResult = op(it->second, e.second);
-                    if (equal(opResult, identity))
-                    {
-                        result.erase(it);
-                    }
-                    else
-                    {
-                        it->second = opResult;
-                    }
-                }
-            }
-            return result;
-        }
-
-        template <typename C>
-        auto mergeSum(C const& c1, C const& c2)
-        {
-            constexpr auto add = [](auto&& lhs, auto&& rhs) { return lhs + rhs; };
-            auto result = merge(c1, c2, add, 0_i);;
-            if (result.size() == 1)
-            {
-                return (*result.begin()).second;
-            }
-            return makeSharedExprPtr(std::move(result));
-        }
-
-        template <typename C>
-        auto mergeProduct(C const& c1, C const& c2)
-        {
-            constexpr auto mul = [](auto&& lhs, auto&& rhs) { return lhs * rhs; };
-            auto result = merge(c1, c2, mul, 1_i);;
-            if (result.size() == 1)
-            {
-                return (*result.begin()).second;
-            }
-            return makeSharedExprPtr(std::move(result));
-        }
-
         ExprPtr simplifyRational(ExprPtr const &r);
 
         std::complex<double> evalc(ExprPtr const &ex);
-
-        inline constexpr auto asCoeff = or_(as<Integer>(_), as<Fraction>(_));
-        inline constexpr auto second = [](auto&& p)
-        {
-            return p.second;
-        };
-        inline constexpr auto firstIsCoeff = [](auto &&id, auto &&whole)
-        {
-            // second part of the first pair
-            return as<Product>(whole.at(ds(app(second, id.at(some(asCoeff))), ooo)));
-        };
 
         std::pair<ExprPtr, ExprPtr> coeffAndTerm(Expr const &e);
 
@@ -586,7 +515,7 @@ namespace mathiu
             return substitute(substitute(ex, srcDstPairs), seqPairs...);
         }
 
-        inline auto const asDouble = meet([](auto&& e)
+        inline auto const asDouble = matchit::meet([](auto&& e)
         {
             try{
                 evald(e);

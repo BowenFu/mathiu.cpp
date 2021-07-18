@@ -4,6 +4,8 @@
 
 namespace mathiu::impl
 {
+    using namespace matchit;
+
     ExprPtr sin(ExprPtr const &ex)
     {
         using namespace matchit;
@@ -199,6 +201,17 @@ namespace mathiu::impl
 
     std::pair<ExprPtr, ExprPtr> coeffAndTerm(Expr const &e)
     {
+        constexpr auto firstIsCoeff = [](auto &&id, auto &&whole)
+        {
+            constexpr auto asCoeff = or_(as<Integer>(_), as<Fraction>(_));
+            constexpr auto second = [](auto&& p)
+            {
+                return p.second;
+            };
+            // second part of the first pair
+            return as<Product>(whole.at(ds(app(second, id.at(some(asCoeff))), ooo)));
+        };
+
         Id<ExprPtr> icoeff;
         Id<Product> ip;
         return match(e)(
@@ -226,6 +239,68 @@ namespace mathiu::impl
             e.first = op(e.first);
         }
         return makeSharedExprPtr(std::move(p));
+    }
+
+    template <typename C, typename Op, typename Identity>
+    auto merge(C const &c1, C const &c2, Op op, Identity identity) -> C
+    {
+        if (c1.size() < c2.size())
+        {
+            return merge(c2, c1, op, identity);
+        }
+        C result = c1;
+        // We assume rational is at the beginning.
+        auto const firstIsRational = matched(result.begin()->second, some(isRational));
+        for (auto const &e : c2)
+        {
+            auto const bothRational = firstIsRational && matched(e.second, some(isRational));
+            auto const it = bothRational ? result.begin() : result.find(e.first);
+            if (it == result.end())
+            {
+                result.insert(e);
+            }
+            else
+            {
+                auto const opResult = op(it->second, e.second);
+                if (equal(opResult, identity))
+                {
+                    result.erase(it);
+                }
+                else
+                {
+                    it->second = opResult;
+                }
+            }
+        }
+        return result;
+    }
+
+    template <typename C>
+    auto mergeSum(C const &c1, C const &c2)
+    {
+        constexpr auto add = [](auto &&lhs, auto &&rhs)
+        { return lhs + rhs; };
+        auto result = merge(c1, c2, add, 0_i);
+        ;
+        if (result.size() == 1)
+        {
+            return (*result.begin()).second;
+        }
+        return makeSharedExprPtr(std::move(result));
+    }
+
+    template <typename C>
+    auto mergeProduct(C const &c1, C const &c2)
+    {
+        constexpr auto mul = [](auto &&lhs, auto &&rhs)
+        { return lhs * rhs; };
+        auto result = merge(c1, c2, mul, 1_i);
+        ;
+        if (result.size() == 1)
+        {
+            return (*result.begin()).second;
+        }
+        return makeSharedExprPtr(std::move(result));
     }
 
     ExprPtr operator+(ExprPtr const &lhs, ExprPtr const &rhs)
@@ -799,7 +874,7 @@ namespace mathiu::impl
             pattern | some(as<Arctan>(ds(var))) = expr(false),
             pattern | some(as<PieceWise>(iPieceWise)) = [&]
             {
-                for (auto const& e : *iPieceWise)
+                for (auto const &e : *iPieceWise)
                 {
                     if (!freeOf(e.first, var))
                     {

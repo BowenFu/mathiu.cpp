@@ -14,9 +14,6 @@ namespace mathiu
 
         ExprPtr union_(ExprPtr const &lhs, ExprPtr const &rhs);
 
-        inline auto const realInterval = [](auto &&left, auto &&right)
-        { return ds(and_(ds(asDouble, _), left), and_(ds(asDouble, _), right)); };
-
         ExprPtr intersectInterval(Interval const& lhs, Interval const& rhs);
 
         bool inInterval(ExprPtr const& e, Interval const& interval);

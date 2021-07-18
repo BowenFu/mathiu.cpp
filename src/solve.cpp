@@ -9,6 +9,8 @@
 
 namespace mathiu::impl
 {
+    using namespace matchit;
+
     ExprPtr solvePoly(ExprPtr const &ex, ExprPtr const &var)
     {
 #if DEBUG

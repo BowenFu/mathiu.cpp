@@ -5,6 +5,11 @@
 
 namespace mathiu::impl
 {
+    using namespace matchit;
+
+    inline auto const realInterval = [](auto &&left, auto &&right)
+    { return ds(and_(ds(asDouble, _), left), and_(ds(asDouble, _), right)); };
+
     ExprPtr intersectInterval(Interval const &lhs, Interval const &rhs)
     {
         Id<IntervalEnd> iIEL1, iIER1, iIEL2, iIER2;

@@ -10,6 +10,8 @@ namespace mathiu::impl
 {
     // implement limit
 
+    using namespace matchit;
+
     Interval functionRangeImplIntervalDomain(ExprPtr const &function, ExprPtr const &symbol, ExprPtr const &domain)
     {
 #if DEBUG
