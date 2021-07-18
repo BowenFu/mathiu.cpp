@@ -4,6 +4,7 @@
 #include "mathiu/diff.h"
 #include "mathiu/inequation.h"
 #include "mathiu/setOp.h"
+#include "mathiu/polynomial.h"
 #include "mathiu/function_range.h"
 #include <numeric>
 
@@ -26,16 +27,21 @@ namespace mathiu::impl
         auto const secondP = IntervalEnd{subs(domain_.second.first), domain_.second.second};
         auto const derivative = diff(function, symbol);
         auto const criticalPoints = solve(derivative, symbol, domain);
-        auto min_ = evald(firstP.first) < evald(secondP.first) ? firstP : secondP;
-        auto max_ = evald(firstP.first) < evald(secondP.first) ? secondP : firstP;
+        auto lessThan = [](auto&& l, auto&& r)
+        {
+            auto e = expand(l - r);
+            return evald(e) < 0;
+        };
+        auto const lLTr = lessThan(firstP.first, secondP.first);
+        auto min_ = lLTr ? firstP : secondP;
+        auto max_ = lLTr ? secondP : firstP;
         // optimize me
         for (auto const &e : std::get<Set>(*criticalPoints))
         {
             auto const v = IntervalEnd{subs(e), true};
-            min_ = evald(min_.first) < evald(v.first) ? min_ : v;
-            max_ = evald(max_.first) > evald(v.first) ? max_ : v;
+            min_ = lessThan(min_.first, v.first) ? min_ : v;
+            max_ = lessThan(v.first, max_.first) ? max_ : v;
         }
-        assert(evald(min_.first) <= evald(max_.first));
         auto result = Interval{min_, max_};
 #if DEBUG
         std::cout << "functionRangeImplIntervalDomain: " << toString(function) << ",\t" << toString(symbol) << ",\t" << toString(domain) << ",\t resutl: " << toString(makeSharedExprPtr(result)) << std::endl;

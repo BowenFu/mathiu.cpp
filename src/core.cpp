@@ -683,6 +683,10 @@ namespace mathiu::impl
 
     double evald(ExprPtr const &ex)
     {
+#if DEBUG
+        std::cout << "evald: " << toString(ex) << std::endl;
+#endif // VERBOSE_DEBUG
+
         assert(ex);
         Id<Integer> i, il, ir;
         Id<Sum> iS;
