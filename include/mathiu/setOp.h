@@ -1,10 +1,7 @@
 #ifndef SET_OP_H
 #define SET_OP_H
 
-#include "matchit.h"
 #include "core.h"
-#include "diff.h"
-#include "polynomial.h"
 
 namespace mathiu
 {

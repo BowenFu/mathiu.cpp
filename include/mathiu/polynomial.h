@@ -1,10 +1,7 @@
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
 
-#include "matchit.h"
 #include "core.h"
-#include "diff.h"
-#include <cmath>
 
 namespace mathiu
 {

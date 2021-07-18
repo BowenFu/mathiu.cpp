@@ -1,6 +1,7 @@
 #include "matchit.h"
 #include "mathiu/core.h"
 #include "mathiu/solve.h"
+#include "mathiu/diff.h"
 #include "mathiu/inequation.h"
 #include "mathiu/setOp.h"
 #include "mathiu/function_range.h"

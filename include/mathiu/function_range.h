@@ -1,7 +1,6 @@
 #ifndef FUNCTION_RANGE_H
 #define FUNCTION_RANGE_H
 
-#include "matchit.h"
 #include "core.h"
 
 namespace mathiu

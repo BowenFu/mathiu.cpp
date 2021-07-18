@@ -1,10 +1,7 @@
 #ifndef INEQUATION_H
 #define INEQUATION_H
 
-#include "matchit.h"
 #include "core.h"
-#include "diff.h"
-#include "polynomial.h"
 
 namespace mathiu
 {
